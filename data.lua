@@ -9,7 +9,7 @@ styles["ugg_content_frame"] = {
 }
 
 styles["ugg_controls_flow"] = {
-    type = "horizontal_flow_style",
+    type = "vertical_flow_style",
     vertical_align = "center",
     horizontal_spacing = 16
 }
