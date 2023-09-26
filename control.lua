@@ -70,7 +70,7 @@ local function build_train_schedule_group_report(player)
 
             local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
             for key, train_schedule_group in pairs(train_schedule_groups) do
-                local train_limit_sum = get_train_station_limits(player, train_schedule_group, {}, surface)
+                local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface)
 
                 local invalid = (train_limit_sum == -1)
                 local satisfied = (train_limit_sum - #train_schedule_group == 1)
@@ -130,6 +130,7 @@ local function toggle_interface(player)
     local player_global = global.players[player.index]
     local main_frame = player_global.elements.main_frame
     if main_frame == nil then
+        player.opened = player_global.elements.main_frame
         build_interface(player)
     else
         main_frame.destroy()
@@ -169,7 +170,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
 end)
 
 script.on_event(defines.events.on_gui_closed, function(event)
-    if event.element and event.element.name == "tll_toggle_interface" then
+    if event.element and event.element.name == "tll_main_frame" then
         local player = game.get_player(event.player_index)
         toggle_interface(player)
     end
@@ -209,6 +210,5 @@ end)
 
 -- TODO: break train group reports into sections based on surface
 -- TODO: add click-for-blueprint functionality
--- TODO: add ability to esc out of window
 -- TODO: add close button in top right of window
 -- TODO: add pin button to window
