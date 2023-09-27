@@ -254,11 +254,7 @@ local function build_interface(player)
 
     local exclude_control_flow = exclude_content_frame.add{type="flow", direction="vertical", style="ugg_controls_flow"}
     exclude_control_flow.style.bottom_margin = 5
-    local exclude_textfield_label = exclude_control_flow.add{
-        type="label",
-        caption={"tll.add_excluded_keyword"},
-        tooltip={"tll.add_excluded_keyword_tooltip"}
-    }
+    exclude_control_flow.add{type="label", caption={"tll.add_excluded_keyword"}, tooltip={"tll.add_excluded_keyword_tooltip"}}
     local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
     local exclude_entry_textfield = exclude_textfield_flow.add{type="textfield"}
     player_global.elements.exclude_entry_textfield = exclude_entry_textfield
@@ -268,7 +264,7 @@ local function build_interface(player)
     exclude_textfield_flow.add{type="button", name="delete_all_excluded_strings_button", style="tool_button_red", tooltip={"tll.delete_all_excluded"}}
 
 
-    local excluded_strings_frame = exclude_content_frame.add{type="frame", direction="vertical"}
+    local excluded_strings_frame = exclude_content_frame.add{type="scroll-pane", direction="vertical"}
     player_global.elements.excluded_strings_frame = excluded_strings_frame
 
     build_excluded_string_table(player)
@@ -389,5 +385,3 @@ end)
 -- TODO: add click-for-blueprint functionality
 -- TODO: add exclusions for surfaces
 -- TODO: fix pinning behavior
--- TODO: update table automatically?
--- TODO: fix bottom of exclude tab extending too far
