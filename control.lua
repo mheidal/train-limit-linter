@@ -8,6 +8,22 @@ local function get_table_size(t)
     return count
 end
 
+local function contains(t, k)
+    for key, value in pairs(t) do
+        if key == k then return true end
+    end
+    return false
+end
+
+local function get_enabled_excluded_strings(player)
+    local player_global = global.players[player.index]
+    local enabled_excluded_strings = {}
+    for string, string_data in pairs(player_global.excluded_strings) do
+        if string_data.enabled then table.insert(enabled_excluded_strings, string) end
+    end
+    return enabled_excluded_strings
+end
+
 -- Returns an array of arrays of trains which share a schedule.
 local function get_train_schedule_groups_by_surface()
     local function train_schedule_to_key(schedule)
@@ -43,20 +59,25 @@ local function get_train_schedule_groups_by_surface()
     return surface_train_schedule_groups
 end
 
-local function get_train_station_limits(player, train_schedule_group, surface)
+local function get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_strings)
     local sum_of_limits = 0
     local shared_schedule = train_schedule_group[1].schedule
 
     for _, record in pairs(shared_schedule.records) do
-        for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do    
+        for _, excluded_string in pairs(enabled_excluded_strings) do
+            if string.find(record.station, excluded_string) then goto excluded_string_in_train_stop_name end
+        end
+        for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
             -- no train limit is implemented as limit == 2 ^ 32 - 1
             if train_stop.trains_limit == (2 ^ 32) - 1 then
-                return "x" -- "x" used as a sentinal value (how I miss you, Rust)
+                return "not set" -- "not set" used as a sentinal value (how I miss you, Rust)
             else
                 sum_of_limits = sum_of_limits + train_stop.trains_limit
             end
         end
+        ::excluded_string_in_train_stop_name::
     end
+    if sum_of_limits == 0 then return "excluded" end
     return sum_of_limits
 end
 
@@ -70,6 +91,8 @@ local function build_train_schedule_group_report(player)
     local surface_train_schedule_groups_pairs = get_train_schedule_groups_by_surface()
     local report_frame = player_global.elements.report_frame
     report_frame.clear()
+
+    local enabled_excluded_strings = get_enabled_excluded_strings(player)
 
     if player_global.train_report_exists then
         for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
@@ -88,15 +111,16 @@ local function build_train_schedule_group_report(player)
                 surface_label.style.horizontally_stretchable = true
                 surface_label.style.margin = 5
             end
-            
+
             local surface_pane = report_frame.add{type="scroll-pane", name="report_table_" .. surface.name , style="rb_list_box_scroll_pane"}
 
             local num_valid_train_schedule_groups = 0 -- "valid" here meaning that they're shown
 
             for key, train_schedule_group in pairs(train_schedule_groups) do
-                local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface)
+                local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_strings)
+                if train_limit_sum == "excluded" then goto schedule_excluded end
 
-                local invalid = (train_limit_sum == "x")
+                local invalid = (train_limit_sum == "not set")
                 local satisfied = not invalid and (train_limit_sum - #train_schedule_group == 1)
 
                 if (
@@ -108,6 +132,7 @@ local function build_train_schedule_group_report(player)
                         local caption = tostring(#train_schedule_group) .. "/" .. tostring(train_limit_sum) .. " --- " .. key
                         surface_pane.add{type="button", style="rb_list_box_item", caption=caption}
                 end
+                ::schedule_excluded::
             end
 
             -- kinda hacky, if you didn't end up adding any of the schedules because it didn't meet any conditions then we don't want to add the label or table
@@ -128,6 +153,25 @@ local function build_train_schedule_group_report(player)
     end
 end
 
+local function build_excluded_string_table(player)
+    local player_global = global.players[player.index]
+    local excluded_strings_frame = player_global.elements.excluded_strings_frame
+    excluded_strings_frame.clear()
+    if get_table_size(player_global.excluded_strings) == 0 then
+        excluded_strings_frame.add{type="label", caption={"tll.no_excluded_strings"}}
+        return
+    end
+    for excluded_string, string_data in pairs(player_global.excluded_strings) do
+        local excluded_string_line = excluded_strings_frame.add{type="flow", direction="horizontal"}
+        excluded_string_line.add{type="checkbox", state=string_data.enabled, tags={associated_string=excluded_string}}
+        excluded_string_line.add{type="label", caption=excluded_string}
+        local spacer = excluded_string_line.add{type="empty-widget"}
+        spacer.style.horizontally_stretchable = true
+        excluded_string_line.add{type="button", name="delete_excluded_string_button", style="tool_button_red", tags={associated_string=excluded_string}} -- TODO: sprite
+    end
+
+end
+
 local function get_pin_style(player)
     local player_global = global.players[player.index]
     return player_global.window_pinned and "flib_selected_frame_action_button" or "frame_action_button"
@@ -145,6 +189,7 @@ local function initialize_global(player)
         show_satisfied = true, -- satisfied when sum of train limits is 1 greater than sum of trains
         show_invalid = false, -- invalid when train limits are not set for all stations in name group,
         window_pinned = false,
+        excluded_strings = {}, -- table of tables with structure {<excluded string>={"enabled": bool}}
         elements = {}
     }
 end
@@ -165,6 +210,7 @@ local function build_interface(player)
     player.opened = main_frame
     player_global.elements.main_frame = main_frame
 
+    -- titlebar
     local titlebar_flow = main_frame.add{
         type="flow",
         direction="horizontal",
@@ -182,8 +228,16 @@ local function build_interface(player)
 
     titlebar_flow.add{type="sprite-button", name="close_window_button", style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
 
-    local content_frame = main_frame.add{type="frame", name="content_frame", direction="vertical", style="ugg_content_frame"}
-    local controls_flow = content_frame.add{type="flow", name="controls_flow", direction="vertical", style="ugg_controls_flow"}
+    -- tabs
+    local tab_pane_frame = main_frame.add{type="frame", style="inside_deep_frame_for_tabs"}
+    local tabbed_pane = tab_pane_frame.add{type="tabbed-pane", style="tabbed_pane_with_no_side_padding"}
+
+    -- display tab
+    local display_tab = tabbed_pane.add{type="tab", caption={"tll.display_tab"}}
+    local display_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
+    tabbed_pane.add_tab(display_tab, display_content_frame)
+
+    local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="ugg_controls_flow"}
 
     controls_flow.add{type="checkbox", name="current_surface_checkbox", caption={"tll.only_player_surface"}, state=player_global.only_current_surface}
     controls_flow.add{type="checkbox", name="show_satisfied_checkbox", caption={"tll.show_satisfied"}, state=player_global.show_satisfied}
@@ -191,12 +245,37 @@ local function build_interface(player)
     local train_report_button = controls_flow.add{type="button", name="train_report_button", caption={"tll.train_report_button_create"}}
     train_report_button.style.bottom_margin = 10
 
-    local report_frame = content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
+    local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
     report_frame.style.horizontally_stretchable = true
     player_global.elements.report_frame = report_frame
 
     build_train_schedule_group_report(player)
 
+    -- exclude tab
+    local exclude_tab = tabbed_pane.add{type="tab", caption={"tll.exclude_tab"}}
+    local exclude_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
+    tabbed_pane.add_tab(exclude_tab, exclude_content_frame)
+
+    local exclude_control_flow = exclude_content_frame.add{type="flow", direction="vertical", style="ugg_controls_flow"}
+    exclude_control_flow.style.bottom_margin = 5
+    local exclude_textfield_label = exclude_control_flow.add{
+        type="label",
+        caption={"tll.add_excluded_keyword"},
+        tooltip={"tll.add_excluded_keyword_tooltip"}
+    }
+    local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
+    local exclude_entry_textfield = exclude_textfield_flow.add{type="textfield"}
+    player_global.elements.exclude_entry_textfield = exclude_entry_textfield
+    exclude_textfield_flow.add{type="button", name="exclude_textfield_apply", style="item_and_count_select_confirm", sprite="", tooltip={"tll.apply_change"}} -- TODO sprite
+    local spacer = exclude_textfield_flow.add{type="empty-widget"}
+    spacer.style.horizontally_stretchable = true
+    exclude_textfield_flow.add{type="button", name="delete_all_excluded_strings_button", style="tool_button_red", tooltip={"tll.delete_all_excluded"}}
+
+
+    local excluded_strings_frame = exclude_content_frame.add{type="frame", direction="vertical"}
+    player_global.elements.excluded_strings_frame = excluded_strings_frame
+
+    build_excluded_string_table(player)
 end
 
 local function toggle_interface(player)
@@ -230,6 +309,20 @@ script.on_event(defines.events.on_gui_click, function (event)
         player_global.window_pinned = not player_global.window_pinned
         player_global.elements.pin_button.style = get_pin_style(player)
         player_global.elements.pin_button.sprite = get_pin_sprite(player)
+    elseif event.element.name == "exclude_textfield_apply" then
+        local text = player_global.elements.exclude_entry_textfield.text
+        if text ~= "" then -- don't allow user to input the empty string
+            player_global.excluded_strings[text] = {enabled=true}
+            player_global.elements.exclude_entry_textfield.text = ""
+            build_excluded_string_table(player)
+        end
+    elseif event.element.name == "delete_excluded_string_button" then
+        local excluded_string = event.element.tags.associated_string
+        player_global.excluded_strings[excluded_string] = nil
+        build_excluded_string_table(player)
+    elseif event.element.name == "delete_all_excluded_strings_button" then
+        player_global.excluded_strings = {}
+        build_excluded_string_table(player)
     end
 end)
 
@@ -245,6 +338,9 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     elseif event.element.name == "show_invalid_checkbox" then
         player_global.show_invalid = not player_global.show_invalid
         build_train_schedule_group_report(player)
+    elseif event.element.tags.associated_string then
+        player_global.excluded_strings[event.element.tags.associated_string].enabled = not player_global.excluded_strings[event.element.tags.associated_string].enabled
+        build_excluded_string_table(player)
     end
 end)
 
@@ -293,4 +389,7 @@ script.on_configuration_changed(function (config_changed_data)
 end)
 
 -- TODO: add click-for-blueprint functionality
+-- TODO: add exclusions for surfaces
 -- TODO: fix pinning behavior
+-- TODO: update table automatically?
+-- TODO: remove "create table", just create it upon opening gui
