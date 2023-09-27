@@ -94,62 +94,59 @@ local function build_train_schedule_group_report(player)
 
     local enabled_excluded_strings = get_enabled_excluded_strings(player)
 
-    if player_global.train_report_exists then
-        for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
-            local surface = surface_train_schedule_groups_pair.surface
-            if player_global.only_current_surface and surface.name ~= player.surface.name then goto continue end
+    for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
+        local surface = surface_train_schedule_groups_pair.surface
+        if player_global.only_current_surface and surface.name ~= player.surface.name then goto continue end
 
-            local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
-            local num_train_schedule_groups = get_table_size(train_schedule_groups)
-            if num_train_schedule_groups == 0 then
-                goto continue
-            end
-            local surface_label = nil
-            if not player_global.only_current_surface then
-                -- caption added at end of surface loop
-                surface_label = report_frame.add{type="label", name="surface_label_" .. surface.name, ignored_by_interaction=true}
-                surface_label.style.horizontally_stretchable = true
-                surface_label.style.margin = 5
-            end
-
-            local surface_pane = report_frame.add{type="scroll-pane", name="report_table_" .. surface.name , style="rb_list_box_scroll_pane"}
-
-            local num_valid_train_schedule_groups = 0 -- "valid" here meaning that they're shown
-
-            for key, train_schedule_group in pairs(train_schedule_groups) do
-                local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_strings)
-                if train_limit_sum == "excluded" then goto schedule_excluded end
-
-                local invalid = (train_limit_sum == "not set")
-                local satisfied = not invalid and (train_limit_sum - #train_schedule_group == 1)
-
-                if (
-                    (player_global.show_satisfied and satisfied)
-                    or (player_global.show_invalid and invalid)
-                    or (not invalid and not satisfied)
-                    ) then
-                        num_valid_train_schedule_groups = num_valid_train_schedule_groups + 1
-                        local caption = tostring(#train_schedule_group) .. "/" .. tostring(train_limit_sum) .. " --- " .. key
-                        surface_pane.add{type="button", style="rb_list_box_item", caption=caption}
-                end
-                ::schedule_excluded::
-            end
-
-            -- kinda hacky, if you didn't end up adding any of the schedules because it didn't meet any conditions then we don't want to add the label or table
-            if num_valid_train_schedule_groups == 0 then
-                if surface_label then surface_label.destroy() end
-                surface_pane.destroy()
-                goto continue
-            end
-
-            if surface_label then
-                local surface_label_caption = surface.name .. ": " .. tostring(num_valid_train_schedule_groups) .. " train schedule" .. (num_valid_train_schedule_groups == 1 and "" or "s")
-                report_frame["surface_label_" .. surface.name].caption=surface_label_caption
-            end
-
-        ::continue::
+        local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
+        local num_train_schedule_groups = get_table_size(train_schedule_groups)
+        if num_train_schedule_groups == 0 then
+            goto continue
+        end
+        local surface_label = nil
+        if not player_global.only_current_surface then
+            -- caption added at end of surface loop
+            surface_label = report_frame.add{type="label", name="surface_label_" .. surface.name, ignored_by_interaction=true}
+            surface_label.style.horizontally_stretchable = true
+            surface_label.style.margin = 5
         end
 
+        local surface_pane = report_frame.add{type="scroll-pane", name="report_table_" .. surface.name , style="rb_list_box_scroll_pane"}
+
+        local num_valid_train_schedule_groups = 0 -- "valid" here meaning that they're shown
+
+        for key, train_schedule_group in pairs(train_schedule_groups) do
+            local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_strings)
+            if train_limit_sum == "excluded" then goto schedule_excluded end
+
+            local invalid = (train_limit_sum == "not set")
+            local satisfied = not invalid and (train_limit_sum - #train_schedule_group == 1)
+
+            if (
+                (player_global.show_satisfied and satisfied)
+                or (player_global.show_invalid and invalid)
+                or (not invalid and not satisfied)
+                ) then
+                    num_valid_train_schedule_groups = num_valid_train_schedule_groups + 1
+                    local caption = tostring(#train_schedule_group) .. "/" .. tostring(train_limit_sum) .. " --- " .. key
+                    surface_pane.add{type="button", style="rb_list_box_item", caption=caption}
+            end
+            ::schedule_excluded::
+        end
+
+        -- kinda hacky, if you didn't end up adding any of the schedules because it didn't meet any conditions then we don't want to add the label or table
+        if num_valid_train_schedule_groups == 0 then
+            if surface_label then surface_label.destroy() end
+            surface_pane.destroy()
+            goto continue
+        end
+
+        if surface_label then
+            local surface_label_caption = surface.name .. ": " .. tostring(num_valid_train_schedule_groups) .. " train schedule" .. (num_valid_train_schedule_groups == 1 and "" or "s")
+            report_frame["surface_label_" .. surface.name].caption=surface_label_caption
+        end
+
+    ::continue::
     end
 end
 
@@ -184,7 +181,6 @@ end
 
 local function initialize_global(player)
     global.players[player.index] = {
-        train_report_exists = false,
         only_current_surface = true,
         show_satisfied = true, -- satisfied when sum of train limits is 1 greater than sum of trains
         show_invalid = false, -- invalid when train limits are not set for all stations in name group,
@@ -242,7 +238,7 @@ local function build_interface(player)
     controls_flow.add{type="checkbox", name="current_surface_checkbox", caption={"tll.only_player_surface"}, state=player_global.only_current_surface}
     controls_flow.add{type="checkbox", name="show_satisfied_checkbox", caption={"tll.show_satisfied"}, state=player_global.show_satisfied}
     controls_flow.add{type="checkbox", name="show_invalid_checkbox", caption={"tll.show_invalid"}, state=player_global.show_invalid}
-    local train_report_button = controls_flow.add{type="button", name="train_report_button", caption={"tll.train_report_button_create"}}
+    local train_report_button = controls_flow.add{type="button", name="train_report_button", caption={"tll.train_report_button_update"}}
     train_report_button.style.bottom_margin = 10
 
     local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
@@ -287,7 +283,6 @@ local function toggle_interface(player)
     else
         main_frame.destroy()
         player_global.elements = {}
-        player_global.train_report_exists = false
     end
 end
 
@@ -301,7 +296,6 @@ script.on_event(defines.events.on_gui_click, function (event)
     local player_global = global.players[player.index]
     if event.element.name == "train_report_button" then
         event.element.caption = {"tll.train_report_button_update"}
-        player_global.train_report_exists = true
         build_train_schedule_group_report(player)
     elseif event.element.name == "close_window_button" then
         toggle_interface(player)
@@ -315,14 +309,17 @@ script.on_event(defines.events.on_gui_click, function (event)
             player_global.excluded_strings[text] = {enabled=true}
             player_global.elements.exclude_entry_textfield.text = ""
             build_excluded_string_table(player)
+            build_train_schedule_group_report(player)
         end
     elseif event.element.name == "delete_excluded_string_button" then
         local excluded_string = event.element.tags.associated_string
         player_global.excluded_strings[excluded_string] = nil
         build_excluded_string_table(player)
+        build_train_schedule_group_report(player)
     elseif event.element.name == "delete_all_excluded_strings_button" then
         player_global.excluded_strings = {}
         build_excluded_string_table(player)
+        build_train_schedule_group_report(player)
     end
 end)
 
@@ -341,6 +338,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     elseif event.element.tags.associated_string then
         player_global.excluded_strings[event.element.tags.associated_string].enabled = not player_global.excluded_strings[event.element.tags.associated_string].enabled
         build_excluded_string_table(player)
+        build_train_schedule_group_report(player)
     end
 end)
 
@@ -392,4 +390,4 @@ end)
 -- TODO: add exclusions for surfaces
 -- TODO: fix pinning behavior
 -- TODO: update table automatically?
--- TODO: remove "create table", just create it upon opening gui
+-- TODO: fix bottom of exclude tab extending too far
