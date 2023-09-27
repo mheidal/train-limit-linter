@@ -1,3 +1,13 @@
+-- Util functions
+
+local function get_table_size(t)
+    local count = 0
+    for _, _ in pairs(t) do
+        count = count + 1
+    end
+    return count
+end
+
 -- Returns an array of arrays of trains which share a schedule.
 local function get_train_schedule_groups_by_surface()
     local function train_schedule_to_key(schedule)
@@ -67,6 +77,22 @@ local function build_train_schedule_group_report(player)
             if player_global.only_current_surface and surface.name ~= player.surface.name then goto continue end
 
             local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
+            local num_train_schedule_groups = get_table_size(train_schedule_groups)
+            if num_train_schedule_groups == 0 then
+                goto continue
+            end
+            local surface_label = nil
+            if not player_global.only_current_surface then
+                -- caption added at end of surface loop
+                surface_label = report_frame.add{type="label", name="surface_label_" .. surface.name, ignored_by_interaction=true}
+                surface_label.style.horizontally_stretchable = true
+                surface_label.style.margin = 5
+            end
+            
+            local surface_pane = report_frame.add{type="scroll-pane", name="report_table_" .. surface.name , style="rb_list_box_scroll_pane"}
+
+            local num_valid_train_schedule_groups = 0 -- "valid" here meaning that they're shown
+
             for key, train_schedule_group in pairs(train_schedule_groups) do
                 local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface)
 
@@ -78,12 +104,27 @@ local function build_train_schedule_group_report(player)
                     or (player_global.show_invalid and invalid)
                     or (not invalid and not satisfied)
                     ) then
-                    local caption = key .. " --- " .. tostring(#train_schedule_group) .. "/" .. tostring(train_limit_sum)
-                    report_frame.add{type="button", style="rb_list_box_item", caption=caption}
+                        num_valid_train_schedule_groups = num_valid_train_schedule_groups + 1
+                        local caption = tostring(#train_schedule_group) .. "/" .. tostring(train_limit_sum) .. " --- " .. key
+                        surface_pane.add{type="button", style="rb_list_box_item", caption=caption}
                 end
             end
-        end
+
+            -- kinda hacky, if you didn't end up adding any of the schedules because it didn't meet any conditions then we don't want to add the label or table
+            if num_valid_train_schedule_groups == 0 then
+                if surface_label then surface_label.destroy() end
+                surface_pane.destroy()
+                goto continue
+            end
+
+            if surface_label then
+                local surface_label_caption = surface.name .. ": " .. tostring(num_valid_train_schedule_groups) .. " train schedule" .. (num_valid_train_schedule_groups == 1 and "" or "s")
+                report_frame["surface_label_" .. surface.name].caption=surface_label_caption
+            end
+
         ::continue::
+        end
+
     end
 end
 
@@ -147,10 +188,11 @@ local function build_interface(player)
     controls_flow.add{type="checkbox", name="current_surface_checkbox", caption={"tll.only_player_surface"}, state=player_global.only_current_surface}
     controls_flow.add{type="checkbox", name="show_satisfied_checkbox", caption={"tll.show_satisfied"}, state=player_global.show_satisfied}
     controls_flow.add{type="checkbox", name="show_invalid_checkbox", caption={"tll.show_invalid"}, state=player_global.show_invalid}
-    controls_flow.add{type="button", name="train_report_button", caption={"tll.train_report_button_create"}}
+    local train_report_button = controls_flow.add{type="button", name="train_report_button", caption={"tll.train_report_button_create"}}
+    train_report_button.style.bottom_margin = 10
 
-
-    local report_frame = content_frame.add{type="scroll-pane", name="report_table", style="rb_list_box_scroll_pane"}
+    local report_frame = content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
+    report_frame.style.horizontally_stretchable = true
     player_global.elements.report_frame = report_frame
 
     build_train_schedule_group_report(player)
@@ -250,6 +292,5 @@ script.on_configuration_changed(function (config_changed_data)
     end
 end)
 
--- TODO: break train group reports into sections based on surface
 -- TODO: add click-for-blueprint functionality
 -- TODO: fix pinning behavior
