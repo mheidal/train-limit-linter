@@ -178,7 +178,6 @@ local function create_blueprint_from_train(player, train, surface_name)
     for _, carriage in pairs(train.carriages) do
         single_carriage_slot.create_blueprint{surface=surface, area=carriage.bounding_box, force=player.force, include_trains=true, include_entities=false}
         local new_blueprint_entities = combine_blueprint_entities(aggregated_blueprint_slot.get_blueprint_entities(), single_carriage_slot.get_blueprint_entities())
-        -- new_blueprint_entities = remove_rails_from_blueprint_entities(new_blueprint_entities)
         aggregated_blueprint_slot.set_blueprint_entities(new_blueprint_entities)
     end
     local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
@@ -281,27 +280,17 @@ local function build_excluded_string_table(player)
         excluded_string_line.add{type="label", caption=excluded_string}
         local spacer = excluded_string_line.add{type="empty-widget"}
         spacer.style.horizontally_stretchable = true
-        excluded_string_line.add{type="button", name="delete_excluded_string_button", style="tool_button_red", tags={associated_string=excluded_string}} -- TODO: sprite
+        excluded_string_line.add{type="button", name="delete_excluded_string_button", sprite="utility/trash", style="tool_button_red", tags={associated_string=excluded_string}}
     end
 
 end
 
-local function get_pin_style(player)
-    local player_global = global.players[player.index]
-    return player_global.window_pinned and "flib_selected_frame_action_button" or "frame_action_button"
-end
-
-local function get_pin_sprite(player)
-    local player_global = global.players[player.index]
-    return player_global.window_pinned and "tll_pin_black" or "tll_pin_white"
-end
 
 local function initialize_global(player)
     global.players[player.index] = {
         only_current_surface = true,
         show_satisfied = true, -- satisfied when sum of train limits is 1 greater than sum of trains
         show_invalid = false, -- invalid when train limits are not set for all stations in name group,
-        window_pinned = false,
         excluded_strings = {}, -- table of tables with structure {<excluded string>={"enabled": bool}}
         elements = {}
     }
@@ -333,11 +322,6 @@ local function build_interface(player)
     titlebar_flow.drag_target = main_frame
     titlebar_flow.add{type="label", style="frame_title", caption={"tll.main_frame_header"}}
     titlebar_flow.add{type="empty-widget", style="flib_titlebar_drag_handle", ignored_by_interaction=true}
-
-    local pin_style = get_pin_style(player)
-    local pin_sprite = get_pin_sprite(player)
-    local pin_button = titlebar_flow.add{type="sprite-button", name="pin_window_button", style=pin_style, sprite=pin_sprite, hovered_sprite="tll_pin_black", tooltip={"tll.keep_open"}}
-    player_global.elements.pin_button = pin_button
 
     titlebar_flow.add{type="sprite-button", name="close_window_button", style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
 
@@ -375,10 +359,10 @@ local function build_interface(player)
     local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
     local exclude_entry_textfield = exclude_textfield_flow.add{type="textfield"}
     player_global.elements.exclude_entry_textfield = exclude_entry_textfield
-    exclude_textfield_flow.add{type="button", name="exclude_textfield_apply", style="item_and_count_select_confirm", sprite="", tooltip={"tll.apply_change"}} -- TODO sprite
+    exclude_textfield_flow.add{type="button", name="exclude_textfield_apply", style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}} -- TODO sprite
     local spacer = exclude_textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
-    exclude_textfield_flow.add{type="button", name="delete_all_excluded_strings_button", style="tool_button_red", tooltip={"tll.delete_all_excluded"}}
+    exclude_textfield_flow.add{type="button", name="delete_all_excluded_strings_button", style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_excluded"}} -- TODO sprite
 
 
     local excluded_strings_frame = exclude_content_frame.add{type="scroll-pane", direction="vertical"}
@@ -413,10 +397,6 @@ script.on_event(defines.events.on_gui_click, function (event)
         build_train_schedule_group_report(player)
     elseif event.element.name == "close_window_button" then
         toggle_interface(player)
-    elseif event.element.name == "pin_window_button" then
-        player_global.window_pinned = not player_global.window_pinned
-        player_global.elements.pin_button.style = get_pin_style(player)
-        player_global.elements.pin_button.sprite = get_pin_sprite(player)
     elseif event.element.name == "exclude_textfield_apply" then
         local text = player_global.elements.exclude_entry_textfield.text
         if text ~= "" then -- don't allow user to input the empty string
@@ -478,10 +458,7 @@ end)
 script.on_event(defines.events.on_gui_closed, function(event)
     if event.element and event.element.name == "tll_main_frame" then
         local player = game.get_player(event.player_index)
-        local player_global = global.players[player.index]
-        if not player_global.window_pinned then
-            toggle_interface(player)
-        end
+        toggle_interface(player)
     end
 end)
 
@@ -520,6 +497,5 @@ script.on_configuration_changed(function (config_changed_data)
 end)
 
 -- TODO: add exclusions for surfaces
--- TODO: fix pinning behavior
 -- TODO: add fuel in new trains
 -- TODO: fuel selector?
