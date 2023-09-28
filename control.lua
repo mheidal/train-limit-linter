@@ -24,7 +24,21 @@ local function get_enabled_excluded_strings(player)
     return enabled_excluded_strings
 end
 
+---@param id string
+---@return LuaTrain
+local function get_train_by_id(id)
+    for _, surface in pairs(game.surfaces) do
+        for _, train in pairs(surface.get_trains()) do
+            if train.id == id then return train end
+        end
+    end
+    return nil
+end
+
 -- Returns an array of arrays of trains which share a schedule.
+---@return table
+---     - surface (string): name of a surface
+---     - train_schedule_groups LuaTrain[][]: array of arrays of trains, all trains in sub-arrays share a schedule
 local function get_train_schedule_groups_by_surface()
     local function train_schedule_to_key(schedule)
         local key = ""
@@ -59,6 +73,11 @@ local function get_train_schedule_groups_by_surface()
     return surface_train_schedule_groups
 end
 
+---@param player LuaPlayer
+---@param train_schedule_group table: array[LuaTrain]
+---@param surface LuaSurface
+---@param enabled_excluded_strings table: array[string]
+---@return string|number: sum of train limits, or "not set" if at least one train stop does not have a set limit, or "excluded" if all stops are excluded by keyword
 local function get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_strings)
     local sum_of_limits = 0
     local shared_schedule = train_schedule_group[1].schedule
@@ -81,11 +100,96 @@ local function get_train_station_limits(player, train_schedule_group, surface, e
     return sum_of_limits
 end
 
--- TODO
-local function create_blueprint_from_train()
+-- Takes two blueprints. Both have entities 1 thru N_1 and N_2. 
+-- Increments each entity's entity_number in the second blueprint by N_1.
+---@param entity_list_1 BlueprintEntity[]?
+---@param entity_list_2 BlueprintEntity[]?
+---@return BlueprintEntity[]
+local function combine_blueprint_entities(entity_list_1, entity_list_2)
+    local combined = {}
+    local increment = entity_list_1 and #entity_list_1 or 0
+    if entity_list_1 then for i, entity in pairs(entity_list_1) do
+            combined[i] = entity
+    end end
 
+    if entity_list_2 then for i, entity in pairs(entity_list_2) do
+        combined[i + increment] = entity
+    end end
+    
+    return combined
 end
 
+---@param orientation number
+---@return boolean
+local function is_horizontal(orientation)
+    local horizontal_orientations = {
+        0.25,
+        0.75
+    }
+    return orientation == horizontal_orientations[1] or orientation == horizontal_orientations[2]
+end
+
+---@param orientation number
+---@return boolean
+local function is_vertical(orientation)
+    local vertical_orientations = {
+        0,
+        0.5
+    }
+
+    return orientation == vertical_orientations[1] or orientation == vertical_orientations[2]
+end
+
+---comment
+---@param entities BlueprintEntity[]?
+---@return table?
+local function get_snap_to_grid_from_blueprint_entities(entities)
+
+    local y_snap
+    local x_snap
+
+    if not entities then return nil end
+    if is_horizontal(entities[1].orientation) then
+        x_snap = 100
+        y_snap = 4
+    else
+        x_snap = 4
+        y_snap = 100
+    end
+
+    return {
+        x = x_snap,
+        y = y_snap
+    } -- key should be "blueprint_snap_to_grid"
+end
+
+---@param player LuaPlayer
+---@param train LuaTrain
+---@param surface_name string
+local function create_blueprint_from_train(player, train, surface_name)
+    local surface = game.get_surface(surface_name)
+    local script_inventory = game.create_inventory(2)
+    local aggregated_blueprint_slot = script_inventory[1]
+    aggregated_blueprint_slot.set_stack{name="tll_cursor_blueprint"}
+    local single_carriage_slot = script_inventory[2]
+    single_carriage_slot.set_stack{name="tll_cursor_blueprint"}
+
+    -- add entities from train
+    for _, carriage in pairs(train.carriages) do
+        single_carriage_slot.create_blueprint{surface=surface, area=carriage.bounding_box, force=player.force, include_trains=true, include_entities=false}
+        local new_blueprint_entities = combine_blueprint_entities(aggregated_blueprint_slot.get_blueprint_entities(), single_carriage_slot.get_blueprint_entities())
+        -- new_blueprint_entities = remove_rails_from_blueprint_entities(new_blueprint_entities)
+        aggregated_blueprint_slot.set_blueprint_entities(new_blueprint_entities)
+    end
+    local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
+    aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid_from_blueprint_entities(aggregated_entities)
+    player.add_to_clipboard(aggregated_blueprint_slot)
+    player.activate_paste()
+    script_inventory.destroy()
+end
+
+
+---@param player LuaPlayer
 local function build_train_schedule_group_report(player)
     local player_global = global.players[player.index]
     local surface_train_schedule_groups_pairs = get_train_schedule_groups_by_surface()
@@ -96,12 +200,12 @@ local function build_train_schedule_group_report(player)
 
     for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
         local surface = surface_train_schedule_groups_pair.surface
-        if player_global.only_current_surface and surface.name ~= player.surface.name then goto continue end
+        if player_global.only_current_surface and surface.name ~= player.surface.name then goto ignore_surface end
 
         local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
         local num_train_schedule_groups = get_table_size(train_schedule_groups)
         if num_train_schedule_groups == 0 then
-            goto continue
+            goto ignore_surface
         end
         local surface_label = nil
         if not player_global.only_current_surface then
@@ -129,16 +233,29 @@ local function build_train_schedule_group_report(player)
                 ) then
                     num_valid_train_schedule_groups = num_valid_train_schedule_groups + 1
                     local caption = tostring(#train_schedule_group) .. "/" .. tostring(train_limit_sum) .. " --- " .. key
-                    surface_pane.add{type="button", style="rb_list_box_item", caption=caption}
+                    local template_train_ids = {}
+                    for _, train in pairs(train_schedule_group) do
+                        table.insert(template_train_ids, train.id)
+                    end
+                    surface_pane.add{
+                        type="button",
+                        style="rb_list_box_item",
+                        tags={
+                            train_schedule_create_blueprint_button=true,
+                            template_train_ids=template_train_ids,
+                            surface=surface.name
+                        },
+                        caption=caption
+                    }
             end
             ::schedule_excluded::
         end
 
-        -- kinda hacky, if you didn't end up adding any of the schedules because it didn't meet any conditions then we don't want to add the label or table
+        -- kinda hacky, if you didn't end up adding any of the schedules because it didn't meet any conditions then we don't want to add the label or table for the surface
         if num_valid_train_schedule_groups == 0 then
             if surface_label then surface_label.destroy() end
             surface_pane.destroy()
-            goto continue
+            goto ignore_surface
         end
 
         if surface_label then
@@ -146,7 +263,7 @@ local function build_train_schedule_group_report(player)
             report_frame["surface_label_" .. surface.name].caption=surface_label_caption
         end
 
-    ::continue::
+    ::ignore_surface::
     end
 end
 
@@ -289,6 +406,7 @@ end)
 
 script.on_event(defines.events.on_gui_click, function (event)
     local player = game.get_player(event.player_index)
+    if not player then return end -- assure vscode that player is not nil
     local player_global = global.players[player.index]
     if event.element.name == "train_report_button" then
         event.element.caption = {"tll.train_report_button_update"}
@@ -316,11 +434,30 @@ script.on_event(defines.events.on_gui_click, function (event)
         player_global.excluded_strings = {}
         build_excluded_string_table(player)
         build_train_schedule_group_report(player)
+    elseif event.element.tags.train_schedule_create_blueprint_button then
+        local template_train
+        for _, id in pairs(event.element.tags.template_train_ids) do
+            local template_option = get_train_by_id(id)
+            if template_option then
+                local orientation = template_option.front_stock.orientation
+                if is_vertical(orientation) or is_horizontal(orientation) then 
+                    template_train = template_option
+                    break
+                end
+            end
+        end
+        if template_train == nil then
+            player.create_local_flying_text{text="All trains with this schedule have been removed or have yucky orientations.", create_at_cursor=true}
+            return
+        end
+        local surface_name = event.element.tags.surface
+        create_blueprint_from_train(player, template_train, surface_name)
     end
 end)
 
 script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     local player = game.get_player(event.player_index)
+    if not player then return end -- assure vscode that player is not nil
     local player_global = global.players[player.index]
     if event.element.name == "current_surface_checkbox" then
         player_global.only_current_surface = not player_global.only_current_surface
@@ -382,6 +519,7 @@ script.on_configuration_changed(function (config_changed_data)
     end
 end)
 
--- TODO: add click-for-blueprint functionality
 -- TODO: add exclusions for surfaces
 -- TODO: fix pinning behavior
+-- TODO: add fuel in new trains
+-- TODO: fuel selector?

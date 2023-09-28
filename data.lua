@@ -57,13 +57,35 @@ styles["rb_list_box_item"] = {
   disabled_font_color = styles.list_box_item.default_font_color,
 }
 
+-- this stuff is all copied from Factory Planner
+function deepCopy(orig)
+  local copy
+  if type(orig) == 'table' then
+      copy = {}
+      for origKey, origValue in next, orig, nil do
+          copy[deepCopy(origKey)] = deepCopy(origValue)
+      end
+      setmetatable(copy, deepCopy(getmetatable(orig)))
+  else -- number, string, boolean, etc
+      copy = orig
+  end
+  return copy
+end
+
+local cursor_blueprint = deepCopy(data.raw["blueprint"]["blueprint"])
+cursor_blueprint.name = "tll_cursor_blueprint"
+cursor_blueprint.order = "z_tll"
+table.insert(cursor_blueprint.flags, "hidden")
+table.insert(cursor_blueprint.flags, "only-in-cursor")
+
 data:extend({
-    {
-      type="custom-input",
-      name="tll_toggle_interface",
-      key_sequence="CONTROL + Q",
-      order = "a"
-    },
-    data_util.build_sprite("tll_pin_white", { 32, 64 }, frame_action_icons, 32),
-    data_util.build_sprite("tll_pin_black", { 0, 64 }, frame_action_icons, 32)
+  {
+    type="custom-input",
+    name="tll_toggle_interface",
+    key_sequence="CONTROL + Q",
+    order = "a"
+  },
+  data_util.build_sprite("tll_pin_white", { 32, 64 }, frame_action_icons, 32),
+  data_util.build_sprite("tll_pin_black", { 0, 64 }, frame_action_icons, 32),
+  cursor_blueprint
 })
