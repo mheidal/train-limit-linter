@@ -140,33 +140,59 @@ local function is_vertical(orientation)
     return orientation == vertical_orientations[1] or orientation == vertical_orientations[2]
 end
 
----comment
 ---@param entities BlueprintEntity[]?
 ---@return table?
 local function get_snap_to_grid_from_blueprint_entities(entities)
-
-    local y_snap
-    local x_snap
-
     if not entities then return nil end
     if is_horizontal(entities[1].orientation) then
-        x_snap = 100
-        y_snap = 4
+        return {x = 100, y = 4} 
     else
-        x_snap = 4
-        y_snap = 100
+        return {x = 4, y = 100}
     end
+end
 
-    return {
-        x = x_snap,
-        y = y_snap
-    } -- key should be "blueprint_snap_to_grid"
+--rotate x and y around the origin by the specified angle (radians)
+local function rotate_around_origin(x, y, angle)
+    local cosAngle = math.cos(angle)
+    local sinAngle = math.sin(angle)
+
+    -- Perform rotation
+    local rotatedX = cosAngle * x - sinAngle * y
+    local rotatedY = sinAngle * x + cosAngle * y
+
+    return {x = rotatedX, y = rotatedY}
+end
+
+
+---Take a train's entities. Find a locomotive. Rotate all the entities so that the locomotive should point downwards. 
+---@param entities BlueprintEntity[]
+---@return transformed_entities BlueprintEntity[]
+local function orient_train_entities_downward(entities)
+    local orientation
+    for _, entity in pairs(entities) do
+        if entity.name == "locomotive" then orientation = entity.orientation end
+        break
+    end
+    if not orientation then return entities end
+
+    local goal_angle = math.pi
+    local current_angle = orientation * 2 * math.pi
+    local angle_to_rotate = goal_angle - current_angle
+
+    for i, entity in pairs(entities) do
+        entity.position = rotate_around_origin(entity.position.x, entity.position.y, angle_to_rotate)
+        entity.orientation = 0.5 -- maybe I should make a constants file
+    end
+    
+    return entities
 end
 
 ---@param player LuaPlayer
 ---@param train LuaTrain
 ---@param surface_name string
 local function create_blueprint_from_train(player, train, surface_name)
+    local player_global = global.players[player.index]
+
     local surface = game.get_surface(surface_name)
     local script_inventory = game.create_inventory(2)
     local aggregated_blueprint_slot = script_inventory[1]
@@ -181,6 +207,20 @@ local function create_blueprint_from_train(player, train, surface_name)
         aggregated_blueprint_slot.set_blueprint_entities(new_blueprint_entities)
     end
     local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
+    for _, entity in pairs(aggregated_entities) do
+        -- change to make more portable across mods?
+        if entity.name == "locomotive" then
+            if player_global.add_fuel and player_global.selected_fuel then
+                entity.items = {}
+                entity.items[player_global.selected_fuel] = player_global.fuel_amount
+            else
+                entity.items = {}
+            end
+        end
+    end
+    aggregated_entities = orient_train_entities_downward(aggregated_entities)
+
+    aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
     aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid_from_blueprint_entities(aggregated_entities)
     player.add_to_clipboard(aggregated_blueprint_slot)
     player.activate_paste()
@@ -290,8 +330,9 @@ local function initialize_global(player)
         only_current_surface = true,
         show_satisfied = true, -- satisfied when sum of train limits is 1 greater than sum of trains
         show_invalid = false, -- invalid when train limits are not set for all stations in name group
-        add_fuel = true,
-        selected_fuel = nil,
+        add_fuel = true, -- boolean
+        selected_fuel = nil, -- nil or string
+        fuel_amount = 0, -- 0 to 3 stacks of selected_fuel
         excluded_strings = {}, -- table of tables with structure {<excluded string>={"enabled": bool}}
         elements = {}
     }
@@ -299,7 +340,7 @@ end
 
 local function build_display_tab(player)
     local player_global = global.players[player.index]
-    local display_content_frame = player_global.elements.fuel_content_frame
+    local display_content_frame = player_global.elements.display_content_frame
     display_content_frame.clear()
 
     local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="ugg_controls_flow"}
@@ -319,7 +360,7 @@ end
 
 local function build_exclude_tab(player)
     local player_global = global.players[player.index]
-    local exclude_content_frame = player_global.elements.fuel_content_frame
+    local exclude_content_frame = player_global.elements.exclude_content_frame
     exclude_content_frame.clear()
 
     local exclude_control_flow = exclude_content_frame.add{type="flow", direction="vertical", style="ugg_controls_flow"}
@@ -349,8 +390,22 @@ local function build_fuel_tab(player)
     fuel_content_frame.add{type="label", caption={"tll.fuel_selector"}}
     fuel_content_frame.add{type="checkbox", name="place_trains_with_fuel_checkbox", state=player_global.add_fuel, caption={"tll.place_trains_with_fuel_checkbox"}}
 
+    local fuel_amount_frame_enabled = player_global.add_fuel and player_global.selected_fuel ~= nil
+    local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[player_global.selected_fuel].stack_size * 3)) or 1
+
+    local capped_fuel_amount = player_global.fuel_amount >= maximum_fuel_amount and maximum_fuel_amount or player_global.fuel_amount
+
+    local fuel_amount_frame = fuel_content_frame.add{type="frame", direction="horizontal"}
+    fuel_amount_frame.style.top_margin = 10
+    fuel_amount_frame.style.bottom_margin = 10
+    local fuel_amount_textfield = fuel_amount_frame.add{type="textfield", tags={action="update_fuel_amount_textfield"}, text=tostring(capped_fuel_amount), numeric=true, allow_decimal=false, allow_negative=false, enabled=fuel_amount_frame_enabled}
+    local fuel_amount_slider = fuel_amount_frame.add{type="slider", tags={action="update_fuel_amount_slider"}, value=capped_fuel_amount, minimum_value=0, maximum_value=maximum_fuel_amount, style="notched_slider", enabled=fuel_amount_frame_enabled}
+
+    player_global.elements.fuel_amount_textfield = fuel_amount_textfield
+    player_global.elements.fuel_amount_slider = fuel_amount_slider
+
     local valid_fuels = {}
-    for _, prototype in pairs(game.item_prototypes) do
+    for i, prototype in pairs(game.item_prototypes) do
         if prototype.fuel_category and prototype.fuel_category == "chemical" then
             table.insert(valid_fuels, prototype)
         end
@@ -417,9 +472,6 @@ local function build_interface(player)
 
     -- fuel tab
 
-    player_global.add_fuel = true -- just for adding to existing player global table
-    player_global.selected_fuel = nil
-
     local fuel_tab = tabbed_pane.add{type="tab", caption={"tll.fuel_tab"}}
     local fuel_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
     tabbed_pane.add_tab(fuel_tab, fuel_content_frame)
@@ -445,6 +497,9 @@ end
 script.on_event("tll_toggle_interface", function(event)
     local player = game.get_player(event.player_index)
     toggle_interface(player)
+    -- if player.is_cursor_blueprint then
+    --     player.print(player.cursor_stack.get_blueprint_entities()[1].orientation)
+    -- end
 end)
 
 script.on_event(defines.events.on_gui_click, function (event)
@@ -453,7 +508,6 @@ script.on_event(defines.events.on_gui_click, function (event)
     local player_global = global.players[player.index]
     -- TODO: refactor all of these to use tags={action="my action"}
     if event.element.tags.action then
-         -- 
          if event.element.tags.action == "select_fuel" then
 
             local item_name =  event.element.tags.item_name
@@ -463,6 +517,7 @@ script.on_event(defines.events.on_gui_click, function (event)
                 player_global.selected_fuel = item_name
             end
             build_fuel_tab(player)
+            return
         end
     end
     if event.element.name == "train_report_button" then
@@ -493,14 +548,16 @@ script.on_event(defines.events.on_gui_click, function (event)
             local template_option = get_train_by_id(id)
             if template_option then
                 local orientation = template_option.front_stock.orientation
-                if is_vertical(orientation) or is_horizontal(orientation) then 
-                    template_train = template_option
-                    break
-                end
+                -- if is_vertical(orientation) or is_horizontal(orientation) then 
+                --     template_train = template_option
+                --     break
+                -- end
+                template_train = template_option
+                break
             end
         end
         if template_train == nil then
-            player.create_local_flying_text{text="All trains with this schedule have been removed or have yucky orientations.", create_at_cursor=true}
+            player.create_local_flying_text{text={"tll.no_template_trains"}, create_at_cursor=true}
             return
         end
         local surface_name = event.element.tags.surface
@@ -529,6 +586,31 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     elseif event.element.name == "place_trains_with_fuel_checkbox" then
         player_global.add_fuel = not player_global.add_fuel
         build_fuel_tab(player)
+    end
+end)
+
+script.on_event(defines.events.on_gui_value_changed, function (event)
+    local player = game.get_player(event.player_index)
+    local player_global = global.players[player.index]
+    if event.element.tags.action then
+        if event.element.tags.action == "update_fuel_amount_slider" then
+            local new_fuel_amount = event.element.slider_value
+            player_global.fuel_amount = new_fuel_amount
+            player_global.elements.fuel_amount_textfield.text = tostring(new_fuel_amount)
+        end
+    end
+end)
+
+script.on_event(defines.events.on_gui_text_changed, function (event)
+    local player = game.get_player(event.player_index)
+    local player_global = global.players[player.index]
+    if event.element.tags.action then
+        local new_fuel_amount = tonumber(event.element.text)
+        local maximum_fuel_amount = game.item_prototypes[player_global.selected_fuel].stack_size * 3
+        new_fuel_amount = new_fuel_amount <= maximum_fuel_amount and new_fuel_amount or maximum_fuel_amount
+        player_global.fuel_amount = new_fuel_amount
+        player_global.elements.fuel_amount_slider.slider_value = new_fuel_amount
+        
     end
 end)
 
@@ -573,7 +655,4 @@ script.on_configuration_changed(function (config_changed_data)
     end
 end)
 
--- TODO: add exclusions for surfaces
--- TODO: add fuel in new trains
--- TODO: fuel selector?
--- TODO: allow non-cardinal-direction trains to serve as templates (probably going to involve just making new blueprint entities?)
+-- TODO: add exclusions for surfaces?
