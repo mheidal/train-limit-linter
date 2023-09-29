@@ -8,13 +8,6 @@ local function get_table_size(t)
     return count
 end
 
-local function contains(t, k)
-    for key, value in pairs(t) do
-        if key == k then return true end
-    end
-    return false
-end
-
 local function get_enabled_excluded_strings(player)
     local player_global = global.players[player.index]
     local enabled_excluded_strings = {}
@@ -127,17 +120,6 @@ local function is_horizontal(orientation)
         0.75
     }
     return orientation == horizontal_orientations[1] or orientation == horizontal_orientations[2]
-end
-
----@param orientation number
----@return boolean
-local function is_vertical(orientation)
-    local vertical_orientations = {
-        0,
-        0.5
-    }
-
-    return orientation == vertical_orientations[1] or orientation == vertical_orientations[2]
 end
 
 ---@param entities BlueprintEntity[]?
@@ -320,7 +302,7 @@ local function build_excluded_string_table(player)
         excluded_string_line.add{type="label", caption=excluded_string}
         local spacer = excluded_string_line.add{type="empty-widget"}
         spacer.style.horizontally_stretchable = true
-        excluded_string_line.add{type="sprite-button", tags={action="delete_excluded_string"}, sprite="utility/trash", style="tool_button_red", tags={associated_string=excluded_string}}
+        excluded_string_line.add{type="sprite-button", tags={action="delete_excluded_string", associated_string=excluded_string}, sprite="utility/trash", style="tool_button_red"}
     end
 
 end
@@ -539,13 +521,12 @@ script.on_event(defines.events.on_gui_click, function (event)
             player_global.excluded_strings = {}
             build_excluded_string_table(player)
             build_train_schedule_group_report(player)
-            
+
         elseif event.element.tags.action == "train_schedule_create_blueprint" then
             local template_train
             for _, id in pairs(event.element.tags.template_train_ids) do
                 local template_option = get_train_by_id(id)
                 if template_option then
-                    local orientation = template_option.front_stock.orientation
                     template_train = template_option
                     break
                 end
@@ -599,12 +580,13 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
     local player = game.get_player(event.player_index)
     local player_global = global.players[player.index]
     if event.element.tags.action then
-        local new_fuel_amount = tonumber(event.element.text)
-        local maximum_fuel_amount = game.item_prototypes[player_global.selected_fuel].stack_size * 3
-        new_fuel_amount = new_fuel_amount <= maximum_fuel_amount and new_fuel_amount or maximum_fuel_amount
-        player_global.fuel_amount = new_fuel_amount
-        player_global.elements.fuel_amount_slider.slider_value = new_fuel_amount
-        
+        if event.element.tags.action == "update_fuel_amount_textfield" then
+            local new_fuel_amount = tonumber(event.element.text)
+            local maximum_fuel_amount = game.item_prototypes[player_global.selected_fuel].stack_size * 3
+            new_fuel_amount = new_fuel_amount <= maximum_fuel_amount and new_fuel_amount or maximum_fuel_amount
+            player_global.fuel_amount = new_fuel_amount
+            player_global.elements.fuel_amount_slider.slider_value = new_fuel_amount
+        end
     end
 end)
 
