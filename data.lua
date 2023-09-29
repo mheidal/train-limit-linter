@@ -1,6 +1,3 @@
-local data_util = require("__flib__.data-util")
-local frame_action_icons = "__train-limit-linter__/graphics/frame-action-icons.png"
-
 -- These are some style prototypes that the tutorial uses
 -- You don't need to understand how these work to follow along
 local styles = data.raw["gui-style"].default
@@ -85,7 +82,5 @@ data:extend({
     key_sequence="CONTROL + Q",
     order = "a"
   },
-  data_util.build_sprite("tll_pin_white", { 32, 64 }, frame_action_icons, 32),
-  data_util.build_sprite("tll_pin_black", { 0, 64 }, frame_action_icons, 32),
   cursor_blueprint
 })

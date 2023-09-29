@@ -280,7 +280,7 @@ local function build_excluded_string_table(player)
         excluded_string_line.add{type="label", caption=excluded_string}
         local spacer = excluded_string_line.add{type="empty-widget"}
         spacer.style.horizontally_stretchable = true
-        excluded_string_line.add{type="button", name="delete_excluded_string_button", sprite="utility/trash", style="tool_button_red", tags={associated_string=excluded_string}}
+        excluded_string_line.add{type="sprite-button", name="delete_excluded_string_button", sprite="utility/trash", style="tool_button_red", tags={associated_string=excluded_string}}
     end
 
 end
@@ -290,7 +290,9 @@ local function initialize_global(player)
     global.players[player.index] = {
         only_current_surface = true,
         show_satisfied = true, -- satisfied when sum of train limits is 1 greater than sum of trains
-        show_invalid = false, -- invalid when train limits are not set for all stations in name group,
+        show_invalid = false, -- invalid when train limits are not set for all stations in name group
+        add_fuel = true,
+        selected_fuel = nil,
         excluded_strings = {}, -- table of tables with structure {<excluded string>={"enabled": bool}}
         elements = {}
     }
@@ -359,16 +361,44 @@ local function build_interface(player)
     local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
     local exclude_entry_textfield = exclude_textfield_flow.add{type="textfield"}
     player_global.elements.exclude_entry_textfield = exclude_entry_textfield
-    exclude_textfield_flow.add{type="button", name="exclude_textfield_apply", style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}} -- TODO sprite
+    exclude_textfield_flow.add{type="sprite-button", name="exclude_textfield_apply", style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
     local spacer = exclude_textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
-    exclude_textfield_flow.add{type="button", name="delete_all_excluded_strings_button", style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_excluded"}} -- TODO sprite
+    exclude_textfield_flow.add{type="sprite-button", name="delete_all_excluded_strings_button", style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_excluded"}}
 
 
     local excluded_strings_frame = exclude_content_frame.add{type="scroll-pane", direction="vertical"}
     player_global.elements.excluded_strings_frame = excluded_strings_frame
 
     build_excluded_string_table(player)
+
+    -- fuel tab
+
+    player_global.add_fuel = true
+    player_global.selected_fuel = nil
+
+    local fuel_tab = tabbed_pane.add{type="tab", caption={"tll.fuel_tab"}}
+    local fuel_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
+    tabbed_pane.add_tab(fuel_tab, fuel_content_frame)
+    -- TODO: fuel selector
+    fuel_content_frame.add{type="label", caption={"tll.fuel_selector"}}
+    fuel_content_frame.add{type="checkbox", state=player_global.add_fuel, caption={"tll.place_trains_with_fuel_checkbox"}}
+
+    local valid_fuels = {}
+    for _, prototype in pairs(game.item_prototypes) do
+        if prototype.fuel_category and prototype.fuel_category == "chemical" then
+            table.insert(valid_fuels, prototype)
+        end
+    end
+
+    local fuel_button_table = fuel_content_frame.add{type="table", column_count=#valid_fuels <= 10 and #valid_fuels or 10, style="filter_slot_table"}
+
+    for _, fuel in pairs(valid_fuels) do
+        local item_name = fuel.name
+        local button_style = (item_name == player_global.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
+        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={}, style=button_style} -- TODO: select on click
+    end
+
 end
 
 local function toggle_interface(player)
@@ -499,3 +529,4 @@ end)
 -- TODO: add exclusions for surfaces
 -- TODO: add fuel in new trains
 -- TODO: fuel selector?
+-- TODO: allow non-cardinal-direction trains to serve as templates (probably going to involve just making new blueprint entities?)
