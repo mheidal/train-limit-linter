@@ -361,7 +361,7 @@ local function build_fuel_tab(player)
     for _, fuel in pairs(valid_fuels) do
         local item_name = fuel.name
         local button_style = (item_name == player_global.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
-        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={}, style=button_style} -- TODO: select on click
+        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={action="select_fuel", item_name=item_name}, style=button_style, enabled = player_global.add_fuel} -- TODO: select on click
     end
 end
 
@@ -451,6 +451,20 @@ script.on_event(defines.events.on_gui_click, function (event)
     local player = game.get_player(event.player_index)
     if not player then return end -- assure vscode that player is not nil
     local player_global = global.players[player.index]
+    -- TODO: refactor all of these to use tags={action="my action"}
+    if event.element.tags.action then
+         -- 
+         if event.element.tags.action == "select_fuel" then
+
+            local item_name =  event.element.tags.item_name
+            if player_global.selected_fuel == item_name then
+                player_global.selected_fuel = nil
+            else
+                player_global.selected_fuel = item_name
+            end
+            build_fuel_tab(player)
+        end
+    end
     if event.element.name == "train_report_button" then
         event.element.caption = {"tll.train_report_button_update"}
         build_train_schedule_group_report(player)
@@ -491,6 +505,7 @@ script.on_event(defines.events.on_gui_click, function (event)
         end
         local surface_name = event.element.tags.surface
         create_blueprint_from_train(player, template_train, surface_name)
+    elseif event.element.tags.action and event.element.tags.action == false then
     end
 end)
 
@@ -513,7 +528,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
         build_train_schedule_group_report(player)
     elseif event.element.name == "place_trains_with_fuel_checkbox" then
         player_global.add_fuel = not player_global.add_fuel
-        
+        build_fuel_tab(player)
     end
 end)
 
