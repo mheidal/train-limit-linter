@@ -280,7 +280,7 @@ local function build_train_schedule_group_report(player)
                         type="button",
                         style="rb_list_box_item",
                         tags={
-                            train_schedule_create_blueprint_button=true,
+                            action="train_schedule_create_blueprint",
                             template_train_ids=template_train_ids,
                             surface=surface.name
                         },
@@ -320,7 +320,7 @@ local function build_excluded_string_table(player)
         excluded_string_line.add{type="label", caption=excluded_string}
         local spacer = excluded_string_line.add{type="empty-widget"}
         spacer.style.horizontally_stretchable = true
-        excluded_string_line.add{type="sprite-button", name="delete_excluded_string_button", sprite="utility/trash", style="tool_button_red", tags={associated_string=excluded_string}}
+        excluded_string_line.add{type="sprite-button", tags={action="delete_excluded_string"}, sprite="utility/trash", style="tool_button_red", tags={associated_string=excluded_string}}
     end
 
 end
@@ -348,7 +348,7 @@ local function build_display_tab(player)
     controls_flow.add{type="checkbox", name="current_surface_checkbox", caption={"tll.only_player_surface"}, state=player_global.only_current_surface}
     controls_flow.add{type="checkbox", name="show_satisfied_checkbox", caption={"tll.show_satisfied"}, state=player_global.show_satisfied}
     controls_flow.add{type="checkbox", name="show_invalid_checkbox", caption={"tll.show_invalid"}, state=player_global.show_invalid}
-    local train_report_button = controls_flow.add{type="button", name="train_report_button", caption={"tll.train_report_button_update"}}
+    local train_report_button = controls_flow.add{type="button", tags={action="train_report_update"}, caption={"tll.train_report_button_update"}}
     train_report_button.style.bottom_margin = 10
 
     local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
@@ -369,10 +369,10 @@ local function build_exclude_tab(player)
     local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
     local exclude_entry_textfield = exclude_textfield_flow.add{type="textfield"}
     player_global.elements.exclude_entry_textfield = exclude_entry_textfield
-    exclude_textfield_flow.add{type="sprite-button", name="exclude_textfield_apply", style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
+    exclude_textfield_flow.add{type="sprite-button", tags={action="exclude_textfield_apply"}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
     local spacer = exclude_textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
-    exclude_textfield_flow.add{type="sprite-button", name="delete_all_excluded_strings_button", style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_excluded"}}
+    exclude_textfield_flow.add{type="sprite-button", tags={action="delete_all_excluded_strings"}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_excluded"}}
 
 
     local excluded_strings_frame = exclude_content_frame.add{type="scroll-pane", direction="vertical"}
@@ -447,7 +447,7 @@ local function build_interface(player)
     titlebar_flow.add{type="label", style="frame_title", caption={"tll.main_frame_header"}}
     titlebar_flow.add{type="empty-widget", style="flib_titlebar_drag_handle", ignored_by_interaction=true}
 
-    titlebar_flow.add{type="sprite-button", name="close_window_button", style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
+    titlebar_flow.add{type="sprite-button", tags={action="close_window"}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
 
     -- tabs
     local tab_pane_frame = main_frame.add{type="frame", style="inside_deep_frame_for_tabs"}
@@ -497,19 +497,14 @@ end
 script.on_event("tll_toggle_interface", function(event)
     local player = game.get_player(event.player_index)
     toggle_interface(player)
-    -- if player.is_cursor_blueprint then
-    --     player.print(player.cursor_stack.get_blueprint_entities()[1].orientation)
-    -- end
 end)
 
 script.on_event(defines.events.on_gui_click, function (event)
     local player = game.get_player(event.player_index)
     if not player then return end -- assure vscode that player is not nil
     local player_global = global.players[player.index]
-    -- TODO: refactor all of these to use tags={action="my action"}
     if event.element.tags.action then
          if event.element.tags.action == "select_fuel" then
-
             local item_name =  event.element.tags.item_name
             if player_global.selected_fuel == item_name then
                 player_global.selected_fuel = nil
@@ -518,51 +513,50 @@ script.on_event(defines.events.on_gui_click, function (event)
             end
             build_fuel_tab(player)
             return
-        end
-    end
-    if event.element.name == "train_report_button" then
-        event.element.caption = {"tll.train_report_button_update"}
-        build_train_schedule_group_report(player)
-    elseif event.element.name == "close_window_button" then
-        toggle_interface(player)
-    elseif event.element.name == "exclude_textfield_apply" then
-        local text = player_global.elements.exclude_entry_textfield.text
-        if text ~= "" then -- don't allow user to input the empty string
-            player_global.excluded_strings[text] = {enabled=true}
-            player_global.elements.exclude_entry_textfield.text = ""
+
+        elseif event.element.tags.action == "train_report_update" then
+            build_train_schedule_group_report(player)
+
+        elseif event.element.tags.action == "close_window" then
+            toggle_interface(player)
+
+        elseif event.element.tags.action == "exclude_textfield_apply" then
+            local text = player_global.elements.exclude_entry_textfield.text
+            if text ~= "" then -- don't allow user to input the empty string
+                player_global.excluded_strings[text] = {enabled=true}
+                player_global.elements.exclude_entry_textfield.text = ""
+                build_excluded_string_table(player)
+                build_train_schedule_group_report(player)
+            end
+
+        elseif event.element.tags.action == "delete_excluded_string" then
+            local excluded_string = event.element.tags.associated_string
+            player_global.excluded_strings[excluded_string] = nil
             build_excluded_string_table(player)
             build_train_schedule_group_report(player)
-        end
-    elseif event.element.name == "delete_excluded_string_button" then
-        local excluded_string = event.element.tags.associated_string
-        player_global.excluded_strings[excluded_string] = nil
-        build_excluded_string_table(player)
-        build_train_schedule_group_report(player)
-    elseif event.element.name == "delete_all_excluded_strings_button" then
-        player_global.excluded_strings = {}
-        build_excluded_string_table(player)
-        build_train_schedule_group_report(player)
-    elseif event.element.tags.train_schedule_create_blueprint_button then
-        local template_train
-        for _, id in pairs(event.element.tags.template_train_ids) do
-            local template_option = get_train_by_id(id)
-            if template_option then
-                local orientation = template_option.front_stock.orientation
-                -- if is_vertical(orientation) or is_horizontal(orientation) then 
-                --     template_train = template_option
-                --     break
-                -- end
-                template_train = template_option
-                break
+
+        elseif event.element.tags.action == "delete_all_excluded_strings" then
+            player_global.excluded_strings = {}
+            build_excluded_string_table(player)
+            build_train_schedule_group_report(player)
+            
+        elseif event.element.tags.action == "train_schedule_create_blueprint" then
+            local template_train
+            for _, id in pairs(event.element.tags.template_train_ids) do
+                local template_option = get_train_by_id(id)
+                if template_option then
+                    local orientation = template_option.front_stock.orientation
+                    template_train = template_option
+                    break
+                end
             end
+            if template_train == nil then
+                player.create_local_flying_text{text={"tll.no_template_trains"}, create_at_cursor=true}
+                return
+            end
+            local surface_name = event.element.tags.surface
+            create_blueprint_from_train(player, template_train, surface_name)
         end
-        if template_train == nil then
-            player.create_local_flying_text{text={"tll.no_template_trains"}, create_at_cursor=true}
-            return
-        end
-        local surface_name = event.element.tags.surface
-        create_blueprint_from_train(player, template_train, surface_name)
-    elseif event.element.tags.action and event.element.tags.action == false then
     end
 end)
 
