@@ -285,7 +285,6 @@ local function build_excluded_string_table(player)
 
 end
 
-
 local function initialize_global(player)
     global.players[player.index] = {
         only_current_surface = true,
@@ -296,6 +295,74 @@ local function initialize_global(player)
         excluded_strings = {}, -- table of tables with structure {<excluded string>={"enabled": bool}}
         elements = {}
     }
+end
+
+local function build_display_tab(player)
+    local player_global = global.players[player.index]
+    local display_content_frame = player_global.elements.fuel_content_frame
+    display_content_frame.clear()
+
+    local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="ugg_controls_flow"}
+
+    controls_flow.add{type="checkbox", name="current_surface_checkbox", caption={"tll.only_player_surface"}, state=player_global.only_current_surface}
+    controls_flow.add{type="checkbox", name="show_satisfied_checkbox", caption={"tll.show_satisfied"}, state=player_global.show_satisfied}
+    controls_flow.add{type="checkbox", name="show_invalid_checkbox", caption={"tll.show_invalid"}, state=player_global.show_invalid}
+    local train_report_button = controls_flow.add{type="button", name="train_report_button", caption={"tll.train_report_button_update"}}
+    train_report_button.style.bottom_margin = 10
+
+    local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
+    report_frame.style.horizontally_stretchable = true
+    player_global.elements.report_frame = report_frame
+
+    build_train_schedule_group_report(player)
+end
+
+local function build_exclude_tab(player)
+    local player_global = global.players[player.index]
+    local exclude_content_frame = player_global.elements.fuel_content_frame
+    exclude_content_frame.clear()
+
+    local exclude_control_flow = exclude_content_frame.add{type="flow", direction="vertical", style="ugg_controls_flow"}
+    exclude_control_flow.style.bottom_margin = 5
+    exclude_control_flow.add{type="label", caption={"tll.add_excluded_keyword"}, tooltip={"tll.add_excluded_keyword_tooltip"}}
+    local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
+    local exclude_entry_textfield = exclude_textfield_flow.add{type="textfield"}
+    player_global.elements.exclude_entry_textfield = exclude_entry_textfield
+    exclude_textfield_flow.add{type="sprite-button", name="exclude_textfield_apply", style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
+    local spacer = exclude_textfield_flow.add{type="empty-widget"}
+    spacer.style.horizontally_stretchable = true
+    exclude_textfield_flow.add{type="sprite-button", name="delete_all_excluded_strings_button", style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_excluded"}}
+
+
+    local excluded_strings_frame = exclude_content_frame.add{type="scroll-pane", direction="vertical"}
+    player_global.elements.excluded_strings_frame = excluded_strings_frame
+
+    build_excluded_string_table(player)
+
+end
+
+local function build_fuel_tab(player)
+    local player_global = global.players[player.index]
+    local fuel_content_frame = player_global.elements.fuel_content_frame
+    fuel_content_frame.clear()
+
+    fuel_content_frame.add{type="label", caption={"tll.fuel_selector"}}
+    fuel_content_frame.add{type="checkbox", name="place_trains_with_fuel_checkbox", state=player_global.add_fuel, caption={"tll.place_trains_with_fuel_checkbox"}}
+
+    local valid_fuels = {}
+    for _, prototype in pairs(game.item_prototypes) do
+        if prototype.fuel_category and prototype.fuel_category == "chemical" then
+            table.insert(valid_fuels, prototype)
+        end
+    end
+
+    local fuel_button_table = fuel_content_frame.add{type="table", column_count=#valid_fuels <= 10 and #valid_fuels or 10, style="filter_slot_table"}
+
+    for _, fuel in pairs(valid_fuels) do
+        local item_name = fuel.name
+        local button_style = (item_name == player_global.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
+        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={}, style=button_style} -- TODO: select on click
+    end
 end
 
 local function build_interface(player)
@@ -336,68 +403,30 @@ local function build_interface(player)
     local display_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
     tabbed_pane.add_tab(display_tab, display_content_frame)
 
-    local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="ugg_controls_flow"}
+    player_global.elements.display_content_frame = display_content_frame
 
-    controls_flow.add{type="checkbox", name="current_surface_checkbox", caption={"tll.only_player_surface"}, state=player_global.only_current_surface}
-    controls_flow.add{type="checkbox", name="show_satisfied_checkbox", caption={"tll.show_satisfied"}, state=player_global.show_satisfied}
-    controls_flow.add{type="checkbox", name="show_invalid_checkbox", caption={"tll.show_invalid"}, state=player_global.show_invalid}
-    local train_report_button = controls_flow.add{type="button", name="train_report_button", caption={"tll.train_report_button_update"}}
-    train_report_button.style.bottom_margin = 10
-
-    local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
-    report_frame.style.horizontally_stretchable = true
-    player_global.elements.report_frame = report_frame
-
-    build_train_schedule_group_report(player)
+    build_display_tab(player)
 
     -- exclude tab
     local exclude_tab = tabbed_pane.add{type="tab", caption={"tll.exclude_tab"}}
     local exclude_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
     tabbed_pane.add_tab(exclude_tab, exclude_content_frame)
+    player_global.elements.exclude_content_frame = exclude_content_frame
 
-    local exclude_control_flow = exclude_content_frame.add{type="flow", direction="vertical", style="ugg_controls_flow"}
-    exclude_control_flow.style.bottom_margin = 5
-    exclude_control_flow.add{type="label", caption={"tll.add_excluded_keyword"}, tooltip={"tll.add_excluded_keyword_tooltip"}}
-    local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
-    local exclude_entry_textfield = exclude_textfield_flow.add{type="textfield"}
-    player_global.elements.exclude_entry_textfield = exclude_entry_textfield
-    exclude_textfield_flow.add{type="sprite-button", name="exclude_textfield_apply", style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
-    local spacer = exclude_textfield_flow.add{type="empty-widget"}
-    spacer.style.horizontally_stretchable = true
-    exclude_textfield_flow.add{type="sprite-button", name="delete_all_excluded_strings_button", style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_excluded"}}
-
-
-    local excluded_strings_frame = exclude_content_frame.add{type="scroll-pane", direction="vertical"}
-    player_global.elements.excluded_strings_frame = excluded_strings_frame
-
-    build_excluded_string_table(player)
+    build_exclude_tab(player)
 
     -- fuel tab
 
-    player_global.add_fuel = true
+    player_global.add_fuel = true -- just for adding to existing player global table
     player_global.selected_fuel = nil
 
     local fuel_tab = tabbed_pane.add{type="tab", caption={"tll.fuel_tab"}}
     local fuel_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
     tabbed_pane.add_tab(fuel_tab, fuel_content_frame)
-    -- TODO: fuel selector
-    fuel_content_frame.add{type="label", caption={"tll.fuel_selector"}}
-    fuel_content_frame.add{type="checkbox", state=player_global.add_fuel, caption={"tll.place_trains_with_fuel_checkbox"}}
 
-    local valid_fuels = {}
-    for _, prototype in pairs(game.item_prototypes) do
-        if prototype.fuel_category and prototype.fuel_category == "chemical" then
-            table.insert(valid_fuels, prototype)
-        end
-    end
+    player_global.elements.fuel_content_frame = fuel_content_frame
 
-    local fuel_button_table = fuel_content_frame.add{type="table", column_count=#valid_fuels <= 10 and #valid_fuels or 10, style="filter_slot_table"}
-
-    for _, fuel in pairs(valid_fuels) do
-        local item_name = fuel.name
-        local button_style = (item_name == player_global.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
-        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={}, style=button_style} -- TODO: select on click
-    end
+    build_fuel_tab(player)
 
 end
 
@@ -482,6 +511,9 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
         player_global.excluded_strings[event.element.tags.associated_string].enabled = not player_global.excluded_strings[event.element.tags.associated_string].enabled
         build_excluded_string_table(player)
         build_train_schedule_group_report(player)
+    elseif event.element.name == "place_trains_with_fuel_checkbox" then
+        player_global.add_fuel = not player_global.add_fuel
+        
     end
 end)
 
