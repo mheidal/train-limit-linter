@@ -649,3 +649,10 @@ end)
 -- TODO: add ability to hide schedules with keywords? 
 --    - not just exclude stations with keywords from having their limits counted, but hide the whole schedule if any station has the keyword
 -- TODO: combine planet orbit and planet in space exploration? only do so when there's a space elevator?
+-- TODO: color to indicate correctness?
+-- TODO: tunable placement? snap, direction?
+-- Create copy of this icon on blueprint creation
+-- TODO: delete all only shows when num >= 2
+-- TODO: create from curved templates
+-- TODO: most common color for loco?
+-- TODO: export/import keywords?
