@@ -122,6 +122,20 @@ local function is_horizontal(orientation)
     return orientation == horizontal_orientations[1] or orientation == horizontal_orientations[2]
 end
 
+---@param train LuaTrain
+---@return boolean
+local function train_is_curved(train)
+    local first_orientation
+    for _, carriage in pairs(train.carriages) do
+        if not first_orientation then first_orientation = carriage.orientation end
+        local orientation = carriage.orientation
+        if orientation ~= first_orientation and orientation ~= (first_orientation - 0.5) and orientation ~= (first_orientation + 0.5) then
+            return true
+        end
+    end
+    return false
+end
+
 ---@param entities BlueprintEntity[]?
 ---@return table?
 local function get_snap_to_grid_from_blueprint_entities(entities)
@@ -526,13 +540,13 @@ script.on_event(defines.events.on_gui_click, function (event)
             local template_train
             for _, id in pairs(event.element.tags.template_train_ids) do
                 local template_option = get_train_by_id(id)
-                if template_option then
+                if template_option and not train_is_curved(template_option) then
                     template_train = template_option
                     break
                 end
             end
             if template_train == nil then
-                player.create_local_flying_text{text={"tll.no_template_trains"}, create_at_cursor=true}
+                player.create_local_flying_text{text={"tll.no_valid_template_trains"}, create_at_cursor=true}
                 return
             end
             local surface_name = event.element.tags.surface
@@ -632,3 +646,6 @@ script.on_configuration_changed(function (config_changed_data)
 end)
 
 -- TODO: add exclusions for surfaces?
+-- TODO: add ability to hide schedules with keywords? 
+--    - not just exclude stations with keywords from having their limits counted, but hide the whole schedule if any station has the keyword
+-- TODO: combine planet orbit and planet in space exploration? only do so when there's a space elevator?
