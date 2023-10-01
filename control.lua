@@ -1,3 +1,5 @@
+local constants = require("constants")
+
 -- Util functions
 
 local function get_table_size(t)
@@ -276,7 +278,7 @@ local function build_train_schedule_group_report(player)
                         type="button",
                         style="rb_list_box_item",
                         tags={
-                            action="train_schedule_create_blueprint",
+                            action=constants.actions.train_schedule_create_blueprint,
                             template_train_ids=template_train_ids,
                             surface=surface.name
                         },
@@ -321,7 +323,7 @@ local function build_excluded_string_table(player)
     local player_global = global.players[player.index]
     local excluded_strings_frame = player_global.elements.excluded_strings_frame
     excluded_strings_frame.clear()
-    build_keyword_table(player, player_global.excluded_strings, excluded_strings_frame, "toggle_excluded_keyword", "delete_excluded_keyword")
+    build_keyword_table(player, player_global.excluded_strings, excluded_strings_frame, constants.actions.toggle_excluded_keyword, "delete_excluded_keyword")
 
     -- if get_table_size(player_global.excluded_strings) == 0 then
     --     excluded_strings_frame.add{type="label", caption={"tll.no_excluded_strings"}}
@@ -341,7 +343,7 @@ local function build_hidden_keyword_table(player)
     local player_global = global.players[player.index]
     local hidden_keywords_frame = player_global.elements.hidden_keywords_frame
     hidden_keywords_frame.clear()
-    build_keyword_table(player, player_global.hidden_keywords, hidden_keywords_frame, "toggle_hidden_keyword", "delete_hidden_keyword")
+    build_keyword_table(player, player_global.hidden_keywords, hidden_keywords_frame, "toggle_hidden_keyword", constants.actions.delete_hidden_keyword)
 end
 
 local function initialize_global(player)
@@ -365,10 +367,10 @@ local function build_display_tab(player)
 
     local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="ugg_controls_flow"}
 
-    controls_flow.add{type="checkbox", name="current_surface_checkbox", caption={"tll.only_player_surface"}, state=player_global.only_current_surface}
-    controls_flow.add{type="checkbox", name="show_satisfied_checkbox", caption={"tll.show_satisfied"}, state=player_global.show_satisfied}
-    controls_flow.add{type="checkbox", name="show_invalid_checkbox", caption={"tll.show_invalid"}, state=player_global.show_invalid}
-    local train_report_button = controls_flow.add{type="button", tags={action="train_report_update"}, caption={"tll.train_report_button_update"}}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_current_surface}, caption={"tll.only_player_surface"}, state=player_global.only_current_surface}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=player_global.show_satisfied}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_invalid}, caption={"tll.show_invalid"}, state=player_global.show_invalid}
+    local train_report_button = controls_flow.add{type="button", tags={action=constants.actions.train_report_update}, caption={"tll.train_report_button_update"}}
     train_report_button.style.bottom_margin = 10
 
     local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
@@ -389,10 +391,10 @@ local function build_exclude_tab(player)
     local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
     local exclude_entry_textfield = exclude_textfield_flow.add{type="textfield"}
     player_global.elements.exclude_entry_textfield = exclude_entry_textfield
-    exclude_textfield_flow.add{type="sprite-button", tags={action="exclude_textfield_apply"}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
+    exclude_textfield_flow.add{type="sprite-button", tags={action=constants.actions.exclude_textfield_apply}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
     local spacer = exclude_textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
-    exclude_textfield_flow.add{type="sprite-button", tags={action="delete_all_excluded_strings"}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
+    exclude_textfield_flow.add{type="sprite-button", tags={action=constants.actions.delete_all_excluded_strings}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
 
 
     local excluded_strings_frame = exclude_content_frame.add{type="scroll-pane", direction="vertical"}
@@ -413,10 +415,10 @@ local function build_hide_tab(player)
     local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
     local entry_textfield = textfield_flow.add{type="textfield"}
     player_global.elements.hide_entry_textfield = entry_textfield
-    textfield_flow.add{type="sprite-button", tags={action="hide_textfield_apply"}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
+    textfield_flow.add{type="sprite-button", tags={action=constants.actions.hide_textfield_apply}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
     local spacer = textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
-    textfield_flow.add{type="sprite-button", tags={action="delete_all_hidden_keywords"}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
+    textfield_flow.add{type="sprite-button", tags={action=constants.actions.delete_all_hidden_keywords}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
 
     local hidden_keywords_frame = hide_content_frame.add{type="scroll-pane", direction="vertical"}
     player_global.elements.hidden_keywords_frame = hidden_keywords_frame
@@ -431,7 +433,7 @@ local function build_fuel_tab(player)
     fuel_content_frame.clear()
 
     fuel_content_frame.add{type="label", caption={"tll.fuel_selector"}}
-    fuel_content_frame.add{type="checkbox", name="place_trains_with_fuel_checkbox", state=player_global.add_fuel, caption={"tll.place_trains_with_fuel_checkbox"}}
+    fuel_content_frame.add{type="checkbox", tags={action=constants.actions.toggle_place_trains_with_fuel}, state=player_global.add_fuel, caption={"tll.place_trains_with_fuel_checkbox"}}
 
     local fuel_amount_frame_enabled = player_global.add_fuel and player_global.selected_fuel ~= nil
     local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[player_global.selected_fuel].stack_size * 3)) or 1
@@ -441,8 +443,8 @@ local function build_fuel_tab(player)
     local fuel_amount_frame = fuel_content_frame.add{type="frame", direction="horizontal"}
     fuel_amount_frame.style.top_margin = 10
     fuel_amount_frame.style.bottom_margin = 10
-    local fuel_amount_textfield = fuel_amount_frame.add{type="textfield", tags={action="update_fuel_amount_textfield"}, text=tostring(capped_fuel_amount), numeric=true, allow_decimal=false, allow_negative=false, enabled=fuel_amount_frame_enabled}
-    local fuel_amount_slider = fuel_amount_frame.add{type="slider", tags={action="update_fuel_amount_slider"}, value=capped_fuel_amount, minimum_value=0, maximum_value=maximum_fuel_amount, style="notched_slider", enabled=fuel_amount_frame_enabled}
+    local fuel_amount_textfield = fuel_amount_frame.add{type="textfield", tags={action=constants.actions.update_fuel_amount_textfield}, text=tostring(capped_fuel_amount), numeric=true, allow_decimal=false, allow_negative=false, enabled=fuel_amount_frame_enabled}
+    local fuel_amount_slider = fuel_amount_frame.add{type="slider", tags={action=constants.actions.update_fuel_amount_slider}, value=capped_fuel_amount, minimum_value=0, maximum_value=maximum_fuel_amount, style="notched_slider", enabled=fuel_amount_frame_enabled}
 
     player_global.elements.fuel_amount_textfield = fuel_amount_textfield
     player_global.elements.fuel_amount_slider = fuel_amount_slider
@@ -459,7 +461,7 @@ local function build_fuel_tab(player)
     for _, fuel in pairs(valid_fuels) do
         local item_name = fuel.name
         local button_style = (item_name == player_global.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
-        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={action="select_fuel", item_name=item_name}, style=button_style, enabled = player_global.add_fuel} -- TODO: select on click
+        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={action=constants.actions.select_fuel, item_name=item_name}, style=button_style, enabled = player_global.add_fuel} -- TODO: select on click
     end
 end
 
@@ -490,7 +492,7 @@ local function build_interface(player)
     titlebar_flow.add{type="label", style="frame_title", caption={"tll.main_frame_header"}}
     titlebar_flow.add{type="empty-widget", style="flib_titlebar_drag_handle", ignored_by_interaction=true}
 
-    titlebar_flow.add{type="sprite-button", tags={action="close_window"}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
+    titlebar_flow.add{type="sprite-button", tags={action=constants.actions.close_window}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
 
     -- tabs
     local tab_pane_frame = main_frame.add{type="frame", style="inside_deep_frame_for_tabs"}
@@ -556,7 +558,7 @@ script.on_event(defines.events.on_gui_click, function (event)
     local player_global = global.players[player.index]
     if event.element.tags.action then
         local action = event.element.tags.action
-         if action == "select_fuel" then
+         if action == constants.actions.select_fuel then
             local item_name =  event.element.tags.item_name
             if player_global.selected_fuel == item_name then
                 player_global.selected_fuel = nil
@@ -566,13 +568,13 @@ script.on_event(defines.events.on_gui_click, function (event)
             build_fuel_tab(player)
             return
 
-        elseif action == "train_report_update" then
+        elseif action == constants.actions.train_report_update then
             build_train_schedule_group_report(player)
 
-        elseif action == "close_window" then
+        elseif action == constants.actions.close_window then
             toggle_interface(player)
 
-        elseif action == "exclude_textfield_apply" then
+        elseif action == constants.actions.exclude_textfield_apply then
             local text = player_global.elements.exclude_entry_textfield.text
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.excluded_strings[text] = {enabled=true}
@@ -581,18 +583,18 @@ script.on_event(defines.events.on_gui_click, function (event)
                 build_train_schedule_group_report(player)
             end
 
-        elseif action == "delete_excluded_keyword" then
+        elseif action == constants.actions.delete_excluded_keyword then
             local excluded_string = event.element.tags.keyword
             player_global.excluded_strings[excluded_string] = nil
             build_excluded_string_table(player)
             build_train_schedule_group_report(player)
 
-        elseif action == "delete_all_excluded_strings" then
+        elseif action == constants.actions.delete_all_excluded_strings then
             player_global.excluded_strings = {}
             build_excluded_string_table(player)
             build_train_schedule_group_report(player)
 
-        elseif action == "hide_textfield_apply" then
+        elseif action == constants.actions.hide_textfield_apply then
             local text = player_global.elements.hide_entry_textfield.text
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.hidden_keywords[text] = {enabled=true}
@@ -601,7 +603,7 @@ script.on_event(defines.events.on_gui_click, function (event)
                 build_train_schedule_group_report(player)
             end
 
-        elseif action == "delete_hidden_keyword" then
+        elseif action == constants.actions.delete_hidden_keyword then
             player_global.excluded_strings[event.element.tags.keyword] = nil
             build_hidden_keyword_table(player)
             build_train_schedule_group_report(player)
@@ -611,7 +613,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             build_hidden_keyword_table(player)
             build_train_schedule_group_report(player)
 
-        elseif action == "train_schedule_create_blueprint" then
+        elseif action == constants.actions.train_schedule_create_blueprint then
             local template_train
             for _, id in pairs(event.element.tags.template_train_ids) do
                 local template_option = get_train_by_id(id)
@@ -636,25 +638,25 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     local player_global = global.players[player.index]
     if event.element.tags.action then
         local action = event.element.tags.action
-        if action == "toggle_excluded_keyword" then
+        if action == constants.actions.toggle_excluded_keyword then
             local keyword = event.element.tags.keyword
             player_global.excluded_strings[keyword].enabled = not player_global.excluded_strings[keyword].enabled
             build_excluded_string_table(player)
             build_train_schedule_group_report(player)
         elseif action == "toggle_hidden_keyword" then
 
-        end
-    else
-        if event.element.name == "current_surface_checkbox" then
+        elseif action == constants.actions.toggle_current_surface then
             player_global.only_current_surface = not player_global.only_current_surface
             build_train_schedule_group_report(player)
-        elseif event.element.name == "show_satisfied_checkbox" then
+
+        elseif action == constants.actions.toggle_show_satisfied then
             player_global.show_satisfied = not player_global.show_satisfied
             build_train_schedule_group_report(player)
-        elseif event.element.name == "show_invalid_checkbox" then
+        elseif action == constants.actions.toggle_show_invalid then
             player_global.show_invalid = not player_global.show_invalid
             build_train_schedule_group_report(player)
-        elseif event.element.name == "place_trains_with_fuel_checkbox" then
+
+        elseif action == constants.actions.toggle_place_trains_with_fuel then
             player_global.add_fuel = not player_global.add_fuel
             build_fuel_tab(player)
         end
@@ -665,7 +667,7 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
     local player = game.get_player(event.player_index)
     local player_global = global.players[player.index]
     if event.element.tags.action then
-        if event.element.tags.action == "update_fuel_amount_slider" then
+        if event.element.tags.action == constants.actions.update_fuel_amount_slider then
             local new_fuel_amount = event.element.slider_value
             player_global.fuel_amount = new_fuel_amount
             player_global.elements.fuel_amount_textfield.text = tostring(new_fuel_amount)
@@ -677,7 +679,7 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
     local player = game.get_player(event.player_index)
     local player_global = global.players[player.index]
     if event.element.tags.action then
-        if event.element.tags.action == "update_fuel_amount_textfield" then
+        if event.element.tags.action == constants.actions.update_fuel_amount_textfield then
             local new_fuel_amount = tonumber(event.element.text)
             local maximum_fuel_amount = game.item_prototypes[player_global.selected_fuel].stack_size * 3
             new_fuel_amount = new_fuel_amount <= maximum_fuel_amount and new_fuel_amount or maximum_fuel_amount
