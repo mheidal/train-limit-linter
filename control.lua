@@ -19,6 +19,15 @@ local function get_enabled_excluded_strings(player)
     return enabled_excluded_strings
 end
 
+local function get_enabled_hidden_keywords(player)
+    local player_global = global.players[player.index]
+    local enabled_keywords = {}
+    for keyword, keyword_data in pairs(player_global.hidden_keywords) do
+        if keyword_data.enabled then table.insert(enabled_keywords, keyword) end
+    end
+    return enabled_keywords
+end
+
 ---@param id string
 ---@return LuaTrain
 local function get_train_by_id(id)
@@ -261,6 +270,9 @@ local function build_train_schedule_group_report(player)
         local num_valid_train_schedule_groups = 0 -- "valid" here meaning that they're shown
 
         for key, train_schedule_group in pairs(train_schedule_groups) do
+            for _, enabled_hidden_keyword in pairs(get_enabled_hidden_keywords(player)) do
+                if string.find(key, enabled_hidden_keyword) then goto schedule_excluded end
+            end
             local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_strings)
             if train_limit_sum == "excluded" then goto schedule_excluded end
 
@@ -328,19 +340,6 @@ local function build_excluded_string_table(player)
     local excluded_strings_frame = player_global.elements.excluded_strings_frame
     excluded_strings_frame.clear()
     build_keyword_table(player, player_global.excluded_strings, excluded_strings_frame, constants.actions.toggle_excluded_keyword, "delete_excluded_keyword")
-
-    -- if get_table_size(player_global.excluded_strings) == 0 then
-    --     excluded_strings_frame.add{type="label", caption={"tll.no_excluded_strings"}}
-    --     return
-    -- end
-    -- for excluded_string, string_data in pairs(player_global.excluded_strings) do
-    --     local excluded_string_line = excluded_strings_frame.add{type="flow", direction="horizontal"}
-    --     excluded_string_line.add{type="checkbox", state=string_data.enabled, tags={associated_string=excluded_string}}
-    --     excluded_string_line.add{type="label", caption=excluded_string}
-    --     local spacer = excluded_string_line.add{type="empty-widget"}
-    --     spacer.style.horizontally_stretchable = true
-    --     excluded_string_line.add{type="sprite-button", tags={action="delete_excluded_string", associated_string=excluded_string}, sprite="utility/trash", style="tool_button_red"}
-    -- end
 end
 
 local function build_hidden_keyword_table(player)
