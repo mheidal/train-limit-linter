@@ -77,7 +77,7 @@ local function get_train_station_limits(player, train_schedule_group, surface, e
 
     for _, record in pairs(shared_schedule.records) do
         for _, excluded_string in pairs(enabled_excluded_strings) do
-            if string.find(record.station, excluded_string) then goto excluded_string_in_train_stop_name end
+            if string.find(record.station, excluded_string) then goto excluded_string_in_train_stop_name end -- TODO: crash here!
         end
         for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
             -- no train limit is implemented as limit == 2 ^ 32 - 1
@@ -302,23 +302,46 @@ local function build_train_schedule_group_report(player)
     end
 end
 
+local function build_keyword_table(player, keywords, parent, toggle_keyword_enabled_tag, delete_action_tag)
+    if get_table_size(keywords) == 0 then
+        parent.add{type="label", caption={"tll.no_keywords"}}
+        return
+    end
+    for keyword, string_data in pairs(keywords) do
+        local excluded_string_line = parent.add{type="flow", direction="horizontal"}
+        excluded_string_line.add{type="checkbox", state=string_data.enabled, tags={action=toggle_keyword_enabled_tag, keyword=keyword}}
+        excluded_string_line.add{type="label", caption=keyword}
+        local spacer = excluded_string_line.add{type="empty-widget"}
+        spacer.style.horizontally_stretchable = true
+        excluded_string_line.add{type="sprite-button", tags={action=delete_action_tag, keyword=keyword}, sprite="utility/trash", style="tool_button_red"}
+    end
+end
+
 local function build_excluded_string_table(player)
     local player_global = global.players[player.index]
     local excluded_strings_frame = player_global.elements.excluded_strings_frame
     excluded_strings_frame.clear()
-    if get_table_size(player_global.excluded_strings) == 0 then
-        excluded_strings_frame.add{type="label", caption={"tll.no_excluded_strings"}}
-        return
-    end
-    for excluded_string, string_data in pairs(player_global.excluded_strings) do
-        local excluded_string_line = excluded_strings_frame.add{type="flow", direction="horizontal"}
-        excluded_string_line.add{type="checkbox", state=string_data.enabled, tags={associated_string=excluded_string}}
-        excluded_string_line.add{type="label", caption=excluded_string}
-        local spacer = excluded_string_line.add{type="empty-widget"}
-        spacer.style.horizontally_stretchable = true
-        excluded_string_line.add{type="sprite-button", tags={action="delete_excluded_string", associated_string=excluded_string}, sprite="utility/trash", style="tool_button_red"}
-    end
+    build_keyword_table(player, player_global.excluded_strings, excluded_strings_frame, "toggle_excluded_keyword", "delete_excluded_keyword")
 
+    -- if get_table_size(player_global.excluded_strings) == 0 then
+    --     excluded_strings_frame.add{type="label", caption={"tll.no_excluded_strings"}}
+    --     return
+    -- end
+    -- for excluded_string, string_data in pairs(player_global.excluded_strings) do
+    --     local excluded_string_line = excluded_strings_frame.add{type="flow", direction="horizontal"}
+    --     excluded_string_line.add{type="checkbox", state=string_data.enabled, tags={associated_string=excluded_string}}
+    --     excluded_string_line.add{type="label", caption=excluded_string}
+    --     local spacer = excluded_string_line.add{type="empty-widget"}
+    --     spacer.style.horizontally_stretchable = true
+    --     excluded_string_line.add{type="sprite-button", tags={action="delete_excluded_string", associated_string=excluded_string}, sprite="utility/trash", style="tool_button_red"}
+    -- end
+end
+
+local function build_hidden_keyword_table(player)
+    local player_global = global.players[player.index]
+    local hidden_keywords_frame = player_global.elements.hidden_keywords_frame
+    hidden_keywords_frame.clear()
+    build_keyword_table(player, player_global.hidden_keywords, hidden_keywords_frame, "toggle_hidden_keyword", "delete_hidden_keyword")
 end
 
 local function initialize_global(player)
@@ -329,7 +352,8 @@ local function initialize_global(player)
         add_fuel = true, -- boolean
         selected_fuel = nil, -- nil or string
         fuel_amount = 0, -- 0 to 3 stacks of selected_fuel
-        excluded_strings = {}, -- table of tables with structure {<excluded string>={"enabled": bool}}
+        excluded_strings = {}, -- table of tables with structure {<keyword>={"enabled": bool}}
+        hidden_keywords = {}, -- table of tables with structure {<keyword>={"enabled": bool}}
         elements = {}
     }
 end
@@ -368,13 +392,36 @@ local function build_exclude_tab(player)
     exclude_textfield_flow.add{type="sprite-button", tags={action="exclude_textfield_apply"}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
     local spacer = exclude_textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
-    exclude_textfield_flow.add{type="sprite-button", tags={action="delete_all_excluded_strings"}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_excluded"}}
+    exclude_textfield_flow.add{type="sprite-button", tags={action="delete_all_excluded_strings"}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
 
 
     local excluded_strings_frame = exclude_content_frame.add{type="scroll-pane", direction="vertical"}
     player_global.elements.excluded_strings_frame = excluded_strings_frame
 
     build_excluded_string_table(player)
+
+end
+
+-- TODO: merge a lot of this logic with exclude? building of apply textfield, at least?
+local function build_hide_tab(player)
+    local player_global = global.players[player.index]
+    local hide_content_frame = player_global.elements.hide_content_frame
+    hide_content_frame.clear()
+    local control_flow = hide_content_frame.add{type="flow", direction="vertical", style="ugg_controls_flow"}
+    control_flow.style.bottom_margin = 5
+    control_flow.add{type="label", caption={"tll.add_hidden_keyword"}, tooltip={"tll.add_hidden_keyword_tooltip"}}
+    local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
+    local entry_textfield = textfield_flow.add{type="textfield"}
+    player_global.elements.hide_entry_textfield = entry_textfield
+    textfield_flow.add{type="sprite-button", tags={action="hide_textfield_apply"}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
+    local spacer = textfield_flow.add{type="empty-widget"}
+    spacer.style.horizontally_stretchable = true
+    textfield_flow.add{type="sprite-button", tags={action="delete_all_hidden_keywords"}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
+
+    local hidden_keywords_frame = hide_content_frame.add{type="scroll-pane", direction="vertical"}
+    player_global.elements.hidden_keywords_frame = hidden_keywords_frame
+
+    build_hidden_keyword_table(player)
 
 end
 
@@ -466,6 +513,14 @@ local function build_interface(player)
 
     build_exclude_tab(player)
 
+    -- hide tab
+    local hide_tab = tabbed_pane.add{type="tab", caption={"tll.hide_tab"}}
+    local hide_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
+    tabbed_pane.add_tab(hide_tab, hide_content_frame)
+    player_global.elements.hide_content_frame = hide_content_frame
+
+    build_hide_tab(player)
+
     -- fuel tab
 
     local fuel_tab = tabbed_pane.add{type="tab", caption={"tll.fuel_tab"}}
@@ -500,7 +555,8 @@ script.on_event(defines.events.on_gui_click, function (event)
     if not player then return end -- assure vscode that player is not nil
     local player_global = global.players[player.index]
     if event.element.tags.action then
-         if event.element.tags.action == "select_fuel" then
+        local action = event.element.tags.action
+         if action == "select_fuel" then
             local item_name =  event.element.tags.item_name
             if player_global.selected_fuel == item_name then
                 player_global.selected_fuel = nil
@@ -510,13 +566,13 @@ script.on_event(defines.events.on_gui_click, function (event)
             build_fuel_tab(player)
             return
 
-        elseif event.element.tags.action == "train_report_update" then
+        elseif action == "train_report_update" then
             build_train_schedule_group_report(player)
 
-        elseif event.element.tags.action == "close_window" then
+        elseif action == "close_window" then
             toggle_interface(player)
 
-        elseif event.element.tags.action == "exclude_textfield_apply" then
+        elseif action == "exclude_textfield_apply" then
             local text = player_global.elements.exclude_entry_textfield.text
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.excluded_strings[text] = {enabled=true}
@@ -525,18 +581,37 @@ script.on_event(defines.events.on_gui_click, function (event)
                 build_train_schedule_group_report(player)
             end
 
-        elseif event.element.tags.action == "delete_excluded_string" then
-            local excluded_string = event.element.tags.associated_string
+        elseif action == "delete_excluded_keyword" then
+            local excluded_string = event.element.tags.keyword
             player_global.excluded_strings[excluded_string] = nil
             build_excluded_string_table(player)
             build_train_schedule_group_report(player)
 
-        elseif event.element.tags.action == "delete_all_excluded_strings" then
+        elseif action == "delete_all_excluded_strings" then
             player_global.excluded_strings = {}
             build_excluded_string_table(player)
             build_train_schedule_group_report(player)
 
-        elseif event.element.tags.action == "train_schedule_create_blueprint" then
+        elseif action == "hide_textfield_apply" then
+            local text = player_global.elements.hide_entry_textfield.text
+            if text ~= "" then -- don't allow user to input the empty string
+                player_global.hidden_keywords[text] = {enabled=true}
+                player_global.elements.hide_entry_textfield.text = ""
+                build_hidden_keyword_table(player)
+                build_train_schedule_group_report(player)
+            end
+
+        elseif action == "delete_hidden_keyword" then
+            player_global.excluded_strings[event.element.tags.keyword] = nil
+            build_hidden_keyword_table(player)
+            build_train_schedule_group_report(player)
+
+        elseif action == "delete_all_hidden_keywords" then
+            player_global.hidden_keywords = {}
+            build_hidden_keyword_table(player)
+            build_train_schedule_group_report(player)
+
+        elseif action == "train_schedule_create_blueprint" then
             local template_train
             for _, id in pairs(event.element.tags.template_train_ids) do
                 local template_option = get_train_by_id(id)
@@ -559,22 +634,30 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     local player = game.get_player(event.player_index)
     if not player then return end -- assure vscode that player is not nil
     local player_global = global.players[player.index]
-    if event.element.name == "current_surface_checkbox" then
-        player_global.only_current_surface = not player_global.only_current_surface
-        build_train_schedule_group_report(player)
-    elseif event.element.name == "show_satisfied_checkbox" then
-        player_global.show_satisfied = not player_global.show_satisfied
-        build_train_schedule_group_report(player)
-    elseif event.element.name == "show_invalid_checkbox" then
-        player_global.show_invalid = not player_global.show_invalid
-        build_train_schedule_group_report(player)
-    elseif event.element.tags.associated_string then
-        player_global.excluded_strings[event.element.tags.associated_string].enabled = not player_global.excluded_strings[event.element.tags.associated_string].enabled
-        build_excluded_string_table(player)
-        build_train_schedule_group_report(player)
-    elseif event.element.name == "place_trains_with_fuel_checkbox" then
-        player_global.add_fuel = not player_global.add_fuel
-        build_fuel_tab(player)
+    if event.element.tags.action then
+        local action = event.element.tags.action
+        if action == "toggle_excluded_keyword" then
+            local keyword = event.element.tags.keyword
+            player_global.excluded_strings[keyword].enabled = not player_global.excluded_strings[keyword].enabled
+            build_excluded_string_table(player)
+            build_train_schedule_group_report(player)
+        elseif action == "toggle_hidden_keyword" then
+
+        end
+    else
+        if event.element.name == "current_surface_checkbox" then
+            player_global.only_current_surface = not player_global.only_current_surface
+            build_train_schedule_group_report(player)
+        elseif event.element.name == "show_satisfied_checkbox" then
+            player_global.show_satisfied = not player_global.show_satisfied
+            build_train_schedule_group_report(player)
+        elseif event.element.name == "show_invalid_checkbox" then
+            player_global.show_invalid = not player_global.show_invalid
+            build_train_schedule_group_report(player)
+        elseif event.element.name == "place_trains_with_fuel_checkbox" then
+            player_global.add_fuel = not player_global.add_fuel
+            build_fuel_tab(player)
+        end
     end
 end)
 
@@ -645,14 +728,24 @@ script.on_configuration_changed(function (config_changed_data)
     end
 end)
 
--- TODO: add exclusions for surfaces?
+-- TODO: add ability to hide surfaces?
 -- TODO: add ability to hide schedules with keywords? 
---    - not just exclude stations with keywords from having their limits counted, but hide the whole schedule if any station has the keyword
+--      - not just exclude stations with keywords from having their limits counted, but hide the whole schedule if any station has the keyword
 -- TODO: combine planet orbit and planet in space exploration? only do so when there's a space elevator?
--- TODO: color to indicate correctness?
--- TODO: tunable placement? snap, direction?
--- Create copy of this icon on blueprint creation
+-- TODO: color to indicate correctness of number of trains?
+-- TODO: tunable placement? snap width, direction?
+--      - more generally, add a settings config page?
+-- TODO: Create copy of this icon on blueprint creation
 -- TODO: delete all only shows when num >= 2
--- TODO: create from curved templates
--- TODO: most common color for loco?
+-- TODO: create blueprints from curved template trains
+-- TODO: use the most common color of locomotive within a schedule group when creating a blueprint?
+--      - in the case where one train's color is wrong
 -- TODO: export/import keywords?
+-- TODO: item selector ([item=name]) when adding keyword
+-- TODO: train stop name selector in keyword addition
+-- TODO: update on train placed?
+-- TODO: change display from list of buttons to table with columns and headers?
+-- TODO: tooltip in fuel, name and fuel value? Also display of selected fuel?
+-- TODO: handle non-vanilla locomotives that can take non-chemical fuels?
+-- TODO: change style on slider for fuel
+-- TODO: display schedules in vanilla-alike way (using right arrow)
