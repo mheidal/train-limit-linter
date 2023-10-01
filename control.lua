@@ -727,25 +727,3 @@ script.on_configuration_changed(function (config_changed_data)
         end
     end
 end)
-
--- TODO: add ability to hide surfaces?
--- TODO: add ability to hide schedules with keywords? 
---      - not just exclude stations with keywords from having their limits counted, but hide the whole schedule if any station has the keyword
--- TODO: combine planet orbit and planet in space exploration? only do so when there's a space elevator?
--- TODO: color to indicate correctness of number of trains?
--- TODO: tunable placement? snap width, direction?
---      - more generally, add a settings config page?
--- TODO: Create copy of this icon on blueprint creation
--- TODO: delete all only shows when num >= 2
--- TODO: create blueprints from curved template trains
--- TODO: use the most common color of locomotive within a schedule group when creating a blueprint?
---      - in the case where one train's color is wrong
--- TODO: export/import keywords?
--- TODO: item selector ([item=name]) when adding keyword
--- TODO: train stop name selector in keyword addition
--- TODO: update on train placed?
--- TODO: change display from list of buttons to table with columns and headers?
--- TODO: tooltip in fuel, name and fuel value? Also display of selected fuel?
--- TODO: handle non-vanilla locomotives that can take non-chemical fuels?
--- TODO: change style on slider for fuel
--- TODO: display schedules in vanilla-alike way (using right arrow)
