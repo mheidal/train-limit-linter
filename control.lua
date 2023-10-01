@@ -36,10 +36,14 @@ end
 ---     - train_schedule_groups LuaTrain[][]: array of arrays of trains, all trains in sub-arrays share a schedule
 local function get_train_schedule_groups_by_surface()
     local function train_schedule_to_key(schedule)
-        local key = ""
+        local key
         for _, record in pairs(schedule.records) do
             if not record.temporary and record.station then
-                key = key .. " " .. record.station
+                if not key then
+                     key = record .station
+                else
+                    key = key .. " → " .. record.station
+                end
             end
         end
         return key
