@@ -14,7 +14,9 @@ constants.actions = {
     delete_all_hidden_keywords="delete_all_hidden_keywords",
     toggle_current_surface="toggle_current_surface",
     toggle_show_satisfied="toggle_show_satisfied",
-    toggle_show_invalid="toggle_show_invalid"
+    toggle_show_invalid="toggle_show_invalid",
+    update_fuel_amount_textfield="update_fuel_amount_textfield",
+    update_fuel_amount_slider="update_fuel_amount_slider"
 }
 
 return constants

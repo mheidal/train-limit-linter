@@ -443,8 +443,8 @@ local function build_fuel_tab(player)
     local fuel_amount_frame = fuel_content_frame.add{type="frame", direction="horizontal"}
     fuel_amount_frame.style.top_margin = 10
     fuel_amount_frame.style.bottom_margin = 10
-    local fuel_amount_textfield = fuel_amount_frame.add{type="textfield", tags={action="update_fuel_amount_textfield"}, text=tostring(capped_fuel_amount), numeric=true, allow_decimal=false, allow_negative=false, enabled=fuel_amount_frame_enabled}
-    local fuel_amount_slider = fuel_amount_frame.add{type="slider", tags={action="update_fuel_amount_slider"}, value=capped_fuel_amount, minimum_value=0, maximum_value=maximum_fuel_amount, style="notched_slider", enabled=fuel_amount_frame_enabled}
+    local fuel_amount_textfield = fuel_amount_frame.add{type="textfield", tags={action=constants.actions.update_fuel_amount_textfield}, text=tostring(capped_fuel_amount), numeric=true, allow_decimal=false, allow_negative=false, enabled=fuel_amount_frame_enabled}
+    local fuel_amount_slider = fuel_amount_frame.add{type="slider", tags={action=constants.actions.update_fuel_amount_slider}, value=capped_fuel_amount, minimum_value=0, maximum_value=maximum_fuel_amount, style="notched_slider", enabled=fuel_amount_frame_enabled}
 
     player_global.elements.fuel_amount_textfield = fuel_amount_textfield
     player_global.elements.fuel_amount_slider = fuel_amount_slider
@@ -667,7 +667,7 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
     local player = game.get_player(event.player_index)
     local player_global = global.players[player.index]
     if event.element.tags.action then
-        if event.element.tags.action == "update_fuel_amount_slider" then
+        if event.element.tags.action == constants.actions.update_fuel_amount_slider then
             local new_fuel_amount = event.element.slider_value
             player_global.fuel_amount = new_fuel_amount
             player_global.elements.fuel_amount_textfield.text = tostring(new_fuel_amount)
@@ -679,7 +679,7 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
     local player = game.get_player(event.player_index)
     local player_global = global.players[player.index]
     if event.element.tags.action then
-        if event.element.tags.action == "update_fuel_amount_textfield" then
+        if event.element.tags.action == constants.actions.update_fuel_amount_textfield then
             local new_fuel_amount = tonumber(event.element.text)
             local maximum_fuel_amount = game.item_prototypes[player_global.selected_fuel].stack_size * 3
             new_fuel_amount = new_fuel_amount <= maximum_fuel_amount and new_fuel_amount or maximum_fuel_amount
