@@ -1,4 +1,6 @@
 local constants = require("constants")
+local keyword_list = require("models/keyword_list")
+local utils = require("utils")
 
 -- Util functions
 
@@ -8,24 +10,6 @@ local function get_table_size(t)
         count = count + 1
     end
     return count
-end
-
-local function get_enabled_excluded_strings(player)
-    local player_global = global.players[player.index]
-    local enabled_excluded_strings = {}
-    for string, string_data in pairs(player_global.excluded_strings) do
-        if string_data.enabled then table.insert(enabled_excluded_strings, string) end
-    end
-    return enabled_excluded_strings
-end
-
-local function get_enabled_hidden_keywords(player)
-    local player_global = global.players[player.index]
-    local enabled_keywords = {}
-    for keyword, keyword_data in pairs(player_global.hidden_keywords) do
-        if keyword_data.enabled then table.insert(enabled_keywords, keyword) end
-    end
-    return enabled_keywords
 end
 
 ---@param id string
@@ -84,15 +68,15 @@ end
 ---@param player LuaPlayer
 ---@param train_schedule_group table: array[LuaTrain]
 ---@param surface LuaSurface
----@param enabled_excluded_strings table: array[string]
+---@param enabled_excluded_strings table: array[toggleable_item]
 ---@return string|number: sum of train limits, or "not set" if at least one train stop does not have a set limit, or "excluded" if all stops are excluded by keyword
 local function get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_strings)
     local sum_of_limits = 0
     local shared_schedule = train_schedule_group[1].schedule
 
     for _, record in pairs(shared_schedule.records) do
-        for _, excluded_string in pairs(enabled_excluded_strings) do
-            if string.find(record.station, excluded_string) then goto excluded_string_in_train_stop_name end -- TODO: crash here!
+        for _, enabled_string in pairs(enabled_excluded_strings) do
+            if string.find(record.station, enabled_string) then goto excluded_string_in_train_stop_name end -- TODO: crash here!
         end
         for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
             -- no train limit is implemented as limit == 2 ^ 32 - 1
@@ -246,7 +230,7 @@ local function build_train_schedule_group_report(player)
     local report_frame = player_global.elements.report_frame
     report_frame.clear()
 
-    local enabled_excluded_strings = get_enabled_excluded_strings(player)
+    local enabled_excluded_strings = unique_toggleable_list.get_enabled_strings(player_global.excluded_strings.toggleable_items)
 
     for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
         local surface = surface_train_schedule_groups_pair.surface
@@ -270,7 +254,7 @@ local function build_train_schedule_group_report(player)
         local num_valid_train_schedule_groups = 0 -- "valid" here meaning that they're shown
 
         for key, train_schedule_group in pairs(train_schedule_groups) do
-            for _, enabled_hidden_keyword in pairs(get_enabled_hidden_keywords(player)) do
+            for _, enabled_hidden_keyword in pairs(unique_toggleable_list.get_enabled_strings(player_global.hidden_keywords.toggleable_items)) do
                 if string.find(key, enabled_hidden_keyword) then goto schedule_excluded end
             end
             local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_strings)
@@ -325,7 +309,7 @@ local function build_keyword_table(player, keywords, parent, toggle_keyword_enab
         parent.add{type="label", caption={"tll.no_keywords"}}
         return
     end
-    for keyword, string_data in pairs(keywords) do
+    for keyword, string_data in pairs(keywords.toggleable_items) do
         local excluded_string_line = parent.add{type="flow", direction="horizontal"}
         excluded_string_line.add{type="checkbox", state=string_data.enabled, tags={action=toggle_keyword_enabled_tag, keyword=keyword}}
         excluded_string_line.add{type="label", caption=keyword}
@@ -357,8 +341,8 @@ local function initialize_global(player)
         add_fuel = true, -- boolean
         selected_fuel = nil, -- nil or string
         fuel_amount = 0, -- 0 to 3 stacks of selected_fuel
-        excluded_strings = {}, -- table of tables with structure {<keyword>={"enabled": bool}}
-        hidden_keywords = {}, -- table of tables with structure {<keyword>={"enabled": bool}}
+        excluded_strings = utils.deepCopy(keyword_list.unique_toggleable_list),
+        hidden_keywords = utils.deepCopy(keyword_list.unique_toggleable_list),
         elements = {}
     }
 end
@@ -580,7 +564,7 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.exclude_textfield_apply then
             local text = player_global.elements.exclude_entry_textfield.text
             if text ~= "" then -- don't allow user to input the empty string
-                player_global.excluded_strings[text] = {enabled=true}
+                player_global.excluded_strings.toggleable_items[text] = deepCopy(keyword_list.toggleable_item)
                 player_global.elements.exclude_entry_textfield.text = ""
                 build_excluded_string_table(player)
                 build_train_schedule_group_report(player)
@@ -588,31 +572,31 @@ script.on_event(defines.events.on_gui_click, function (event)
 
         elseif action == constants.actions.delete_excluded_keyword then
             local excluded_string = event.element.tags.keyword
-            player_global.excluded_strings[excluded_string] = nil
+            player_global.excluded_strings.toggleable_items[excluded_string] = nil
             build_excluded_string_table(player)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.delete_all_excluded_strings then
-            player_global.excluded_strings = {}
+            player_global.excluded_strings = deepCopy(keyword_list.unique_toggleable_list)
             build_excluded_string_table(player)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.hide_textfield_apply then
             local text = player_global.elements.hide_entry_textfield.text
             if text ~= "" then -- don't allow user to input the empty string
-                player_global.hidden_keywords[text] = {enabled=true}
+                player_global.hidden_keywords.toggleable_items[text] = deepCopy(keyword_list.toggleable_item)
                 player_global.elements.hide_entry_textfield.text = ""
                 build_hidden_keyword_table(player)
                 build_train_schedule_group_report(player)
             end
 
         elseif action == constants.actions.delete_hidden_keyword then
-            player_global.excluded_strings[event.element.tags.keyword] = nil
+            player_global.excluded_strings.toggleable_items[event.element.tags.keyword] = nil
             build_hidden_keyword_table(player)
             build_train_schedule_group_report(player)
 
         elseif action == "delete_all_hidden_keywords" then
-            player_global.hidden_keywords = {}
+            player_global.hidden_keywords = deepCopy(keyword_list.unique_toggleable_list)
             build_hidden_keyword_table(player)
             build_train_schedule_group_report(player)
 
@@ -643,7 +627,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
         local action = event.element.tags.action
         if action == constants.actions.toggle_excluded_keyword then
             local keyword = event.element.tags.keyword
-            player_global.excluded_strings[keyword].enabled = not player_global.excluded_strings[keyword].enabled
+            player_global.excluded_strings.toggleable_items[keyword].enabled = not player_global.excluded_strings.toggleable_items[keyword].enabled
             build_excluded_string_table(player)
             build_train_schedule_group_report(player)
         elseif action == "toggle_hidden_keyword" then
