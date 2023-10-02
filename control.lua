@@ -564,7 +564,7 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.exclude_textfield_apply then
             local text = player_global.elements.exclude_entry_textfield.text
             if text ~= "" then -- don't allow user to input the empty string
-                player_global.excluded_keywords.toggleable_items[text] = deepCopy(keyword_list.toggleable_item)
+                keyword_list.set_enabled(player_global.excluded_keywords, text, true)
                 player_global.elements.exclude_entry_textfield.text = ""
                 build_excluded_keyword_table(player)
                 build_train_schedule_group_report(player)
@@ -584,7 +584,7 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.hide_textfield_apply then
             local text = player_global.elements.hide_entry_textfield.text
             if text ~= "" then -- don't allow user to input the empty string
-                player_global.hidden_keywords.toggleable_items[text] = deepCopy(keyword_list.toggleable_item)
+                keyword_list.set_enabled(player_global.hidden_keywords, text, true)
                 player_global.elements.hide_entry_textfield.text = ""
                 build_hidden_keyword_table(player)
                 build_train_schedule_group_report(player)
@@ -595,7 +595,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             build_hidden_keyword_table(player)
             build_train_schedule_group_report(player)
 
-        elseif action == "delete_all_hidden_keywords" then
+        elseif action == constants.delete_all_hidden_keywords then
             player_global.hidden_keywords = deepCopy(keyword_list.unique_toggleable_list)
             build_hidden_keyword_table(player)
             build_train_schedule_group_report(player)
@@ -707,6 +707,7 @@ end)
 script.on_configuration_changed(function (config_changed_data)
     if config_changed_data.mod_changes["train-limit-linter"] or true then
         for _, player in pairs(game.players) do
+            initialize_global(player)
             local player_global = global.players[player.index]
             if player_global.elements.main_frame ~= nil then
                 toggle_interface(player)
