@@ -56,7 +56,7 @@ styles["rb_list_box_item"] = {
   disabled_font_color = styles.list_box_item.default_font_color,
 }
 
-local cursor_blueprint = utils.deepCopy(data.raw["blueprint"]["blueprint"])
+local cursor_blueprint = utils.deep_copy(data.raw["blueprint"]["blueprint"])
 cursor_blueprint.name = "tll_cursor_blueprint"
 cursor_blueprint.order = "z_tll"
 table.insert(cursor_blueprint.flags, "hidden")

@@ -1,6 +1,6 @@
 utils = require("utils")
 
-exports = {}
+Exports = {}
 
 ---@class ToggleableItem
 toggleable_item = {
@@ -24,7 +24,7 @@ end
 
 keyword_list.set_enabled = function(list, keyword, enabled)
     if list.toggleable_items[keyword] == nil then
-        list.toggleable_items[keyword] = utils.deepCopy(toggleable_item)
+        list.toggleable_items[keyword] = utils.deep_copy(toggleable_item)
     end
     list.toggleable_items[keyword].enabled = enabled
 end
@@ -40,12 +40,12 @@ keyword_list.remove_item = function(list, keyword)
     list.toggleable_items[keyword] = nil
 end
 
-exports.toggleable_item = toggleable_item
-exports.keyword_list = keyword_list
+Exports.toggleable_item = toggleable_item
+Exports.keyword_list = keyword_list
 
-exports.get_enabled_strings = keyword_list.get_enabled_strings
-exports.set_enabled = keyword_list.set_enabled
-exports.toggle_enabled = keyword_list.toggle_enabled
-exports.remove_item = keyword_list.remove_item
+Exports.get_enabled_strings = keyword_list.get_enabled_strings
+Exports.set_enabled = keyword_list.set_enabled
+Exports.toggle_enabled = keyword_list.toggle_enabled
+Exports.remove_item = keyword_list.remove_item
 
-return exports
+return Exports

@@ -310,8 +310,8 @@ local function initialize_global(player)
             add_fuel = true, -- boolean
             selected_fuel = nil, -- nil or string
             fuel_amount = 0, -- 0 to 3 stacks of selected_fuel
-            excluded_keywords = utils.deepCopy(keyword_list.keyword_list),
-            hidden_keywords = utils.deepCopy(keyword_list.keyword_list)
+            excluded_keywords = utils.deep_copy(keyword_list.keyword_list),
+            hidden_keywords = utils.deep_copy(keyword_list.keyword_list)
         },
         view = {}
     }
@@ -547,7 +547,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.delete_all_excluded_keywords then
-            player_global.model.excluded_keywords = deepCopy(keyword_list.keyword_list)
+            player_global.model.excluded_keywords = deep_copy(keyword_list.keyword_list)
             keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
             build_train_schedule_group_report(player)
 
@@ -567,7 +567,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.delete_all_hidden_keywords then
-            player_global.model.hidden_keywords = deepCopy(keyword_list.keyword_list)
+            player_global.model.hidden_keywords = deep_copy(keyword_list.keyword_list)
             keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
             build_train_schedule_group_report(player)
 
