@@ -235,7 +235,7 @@ local function build_train_schedule_group_report(player)
     report_frame.clear()
 
     local enabled_excluded_keywords = keyword_list.get_enabled_strings(player_global.excluded_keywords)
-    local enabled_hidden_keywords = keyword_list.get_enabled_hidden_keywords(player)
+    local enabled_hidden_keywords = keyword_list.get_enabled_strings(player_global.hidden_keywords)
 
     local column_count = 4 + (player_global.only_current_surface and 0 or 1)
 
@@ -263,7 +263,7 @@ local function build_train_schedule_group_report(player)
             for _, schedule_name in pairs(sorted_schedule_names) do
 
                 local train_schedule_group = train_schedule_groups[schedule_name]
-                local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_strings)
+                local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
 
                 local all_stops_excluded = train_limit_sum == constants.train_stop_limit_enums.all_stops_excluded
                 
@@ -310,9 +310,10 @@ local function build_train_schedule_group_report(player)
                     end
 
                     -- tooltip
-                    local train_count_tooltip = nil
+                    local recommended_action_tooltip = nil
                     if train_count_difference and train_count_difference ~= 0 then
-                        train_count_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip"} or {"tll.remove_n_trains_tooltip"}
+                        local abs_diff = train_count_difference > 0 and train_count_difference or -1 * train_count_difference
+                        recommended_action_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip", abs_diff} or {"tll.remove_n_trains_tooltip", abs_diff}
                     end
                     
                     -- color
@@ -336,13 +337,19 @@ local function build_train_schedule_group_report(player)
                         schedule_report_table.add{type="label", caption=surface.name}
                     end
 
-                    schedule_report_table.add{type="label", caption=schedule_name}
-                    local train_count_label = schedule_report_table.add{
+                    local schedule_cell = schedule_report_table.add{
+                        type="label",
+                        caption=schedule_name,
+                        tooltip=recommended_action_tooltip
+                    }
+                    schedule_cell.style.font_color=train_count_label_color
+
+                    local train_count_cell = schedule_report_table.add{
                         type="label",
                         caption=train_count_caption,
-                        tooltip=train_count_tooltip
+                        tooltip=recommended_action_tooltip
                     }
-                    train_count_label.style.font_color=train_count_label_color
+                    train_count_cell.style.font_color=train_count_label_color
 
                     schedule_report_table.add{type="label", caption=train_limit_sum_caption}
 
@@ -764,7 +771,7 @@ script.on_init(function ()
 end)
 
 script.on_configuration_changed(function (config_changed_data)
-    if config_changed_data.mod_changes["train-limit-linter"] then
+    if config_changed_data.mod_changes["train-limit-linter"] or true then
         for _, player in pairs(game.players) do
             initialize_global(player)
             local player_global = global.players[player.index]
