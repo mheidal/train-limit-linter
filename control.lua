@@ -425,6 +425,7 @@ local function migrate_global(player)
             for keyword, data in pairs(old_excluded_strings) do
                 keyword_list.set_enabled(excluded_keywords, keyword, data.enabled)
             end
+            player_global.excluded_strings = nil
         end
 
         local old_excluded_keywords = player_global.excluded_keywords
@@ -432,6 +433,7 @@ local function migrate_global(player)
             for keyword, data in pairs(old_excluded_keywords) do
                 keyword_list.set_enabled(excluded_keywords, keyword, data.enabled)
             end
+            player_global.excluded_keywords = nil
         end
 
         local hidden_keywords = utils.deep_copy(keyword_list.keyword_list)
@@ -440,11 +442,13 @@ local function migrate_global(player)
             for keyword, data in pairs(old_hidden_keywords) do
                 keyword_list.set_enabled(hidden_keywords, keyword, data.enabled)
             end
+            player_global.hidden_keywords = nil
         end
 
         for key, value in pairs(player_global) do
             player_global.model[key] = value
         end
+        
         player_global.model.excluded_keywords = excluded_keywords -- some weirdness here from migrating them from a table to a copy of the keyword list
         player_global.model.hidden_keywords = hidden_keywords -- as above
     end
