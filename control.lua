@@ -387,8 +387,8 @@ local function build_train_schedule_group_report(player)
     end
     end
 
-local function initialize_global(player)
-    global.players[player.index] = {
+local function get_default_global()
+    return deep_copy{
         model = {
             only_current_surface = true,
             show_satisfied = true, -- satisfied when sum of train limits is 1 greater than sum of trains
@@ -401,6 +401,57 @@ local function initialize_global(player)
         },
         view = {}
     }
+end
+
+local function initialize_global(player)
+    global.players[player.index] = get_default_global()
+end
+
+local function migrate_global(player)
+    local player_global = global.players[player.index]
+    if not player_global then
+        global.players[player.index] = get_default_global
+        return
+    end
+    if player_global.elements then -- data is from before we swapped elements to views
+        player_global.elements = nil
+        player_global.model = {}
+        player_global.view = {}
+
+        local excluded_keywords = utils.deep_copy(keyword_list.keyword_list)
+
+        local old_excluded_strings = player_global.excluded_strings
+        if old_excluded_strings then
+            for keyword, data in pairs(old_excluded_strings) do
+                keyword_list.set_enabled(excluded_keywords, keyword, data.enabled)
+            end
+            player_global.excluded_strings = nil
+        end
+
+        local old_excluded_keywords = player_global.excluded_keywords
+        if old_excluded_keywords then
+            for keyword, data in pairs(old_excluded_keywords) do
+                keyword_list.set_enabled(excluded_keywords, keyword, data.enabled)
+            end
+            player_global.excluded_keywords = nil
+        end
+
+        local hidden_keywords = utils.deep_copy(keyword_list.keyword_list)
+        local old_hidden_keywords = player_global.excluded_keywords
+        if old_hidden_keywords then
+            for keyword, data in pairs(old_hidden_keywords) do
+                keyword_list.set_enabled(hidden_keywords, keyword, data.enabled)
+            end
+            player_global.hidden_keywords = nil
+        end
+
+        for key, value in pairs(player_global) do
+            player_global.model[key] = value
+        end
+
+        player_global.model.excluded_keywords = excluded_keywords
+        player_global.model.hidden_keywords = hidden_keywords
+    end
 end
 
 local function build_display_tab(player)
@@ -766,7 +817,7 @@ end)
 script.on_configuration_changed(function (config_changed_data)
     if config_changed_data.mod_changes["train-limit-linter"] then
         for _, player in pairs(game.players) do
-            initialize_global(player)
+            migrate_global(player)
             local player_global = global.players[player.index]
             if player_global.view.main_frame ~= nil then
                 toggle_interface(player)
