@@ -26,7 +26,14 @@ keyword_list.set_enabled = function(list, keyword, enabled)
     if list.toggleable_items[keyword] == nil then
         list.toggleable_items[keyword] = utils.deepCopy(toggleable_item)
     end
-    list.toggleable_items[keyword] = {enabled=enabled}
+    list.toggleable_items[keyword].enabled = enabled
+end
+
+keyword_list.toggle_enabled = function(list, keyword)
+    if list.toggleable_items[keyword] == nil then
+        return
+    end
+    list.toggleable_items[keyword].enabled = not list.toggleable_items[keyword].enabled
 end
 
 exports.toggleable_item = toggleable_item
@@ -34,5 +41,6 @@ exports.keyword_list = keyword_list
 
 exports.get_enabled_strings = keyword_list.get_enabled_strings
 exports.set_enabled = keyword_list.set_enabled
+exports.toggle_enabled = keyword_list.toggle_enabled
 
 return exports

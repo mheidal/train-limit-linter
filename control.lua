@@ -323,14 +323,14 @@ local function build_excluded_keyword_table(player)
     local player_global = global.players[player.index]
     local excluded_keywords_frame = player_global.elements.excluded_keywords_frame
     excluded_keywords_frame.clear()
-    build_keyword_table(player, player_global.excluded_keywords, excluded_keywords_frame, constants.actions.toggle_excluded_keyword, "delete_excluded_keyword")
+    build_keyword_table(player, player_global.excluded_keywords, excluded_keywords_frame, constants.actions.toggle_excluded_keyword, constants.actions.delete_excluded_keyword)
 end
 
 local function build_hidden_keyword_table(player)
     local player_global = global.players[player.index]
     local hidden_keywords_frame = player_global.elements.hidden_keywords_frame
     hidden_keywords_frame.clear()
-    build_keyword_table(player, player_global.hidden_keywords, hidden_keywords_frame, "toggle_hidden_keyword", constants.actions.delete_hidden_keyword)
+    build_keyword_table(player, player_global.hidden_keywords, hidden_keywords_frame, constants.actions.toggle_hidden_keyword, constants.actions.delete_hidden_keyword)
 end
 
 local function initialize_global(player)
@@ -595,7 +595,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             build_hidden_keyword_table(player)
             build_train_schedule_group_report(player)
 
-        elseif action == constants.delete_all_hidden_keywords then
+        elseif action == constants.actions.delete_all_hidden_keywords then
             player_global.hidden_keywords = deepCopy(keyword_list.keyword_list)
             build_hidden_keyword_table(player)
             build_train_schedule_group_report(player)
@@ -627,11 +627,14 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
         local action = event.element.tags.action
         if action == constants.actions.toggle_excluded_keyword then
             local keyword = event.element.tags.keyword
-            player_global.excluded_keywords.toggleable_items[keyword].enabled = not player_global.excluded_keywords.toggleable_items[keyword].enabled
+            keyword_list.toggle_enabled(player_global.excluded_keywords, keyword)
             build_excluded_keyword_table(player)
             build_train_schedule_group_report(player)
-        elseif action == "toggle_hidden_keyword" then
-
+        elseif action == constants.actions.toggle_hidden_keyword then
+            local keyword = event.element.tags.keyword
+            keyword_list.toggle_enabled(player_global.hidden_keywords, keyword)
+            build_hidden_keyword_table(player)
+            build_train_schedule_group_report(player)
         elseif action == constants.actions.toggle_current_surface then
             player_global.only_current_surface = not player_global.only_current_surface
             build_train_schedule_group_report(player)
