@@ -230,7 +230,7 @@ local function build_train_schedule_group_report(player)
     local report_frame = player_global.elements.report_frame
     report_frame.clear()
 
-    local enabled_excluded_keywords = keyword_list.get_enabled_strings(player_global.excluded_keywords.toggleable_items)
+    local enabled_excluded_keywords = keyword_list.get_enabled_strings(player_global.excluded_keywords)
 
     for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
         local surface = surface_train_schedule_groups_pair.surface
@@ -254,7 +254,7 @@ local function build_train_schedule_group_report(player)
         local num_valid_train_schedule_groups = 0 -- "valid" here meaning that they're shown
 
         for key, train_schedule_group in pairs(train_schedule_groups) do
-            for _, enabled_hidden_keyword in pairs(keyword_list.get_enabled_strings(player_global.hidden_keywords.toggleable_items)) do
+            for _, enabled_hidden_keyword in pairs(keyword_list.get_enabled_strings(player_global.hidden_keywords)) do
                 if string.find(key, enabled_hidden_keyword) then goto schedule_excluded end
             end
             local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
