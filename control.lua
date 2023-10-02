@@ -230,7 +230,7 @@ local function build_train_schedule_group_report(player)
     local report_frame = player_global.elements.report_frame
     report_frame.clear()
 
-    local enabled_excluded_keywords = unique_toggleable_list.get_enabled_strings(player_global.excluded_keywords.toggleable_items)
+    local enabled_excluded_keywords = keyword_list.get_enabled_strings(player_global.excluded_keywords.toggleable_items)
 
     for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
         local surface = surface_train_schedule_groups_pair.surface
@@ -254,7 +254,7 @@ local function build_train_schedule_group_report(player)
         local num_valid_train_schedule_groups = 0 -- "valid" here meaning that they're shown
 
         for key, train_schedule_group in pairs(train_schedule_groups) do
-            for _, enabled_hidden_keyword in pairs(unique_toggleable_list.get_enabled_strings(player_global.hidden_keywords.toggleable_items)) do
+            for _, enabled_hidden_keyword in pairs(keyword_list.get_enabled_strings(player_global.hidden_keywords.toggleable_items)) do
                 if string.find(key, enabled_hidden_keyword) then goto schedule_excluded end
             end
             local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
@@ -341,8 +341,8 @@ local function initialize_global(player)
         add_fuel = true, -- boolean
         selected_fuel = nil, -- nil or string
         fuel_amount = 0, -- 0 to 3 stacks of selected_fuel
-        excluded_keywords = utils.deepCopy(keyword_list.unique_toggleable_list),
-        hidden_keywords = utils.deepCopy(keyword_list.unique_toggleable_list),
+        excluded_keywords = utils.deepCopy(keyword_list.keyword_list),
+        hidden_keywords = utils.deepCopy(keyword_list.keyword_list),
         elements = {}
     }
 end
@@ -577,7 +577,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.delete_all_excluded_keywords then
-            player_global.excluded_keywords = deepCopy(keyword_list.unique_toggleable_list)
+            player_global.excluded_keywords = deepCopy(keyword_list.keyword_list)
             build_excluded_keyword_table(player)
             build_train_schedule_group_report(player)
 
@@ -596,7 +596,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             build_train_schedule_group_report(player)
 
         elseif action == constants.delete_all_hidden_keywords then
-            player_global.hidden_keywords = deepCopy(keyword_list.unique_toggleable_list)
+            player_global.hidden_keywords = deepCopy(keyword_list.keyword_list)
             build_hidden_keyword_table(player)
             build_train_schedule_group_report(player)
 
