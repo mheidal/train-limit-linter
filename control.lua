@@ -709,7 +709,7 @@ script.on_init(function ()
 end)
 
 script.on_configuration_changed(function (config_changed_data)
-    if config_changed_data.mod_changes["train-limit-linter"] or true then
+    if config_changed_data.mod_changes["train-limit-linter"] then
         for _, player in pairs(game.players) do
             initialize_global(player)
             local player_global = global.players[player.index]
