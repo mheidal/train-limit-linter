@@ -1,3 +1,5 @@
+local utils = require("utils")
+
 -- These are some style prototypes that the tutorial uses
 -- You don't need to understand how these work to follow along
 local styles = data.raw["gui-style"].default
@@ -54,22 +56,7 @@ styles["rb_list_box_item"] = {
   disabled_font_color = styles.list_box_item.default_font_color,
 }
 
--- this stuff is all copied from Factory Planner
-function deepCopy(orig)
-  local copy
-  if type(orig) == 'table' then
-      copy = {}
-      for origKey, origValue in next, orig, nil do
-          copy[deepCopy(origKey)] = deepCopy(origValue)
-      end
-      setmetatable(copy, deepCopy(getmetatable(orig)))
-  else -- number, string, boolean, etc
-      copy = orig
-  end
-  return copy
-end
-
-local cursor_blueprint = deepCopy(data.raw["blueprint"]["blueprint"])
+local cursor_blueprint = utils.deepCopy(data.raw["blueprint"]["blueprint"])
 cursor_blueprint.name = "tll_cursor_blueprint"
 cursor_blueprint.order = "z_tll"
 table.insert(cursor_blueprint.flags, "hidden")
