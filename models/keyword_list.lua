@@ -13,10 +13,10 @@ keyword_list = {
     toggleable_items={}
 }
 
-keyword_list.get_enabled_strings = function(items)
+keyword_list.get_enabled_strings = function(list)
     local enabled_keywords = {}
 
-    for value, toggleable_item in pairs(items) do
+    for value, toggleable_item in pairs(list.toggleable_items) do
         if toggleable_item.enabled then table.insert(enabled_keywords, value) end
     end
     return enabled_keywords
