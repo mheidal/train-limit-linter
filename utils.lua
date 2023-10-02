@@ -1,20 +1,30 @@
-exports = {}
+Exports = {}
 
 -- this stuff is all copied from Factory Planner
-function deepCopy(orig)
+function deep_copy(orig)
     local copy
     if type(orig) == 'table' then
         copy = {}
         for origKey, origValue in next, orig, nil do
-            copy[deepCopy(origKey)] = deepCopy(origValue)
+            copy[deep_copy(origKey)] = deep_copy(origValue)
         end
-        setmetatable(copy, deepCopy(getmetatable(orig)))
+        setmetatable(copy, deep_copy(getmetatable(orig)))
     else -- number, string, boolean, etc
         copy = orig
     end
     return copy
 end
-exports.deepCopy = deepCopy
+
+function get_table_size(t)
+    local count = 0
+    for _, _ in pairs(t) do
+        count = count + 1
+    end
+    return count
+end
+
+Exports.deep_copy = deep_copy
+Exports.get_table_size = get_table_size
 
 
-return exports
+return Exports
