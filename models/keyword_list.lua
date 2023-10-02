@@ -12,12 +12,12 @@ unique_toggleable_list = {
 }
 
 unique_toggleable_list.get_enabled_strings = function(items)
-    local enabled_strings = {}
+    local enabled_keywords = {}
 
     for value, toggleable_item in pairs(items) do
-        if toggleable_item.enabled then table.insert(enabled_strings, value) end
+        if toggleable_item.enabled then table.insert(enabled_keywords, value) end
     end
-    return enabled_strings
+    return enabled_keywords
 end
 
 exports.toggleable_item = toggleable_item
