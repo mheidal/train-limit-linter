@@ -36,11 +36,16 @@ keyword_list.toggle_enabled = function(list, keyword)
     list.toggleable_items[keyword].enabled = not list.toggleable_items[keyword].enabled
 end
 
+keyword_list.remove_item = function(list, keyword)
+    list.toggleable_items[keyword] = nil
+end
+
 exports.toggleable_item = toggleable_item
 exports.keyword_list = keyword_list
 
 exports.get_enabled_strings = keyword_list.get_enabled_strings
 exports.set_enabled = keyword_list.set_enabled
 exports.toggle_enabled = keyword_list.toggle_enabled
+exports.remove_item = keyword_list.remove_item
 
 return exports

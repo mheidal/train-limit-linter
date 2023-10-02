@@ -572,7 +572,7 @@ script.on_event(defines.events.on_gui_click, function (event)
 
         elseif action == constants.actions.delete_excluded_keyword then
             local excluded_keyword = event.element.tags.keyword
-            player_global.excluded_keywords.toggleable_items[excluded_keyword] = nil
+            keyword_list.remove_item(player_global.excluded_keywords, excluded_keyword)
             build_excluded_keyword_table(player)
             build_train_schedule_group_report(player)
 
@@ -591,7 +591,8 @@ script.on_event(defines.events.on_gui_click, function (event)
             end
 
         elseif action == constants.actions.delete_hidden_keyword then
-            player_global.excluded_keywords.toggleable_items[event.element.tags.keyword] = nil
+            local hidden_keyword = event.element.tags.keyword
+            keyword_list.remove_item(player_global.hidden_keywords, hidden_keyword)
             build_hidden_keyword_table(player)
             build_train_schedule_group_report(player)
 
