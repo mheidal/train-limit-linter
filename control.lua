@@ -240,14 +240,21 @@ local function build_train_schedule_group_report(player)
     local column_count = 4 + (player_global.only_current_surface and 0 or 1)
 
     local schedule_report_table = report_frame.add{type="table", style="bordered_table", column_count=column_count}
+    -- schedule_report_table.style.width = 532
+
     if not player_global.only_current_surface then
         schedule_report_table.add{type="label", caption={"tll.surface_header"}}
     end
-    local schedule_header_cell = schedule_report_table.add{type="label", caption={"tll.schedule_header"}}
+
+    local schedule_header_flow = schedule_report_table.add{type="flow", direction="horizontal"}
+    local schedule_header_cell = schedule_header_flow.add{type="label", caption={"tll.schedule_header"}}
+    schedule_header_flow.add{type="empty-widget"}
+    schedule_header_flow.style.horizontally_stretchable = true
+    schedule_header_flow.style.maximal_width = 300
+
     schedule_report_table.add{type="label", caption={"tll.train_count_header"}}
     schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
     schedule_report_table.add{type="empty-widget"}
-    schedule_header_cell.style.horizontally_stretchable = true
 
     for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
         local surface = surface_train_schedule_groups_pair.surface
@@ -306,7 +313,7 @@ local function build_train_schedule_group_report(player)
                     local train_count_caption = tostring(#train_schedule_group)
                     if train_count_difference and train_count_difference ~= 0 then -- check non-nil
                         local diff_str = train_count_difference > 0 and "+" or ""
-                        train_count_caption = train_count_caption .. " (" .. diff_str .. tostring(train_count_difference) .. ")"
+                        train_count_caption = train_count_caption .. " (" .. diff_str .. tostring(train_count_difference) .. ") [img=info]"
                     end
 
                     -- tooltip
@@ -343,6 +350,7 @@ local function build_train_schedule_group_report(player)
                         tooltip=recommended_action_tooltip
                     }
                     schedule_cell.style.font_color=train_count_label_color
+                    schedule_cell.style.width=300
 
                     local train_count_cell = schedule_report_table.add{
                         type="label",
@@ -356,9 +364,9 @@ local function build_train_schedule_group_report(player)
                     schedule_report_table.add{
                         type="sprite-button",
                         sprite="utility/copy",
-                        style="tool_button",
+                        style="tool_button_blue",
                         tags={action=constants.actions.train_schedule_create_blueprint, template_train_ids=template_train_ids, surface=surface.name},
-                        tooltip="Create copy of train"
+                        tooltip={"tll.copy_train_blueprint_tooltip"}
                     }
                 end
             end
