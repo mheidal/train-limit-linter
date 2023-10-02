@@ -43,21 +43,25 @@ local function get_train_schedule_groups_by_surface()
 
     for _, surface in pairs(game.surfaces) do
         local train_schedule_groups = {}
+        local added_schedule = false
         for _, train in pairs(surface.get_trains()) do
             local schedule = train.schedule
             if schedule then
+                added_schedule = true
                 local key = train_schedule_to_key(schedule)
                 train_schedule_groups[key] = train_schedule_groups[key] or {}
                 table.insert(train_schedule_groups[key], train)
             end
         end
-        table.insert(
-            surface_train_schedule_groups,
-            {
-                surface = surface,
-                train_schedule_groups = train_schedule_groups
-            }
-        )
+        if added_schedule then
+            table.insert(
+                surface_train_schedule_groups,
+                {
+                    surface = surface,
+                    train_schedule_groups = train_schedule_groups
+                }
+            )
+        end
     end
     return surface_train_schedule_groups
 end
@@ -78,14 +82,14 @@ local function get_train_station_limits(player, train_schedule_group, surface, e
         for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
             -- no train limit is implemented as limit == 2 ^ 32 - 1
             if train_stop.trains_limit == (2 ^ 32) - 1 then
-                return "not set" -- "not set" used as a sentinal value (how I miss you, Rust)
+                return constants.train_stop_limit_enums.not_set
             else
                 sum_of_limits = sum_of_limits + train_stop.trains_limit
             end
         end
         ::excluded_keyword_in_train_stop_name::
     end
-    if sum_of_limits == 0 then return "excluded" end
+    if sum_of_limits == 0 then return constants.train_stop_limit_enums.all_stops_excluded end
     return sum_of_limits
 end
 
@@ -228,78 +232,160 @@ local function build_train_schedule_group_report(player)
     report_frame.clear()
 
     local enabled_excluded_keywords = keyword_list.get_enabled_strings(player_global.model.excluded_keywords)
+    local enabled_hidden_keywords = keyword_list.get_enabled_strings(player_global.model.hidden_keywords)
+
+    local column_count = 4 + (player_global.only_current_surface and 0 or 1)
+
+    local schedule_report_table = report_frame.add{type="table", style="bordered_table", column_count=column_count}
+    schedule_report_table.style.maximal_width = 552
+
+    if not player_global.model.only_current_surface then
+        schedule_report_table.add{type="label", caption={"tll.surface_header"}}
+    end
+
+    local schedule_header_flow = schedule_report_table.add{type="flow", direction="horizontal"}
+    schedule_header_flow.add{type="label", caption={"tll.schedule_header"}}
+    schedule_header_flow.add{type="empty-widget"}
+    schedule_header_flow.style.horizontally_stretchable = true
+    schedule_header_flow.style.horizontally_squashable = true
+    schedule_header_flow.style.maximal_width = 300
+
+    schedule_report_table.add{type="label", caption={"tll.train_count_header"}}
+    schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
+    schedule_report_table.add{type="empty-widget"}
 
     for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
         local surface = surface_train_schedule_groups_pair.surface
-        if player_global.model.only_current_surface and surface.name ~= player.surface.name then goto ignore_surface end
 
-        local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
-        local num_train_schedule_groups = get_table_size(train_schedule_groups)
-        if num_train_schedule_groups == 0 then
-            goto ignore_surface
-        end
-        local surface_label = nil
-        if not player_global.model.only_current_surface then
-            -- caption added at end of surface loop
-            surface_label = report_frame.add{type="label", name="surface_label_" .. surface.name, ignored_by_interaction=true}
-            surface_label.style.horizontally_stretchable = true
-            surface_label.style.margin = 5
-        end
+        -- barrier for all train schedules for a surface
+        if not (player_global.model.only_current_surface and surface.name ~= player.surface.name) then
+            local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
 
-        local surface_pane = report_frame.add{type="scroll-pane", name="report_table_" .. surface.name , style="rb_list_box_scroll_pane"}
+            local sorted_schedule_names = {}
+            for schedule_name, _ in pairs(train_schedule_groups) do table.insert(sorted_schedule_names, schedule_name) end
+            table.sort(sorted_schedule_names)
 
-        local num_valid_train_schedule_groups = 0 -- "valid" here meaning that they're shown
+            for _, schedule_name in pairs(sorted_schedule_names) do
 
-        for key, train_schedule_group in pairs(train_schedule_groups) do
-            for _, enabled_hidden_keyword in pairs(keyword_list.get_enabled_strings(player_global.model.hidden_keywords)) do
-                if string.find(key, enabled_hidden_keyword) then goto schedule_excluded end
-            end
-            local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
-            if train_limit_sum == "excluded" then goto schedule_excluded end
+                local train_schedule_group = train_schedule_groups[schedule_name]
+                local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
 
-            local invalid = (train_limit_sum == "not set")
-            local satisfied = not invalid and (train_limit_sum - #train_schedule_group == 1)
+                local all_stops_excluded = train_limit_sum == constants.train_stop_limit_enums.all_stops_excluded
+                
+                local schedule_contains_hidden_keyword = false
+                for _, keyword in pairs(enabled_hidden_keywords) do
+                    if string.find(schedule_name, keyword) then schedule_contains_hidden_keyword = true end -- TODO: crash here!
+                end
 
-            if (
-                (player_global.model.show_satisfied and satisfied)
-                or (player_global.model.show_invalid and invalid)
-                or (not invalid and not satisfied)
+                local invalid = (train_limit_sum == constants.train_stop_limit_enums.not_set)
+
+                local satisfied
+                if type(train_limit_sum) ~= "number" then
+                    satisfied = false
+                else
+                    satisfied = (train_limit_sum - #train_schedule_group == 1)
+                end
+
+                -- barrier for showing a particular schedule
+                if (
+                    (not all_stops_excluded)
+                    and (not schedule_contains_hidden_keyword)
+                    and (player_global.model.show_satisfied or (not satisfied))
+                    and (player_global.model.show_invalid or (not invalid))
                 ) then
-                    num_valid_train_schedule_groups = num_valid_train_schedule_groups + 1
-                    local caption = tostring(#train_schedule_group) .. "/" .. tostring(train_limit_sum) .. " --- " .. key
+
+                    local train_limit_sum_caption
+                    if train_limit_sum == constants.train_stop_limit_enums.not_set then
+                        train_limit_sum_caption = {"tll.train_limit_sum_not_set"}
+                    else
+                        train_limit_sum_caption = tostring(train_limit_sum)
+                    end
+
+
+                    local train_count_difference -- nil or number
+                    if train_limit_sum ~= constants.train_stop_limit_enums.not_set then
+                        train_count_difference = train_limit_sum - 1 -  #train_schedule_group
+                    end
+
+                    -- caption
+                    local train_count_caption = tostring(#train_schedule_group)
+                    if train_count_difference and train_count_difference ~= 0 then -- check non-nil
+                        local diff_str = train_count_difference > 0 and "+" or ""
+                        train_count_caption = train_count_caption .. " (" .. diff_str .. tostring(train_count_difference) .. ") [img=info]"
+                    end
+
+                    -- tooltip
+                    local recommended_action_tooltip = nil
+                    if train_count_difference and train_count_difference ~= 0 then
+                        local abs_diff = train_count_difference > 0 and train_count_difference or -1 * train_count_difference
+                        recommended_action_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip", abs_diff} or {"tll.remove_n_trains_tooltip", abs_diff}
+                    end
+                    
+                    -- color
+                    local train_count_label_color
+                    if train_count_difference then
+                        if train_count_difference ~= 0 then
+                            train_count_label_color = {1, 0.541176, 0.541176}
+                        else
+                            train_count_label_color = {0.375, 0.703125, 0.390625} -- copied from "confirm" buttons in game
+                        end
+                    else
+                        train_count_label_color = {1, 1, 1}
+                    end
+
                     local template_train_ids = {}
                     for _, train in pairs(train_schedule_group) do
                         table.insert(template_train_ids, train.id)
                     end
-                    surface_pane.add{
-                        type="button",
-                        style="rb_list_box_item",
-                        tags={
-                            action=constants.actions.train_schedule_create_blueprint,
-                            template_train_ids=template_train_ids,
-                            surface=surface.name
-                        },
-                        caption=caption
+
+                    -- cell 1
+                    if not player_global.only_current_surface then
+                        schedule_report_table.add{type="label", caption=surface.name}
+                    end
+
+                    
+                    -- cell 2
+                    local schedule_cell = schedule_report_table.add{type="flow", direction="horizontal"}
+                    local schedule_cell_label = schedule_cell.add{
+                        type="label",
+                        caption=schedule_name,
+                        tooltip=recommended_action_tooltip
                     }
+                    schedule_cell_label.style.font_color=train_count_label_color
+                    schedule_cell_label.style.horizontally_squashable = true
+                    schedule_cell_label.style.horizontally_stretchable = true
+                    -- schedule_cell_label.style.minimal_width = 200
+
+                    schedule_cell.add{type="empty-widget"}
+                    schedule_cell.style.horizontally_stretchable = true
+                    schedule_cell.style.horizontally_squashable = true
+                    schedule_cell.style.maximal_width = 300
+
+
+                    -- cell 3
+                    local train_count_cell = schedule_report_table.add{
+                        type="label",
+                        caption=train_count_caption,
+                        tooltip=recommended_action_tooltip
+                    }
+                    train_count_cell.style.font_color=train_count_label_color
+
+                    -- cell 4
+                    schedule_report_table.add{type="label", caption=train_limit_sum_caption}
+
+                    -- cell 5
+                    schedule_report_table.add{
+                        type="sprite-button",
+                        sprite="utility/copy",
+                        style="tool_button_blue",
+                        tags={action=constants.actions.train_schedule_create_blueprint, template_train_ids=template_train_ids, surface=surface.name},
+                        tooltip={"tll.copy_train_blueprint_tooltip"}
+                    }
+                end
             end
-            ::schedule_excluded::
         end
-
-        -- kinda hacky, if you didn't end up adding any of the schedules because it didn't meet any conditions then we don't want to add the label or table for the surface
-        if num_valid_train_schedule_groups == 0 then
-            if surface_label then surface_label.destroy() end
-            surface_pane.destroy()
-            goto ignore_surface
-        end
-
-        if surface_label then
-            local surface_label_caption = surface.name .. ": " .. tostring(num_valid_train_schedule_groups) .. " train schedule" .. (num_valid_train_schedule_groups == 1 and "" or "s")
-            report_frame["surface_label_" .. surface.name].caption=surface_label_caption
-        end
-
-    ::ignore_surface::
     end
-end
+    end
 
 local function initialize_global(player)
     global.players[player.index] = {
@@ -331,7 +417,6 @@ local function build_display_tab(player)
     train_report_button.style.bottom_margin = 10
 
     local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
-    report_frame.style.horizontally_stretchable = true
     player_global.view.report_frame = report_frame
 
     build_train_schedule_group_report(player)
@@ -428,7 +513,7 @@ local function build_interface(player)
     local screen_element = player.gui.screen
 
     local main_frame = screen_element.add{type="frame", name="tll_main_frame", direction="vertical"}
-    main_frame.style.size = {480, 300}
+    main_frame.style.size = {600, 300}
     main_frame.style.minimal_height = 300
     main_frame.style.maximal_height = 810
     main_frame.style.vertically_stretchable = true

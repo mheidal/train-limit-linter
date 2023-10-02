@@ -20,4 +20,9 @@ constants.actions = {
     update_fuel_amount_slider="update_fuel_amount_slider"
 }
 
+constants.train_stop_limit_enums = {
+    not_set = "not_set",
+    all_stops_excluded="all_stops_excluded"
+}
+
 return constants
