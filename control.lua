@@ -448,9 +448,9 @@ local function migrate_global(player)
         for key, value in pairs(player_global) do
             player_global.model[key] = value
         end
-        
-        player_global.model.excluded_keywords = excluded_keywords -- some weirdness here from migrating them from a table to a copy of the keyword list
-        player_global.model.hidden_keywords = hidden_keywords -- as above
+
+        player_global.model.excluded_keywords = excluded_keywords
+        player_global.model.hidden_keywords = hidden_keywords
     end
 end
 
