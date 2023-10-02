@@ -14,7 +14,17 @@ function deepCopy(orig)
     end
     return copy
 end
+
+function get_table_size(t)
+    local count = 0
+    for _, _ in pairs(t) do
+        count = count + 1
+    end
+    return count
+end
+
 exports.deepCopy = deepCopy
+exports.get_table_size = get_table_size
 
 
 return exports

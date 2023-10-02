@@ -1,16 +1,13 @@
 local constants = require("constants")
-local keyword_list = require("models/keyword_list")
 local utils = require("utils")
 
--- Util functions
+-- Models
+local keyword_list = require("models/keyword_list")
 
-local function get_table_size(t)
-    local count = 0
-    for _, _ in pairs(t) do
-        count = count + 1
-    end
-    return count
-end
+-- view
+local keyword_tables = require("views/keyword_tables")
+
+-- Util functions
 
 ---@param id string
 ---@return LuaTrain
@@ -205,9 +202,9 @@ local function create_blueprint_from_train(player, train, surface_name)
     for _, entity in pairs(aggregated_entities) do
         -- change to make more portable across mods?
         if entity.name == "locomotive" then
-            if player_global.add_fuel and player_global.selected_fuel then
+            if player_global.model.add_fuel and player_global.model.selected_fuel then
                 entity.items = {}
-                entity.items[player_global.selected_fuel] = player_global.fuel_amount
+                entity.items[player_global.model.selected_fuel] = player_global.model.fuel_amount
             else
                 entity.items = {}
             end
@@ -227,14 +224,14 @@ end
 local function build_train_schedule_group_report(player)
     local player_global = global.players[player.index]
     local surface_train_schedule_groups_pairs = get_train_schedule_groups_by_surface()
-    local report_frame = player_global.elements.report_frame
+    local report_frame = player_global.view.report_frame
     report_frame.clear()
 
-    local enabled_excluded_keywords = keyword_list.get_enabled_strings(player_global.excluded_keywords)
+    local enabled_excluded_keywords = keyword_list.get_enabled_strings(player_global.model.excluded_keywords)
 
     for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
         local surface = surface_train_schedule_groups_pair.surface
-        if player_global.only_current_surface and surface.name ~= player.surface.name then goto ignore_surface end
+        if player_global.model.only_current_surface and surface.name ~= player.surface.name then goto ignore_surface end
 
         local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
         local num_train_schedule_groups = get_table_size(train_schedule_groups)
@@ -242,7 +239,7 @@ local function build_train_schedule_group_report(player)
             goto ignore_surface
         end
         local surface_label = nil
-        if not player_global.only_current_surface then
+        if not player_global.model.only_current_surface then
             -- caption added at end of surface loop
             surface_label = report_frame.add{type="label", name="surface_label_" .. surface.name, ignored_by_interaction=true}
             surface_label.style.horizontally_stretchable = true
@@ -254,7 +251,7 @@ local function build_train_schedule_group_report(player)
         local num_valid_train_schedule_groups = 0 -- "valid" here meaning that they're shown
 
         for key, train_schedule_group in pairs(train_schedule_groups) do
-            for _, enabled_hidden_keyword in pairs(keyword_list.get_enabled_strings(player_global.hidden_keywords)) do
+            for _, enabled_hidden_keyword in pairs(keyword_list.get_enabled_strings(player_global.model.hidden_keywords)) do
                 if string.find(key, enabled_hidden_keyword) then goto schedule_excluded end
             end
             local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
@@ -264,8 +261,8 @@ local function build_train_schedule_group_report(player)
             local satisfied = not invalid and (train_limit_sum - #train_schedule_group == 1)
 
             if (
-                (player_global.show_satisfied and satisfied)
-                or (player_global.show_invalid and invalid)
+                (player_global.model.show_satisfied and satisfied)
+                or (player_global.model.show_invalid and invalid)
                 or (not invalid and not satisfied)
                 ) then
                     num_valid_train_schedule_groups = num_valid_train_schedule_groups + 1
@@ -304,72 +301,45 @@ local function build_train_schedule_group_report(player)
     end
 end
 
-local function build_keyword_table(player, keywords, parent, toggle_keyword_enabled_tag, delete_action_tag)
-    if get_table_size(keywords) == 0 then
-        parent.add{type="label", caption={"tll.no_keywords"}}
-        return
-    end
-    for keyword, string_data in pairs(keywords.toggleable_items) do
-        local excluded_keyword_line = parent.add{type="flow", direction="horizontal"}
-        excluded_keyword_line.add{type="checkbox", state=string_data.enabled, tags={action=toggle_keyword_enabled_tag, keyword=keyword}}
-        excluded_keyword_line.add{type="label", caption=keyword}
-        local spacer = excluded_keyword_line.add{type="empty-widget"}
-        spacer.style.horizontally_stretchable = true
-        excluded_keyword_line.add{type="sprite-button", tags={action=delete_action_tag, keyword=keyword}, sprite="utility/trash", style="tool_button_red"}
-    end
-end
-
-local function build_excluded_keyword_table(player)
-    local player_global = global.players[player.index]
-    local excluded_keywords_frame = player_global.elements.excluded_keywords_frame
-    excluded_keywords_frame.clear()
-    build_keyword_table(player, player_global.excluded_keywords, excluded_keywords_frame, constants.actions.toggle_excluded_keyword, constants.actions.delete_excluded_keyword)
-end
-
-local function build_hidden_keyword_table(player)
-    local player_global = global.players[player.index]
-    local hidden_keywords_frame = player_global.elements.hidden_keywords_frame
-    hidden_keywords_frame.clear()
-    build_keyword_table(player, player_global.hidden_keywords, hidden_keywords_frame, constants.actions.toggle_hidden_keyword, constants.actions.delete_hidden_keyword)
-end
-
 local function initialize_global(player)
     global.players[player.index] = {
-        only_current_surface = true,
-        show_satisfied = true, -- satisfied when sum of train limits is 1 greater than sum of trains
-        show_invalid = false, -- invalid when train limits are not set for all stations in name group
-        add_fuel = true, -- boolean
-        selected_fuel = nil, -- nil or string
-        fuel_amount = 0, -- 0 to 3 stacks of selected_fuel
-        excluded_keywords = utils.deepCopy(keyword_list.keyword_list),
-        hidden_keywords = utils.deepCopy(keyword_list.keyword_list),
-        elements = {}
+        model = {
+            only_current_surface = true,
+            show_satisfied = true, -- satisfied when sum of train limits is 1 greater than sum of trains
+            show_invalid = false, -- invalid when train limits are not set for all stations in name group
+            add_fuel = true, -- boolean
+            selected_fuel = nil, -- nil or string
+            fuel_amount = 0, -- 0 to 3 stacks of selected_fuel
+            excluded_keywords = utils.deepCopy(keyword_list.keyword_list),
+            hidden_keywords = utils.deepCopy(keyword_list.keyword_list)
+        },
+        view = {}
     }
 end
 
 local function build_display_tab(player)
     local player_global = global.players[player.index]
-    local display_content_frame = player_global.elements.display_content_frame
+    local display_content_frame = player_global.view.display_content_frame
     display_content_frame.clear()
 
     local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="ugg_controls_flow"}
 
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_current_surface}, caption={"tll.only_player_surface"}, state=player_global.only_current_surface}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=player_global.show_satisfied}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_invalid}, caption={"tll.show_invalid"}, state=player_global.show_invalid}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_current_surface}, caption={"tll.only_player_surface"}, state=player_global.model.only_current_surface}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=player_global.model.show_satisfied}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_invalid}, caption={"tll.show_invalid"}, state=player_global.model.show_invalid}
     local train_report_button = controls_flow.add{type="button", tags={action=constants.actions.train_report_update}, caption={"tll.train_report_button_update"}}
     train_report_button.style.bottom_margin = 10
 
     local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
     report_frame.style.horizontally_stretchable = true
-    player_global.elements.report_frame = report_frame
+    player_global.view.report_frame = report_frame
 
     build_train_schedule_group_report(player)
 end
 
 local function build_exclude_tab(player)
     local player_global = global.players[player.index]
-    local exclude_content_frame = player_global.elements.exclude_content_frame
+    local exclude_content_frame = player_global.view.exclude_content_frame
     exclude_content_frame.clear()
 
     local exclude_control_flow = exclude_content_frame.add{type="flow", direction="vertical", style="ugg_controls_flow"}
@@ -377,7 +347,7 @@ local function build_exclude_tab(player)
     exclude_control_flow.add{type="label", caption={"tll.add_excluded_keyword"}, tooltip={"tll.add_excluded_keyword_tooltip"}}
     local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
     local exclude_entry_textfield = exclude_textfield_flow.add{type="textfield"}
-    player_global.elements.exclude_entry_textfield = exclude_entry_textfield
+    player_global.view.exclude_entry_textfield = exclude_entry_textfield
     exclude_textfield_flow.add{type="sprite-button", tags={action=constants.actions.exclude_textfield_apply}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
     local spacer = exclude_textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
@@ -385,47 +355,47 @@ local function build_exclude_tab(player)
 
 
     local excluded_keywords_frame = exclude_content_frame.add{type="scroll-pane", direction="vertical"}
-    player_global.elements.excluded_keywords_frame = excluded_keywords_frame
+    player_global.view.excluded_keywords_frame = excluded_keywords_frame
 
-    build_excluded_keyword_table(player)
+    keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
 
 end
 
 -- TODO: merge a lot of this logic with exclude? building of apply textfield, at least?
 local function build_hide_tab(player)
     local player_global = global.players[player.index]
-    local hide_content_frame = player_global.elements.hide_content_frame
+    local hide_content_frame = player_global.view.hide_content_frame
     hide_content_frame.clear()
     local control_flow = hide_content_frame.add{type="flow", direction="vertical", style="ugg_controls_flow"}
     control_flow.style.bottom_margin = 5
     control_flow.add{type="label", caption={"tll.add_hidden_keyword"}, tooltip={"tll.add_hidden_keyword_tooltip"}}
     local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
     local entry_textfield = textfield_flow.add{type="textfield"}
-    player_global.elements.hide_entry_textfield = entry_textfield
+    player_global.view.hide_entry_textfield = entry_textfield
     textfield_flow.add{type="sprite-button", tags={action=constants.actions.hide_textfield_apply}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
     local spacer = textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
     textfield_flow.add{type="sprite-button", tags={action=constants.actions.delete_all_hidden_keywords}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
 
     local hidden_keywords_frame = hide_content_frame.add{type="scroll-pane", direction="vertical"}
-    player_global.elements.hidden_keywords_frame = hidden_keywords_frame
+    player_global.view.hidden_keywords_frame = hidden_keywords_frame
 
-    build_hidden_keyword_table(player)
+    keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
 
 end
 
 local function build_fuel_tab(player)
     local player_global = global.players[player.index]
-    local fuel_content_frame = player_global.elements.fuel_content_frame
+    local fuel_content_frame = player_global.view.fuel_content_frame
     fuel_content_frame.clear()
 
     fuel_content_frame.add{type="label", caption={"tll.fuel_selector"}}
-    fuel_content_frame.add{type="checkbox", tags={action=constants.actions.toggle_place_trains_with_fuel}, state=player_global.add_fuel, caption={"tll.place_trains_with_fuel_checkbox"}}
+    fuel_content_frame.add{type="checkbox", tags={action=constants.actions.toggle_place_trains_with_fuel}, state=player_global.model.add_fuel, caption={"tll.place_trains_with_fuel_checkbox"}}
 
-    local fuel_amount_frame_enabled = player_global.add_fuel and player_global.selected_fuel ~= nil
-    local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[player_global.selected_fuel].stack_size * 3)) or 1
+    local fuel_amount_frame_enabled = player_global.model.add_fuel and player_global.model.selected_fuel ~= nil
+    local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[player_global.model.selected_fuel].stack_size * 3)) or 1
 
-    local capped_fuel_amount = player_global.fuel_amount >= maximum_fuel_amount and maximum_fuel_amount or player_global.fuel_amount
+    local capped_fuel_amount = player_global.model.fuel_amount >= maximum_fuel_amount and maximum_fuel_amount or player_global.model.fuel_amount
 
     local fuel_amount_frame = fuel_content_frame.add{type="frame", direction="horizontal"}
     fuel_amount_frame.style.top_margin = 10
@@ -433,8 +403,8 @@ local function build_fuel_tab(player)
     local fuel_amount_textfield = fuel_amount_frame.add{type="textfield", tags={action=constants.actions.update_fuel_amount_textfield}, text=tostring(capped_fuel_amount), numeric=true, allow_decimal=false, allow_negative=false, enabled=fuel_amount_frame_enabled}
     local fuel_amount_slider = fuel_amount_frame.add{type="slider", tags={action=constants.actions.update_fuel_amount_slider}, value=capped_fuel_amount, minimum_value=0, maximum_value=maximum_fuel_amount, style="notched_slider", enabled=fuel_amount_frame_enabled}
 
-    player_global.elements.fuel_amount_textfield = fuel_amount_textfield
-    player_global.elements.fuel_amount_slider = fuel_amount_slider
+    player_global.view.fuel_amount_textfield = fuel_amount_textfield
+    player_global.view.fuel_amount_slider = fuel_amount_slider
 
     local valid_fuels = {}
     for i, prototype in pairs(game.item_prototypes) do
@@ -447,8 +417,8 @@ local function build_fuel_tab(player)
 
     for _, fuel in pairs(valid_fuels) do
         local item_name = fuel.name
-        local button_style = (item_name == player_global.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
-        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={action=constants.actions.select_fuel, item_name=item_name}, style=button_style, enabled = player_global.add_fuel} -- TODO: select on click
+        local button_style = (item_name == player_global.model.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
+        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={action=constants.actions.select_fuel, item_name=item_name}, style=button_style, enabled = player_global.model.add_fuel} -- TODO: select on click
     end
 end
 
@@ -466,7 +436,7 @@ local function build_interface(player)
     main_frame.auto_center = true
 
     player.opened = main_frame
-    player_global.elements.main_frame = main_frame
+    player_global.view.main_frame = main_frame
 
     -- titlebar
     local titlebar_flow = main_frame.add{
@@ -490,7 +460,7 @@ local function build_interface(player)
     local display_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
     tabbed_pane.add_tab(display_tab, display_content_frame)
 
-    player_global.elements.display_content_frame = display_content_frame
+    player_global.view.display_content_frame = display_content_frame
 
     build_display_tab(player)
 
@@ -498,7 +468,7 @@ local function build_interface(player)
     local exclude_tab = tabbed_pane.add{type="tab", caption={"tll.exclude_tab"}}
     local exclude_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
     tabbed_pane.add_tab(exclude_tab, exclude_content_frame)
-    player_global.elements.exclude_content_frame = exclude_content_frame
+    player_global.view.exclude_content_frame = exclude_content_frame
 
     build_exclude_tab(player)
 
@@ -506,7 +476,7 @@ local function build_interface(player)
     local hide_tab = tabbed_pane.add{type="tab", caption={"tll.hide_tab"}}
     local hide_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
     tabbed_pane.add_tab(hide_tab, hide_content_frame)
-    player_global.elements.hide_content_frame = hide_content_frame
+    player_global.view.hide_content_frame = hide_content_frame
 
     build_hide_tab(player)
 
@@ -516,7 +486,7 @@ local function build_interface(player)
     local fuel_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
     tabbed_pane.add_tab(fuel_tab, fuel_content_frame)
 
-    player_global.elements.fuel_content_frame = fuel_content_frame
+    player_global.view.fuel_content_frame = fuel_content_frame
 
     build_fuel_tab(player)
 
@@ -524,13 +494,13 @@ end
 
 local function toggle_interface(player)
     local player_global = global.players[player.index]
-    local main_frame = player_global.elements.main_frame
+    local main_frame = player_global.view.main_frame
     if main_frame == nil then
-        player.opened = player_global.elements.main_frame
+        player.opened = player_global.view.main_frame
         build_interface(player)
     else
         main_frame.destroy()
-        player_global.elements = {}
+        player_global.view = {}
     end
 end
 
@@ -547,10 +517,10 @@ script.on_event(defines.events.on_gui_click, function (event)
         local action = event.element.tags.action
          if action == constants.actions.select_fuel then
             local item_name =  event.element.tags.item_name
-            if player_global.selected_fuel == item_name then
-                player_global.selected_fuel = nil
+            if player_global.model.selected_fuel == item_name then
+                player_global.model.selected_fuel = nil
             else
-                player_global.selected_fuel = item_name
+                player_global.model.selected_fuel = item_name
             end
             build_fuel_tab(player)
             return
@@ -562,43 +532,43 @@ script.on_event(defines.events.on_gui_click, function (event)
             toggle_interface(player)
 
         elseif action == constants.actions.exclude_textfield_apply then
-            local text = player_global.elements.exclude_entry_textfield.text
+            local text = player_global.view.exclude_entry_textfield.text
             if text ~= "" then -- don't allow user to input the empty string
-                keyword_list.set_enabled(player_global.excluded_keywords, text, true)
-                player_global.elements.exclude_entry_textfield.text = ""
-                build_excluded_keyword_table(player)
+                keyword_list.set_enabled(player_global.model.excluded_keywords, text, true)
+                player_global.view.exclude_entry_textfield.text = ""
+                keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
                 build_train_schedule_group_report(player)
             end
 
         elseif action == constants.actions.delete_excluded_keyword then
             local excluded_keyword = event.element.tags.keyword
-            keyword_list.remove_item(player_global.excluded_keywords, excluded_keyword)
-            build_excluded_keyword_table(player)
+            keyword_list.remove_item(player_global.model.excluded_keywords, excluded_keyword)
+            keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.delete_all_excluded_keywords then
-            player_global.excluded_keywords = deepCopy(keyword_list.keyword_list)
-            build_excluded_keyword_table(player)
+            player_global.model.excluded_keywords = deepCopy(keyword_list.keyword_list)
+            keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.hide_textfield_apply then
-            local text = player_global.elements.hide_entry_textfield.text
+            local text = player_global.view.hide_entry_textfield.text
             if text ~= "" then -- don't allow user to input the empty string
-                keyword_list.set_enabled(player_global.hidden_keywords, text, true)
-                player_global.elements.hide_entry_textfield.text = ""
-                build_hidden_keyword_table(player)
+                keyword_list.set_enabled(player_global.model.hidden_keywords, text, true)
+                player_global.view.hide_entry_textfield.text = ""
+                keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
                 build_train_schedule_group_report(player)
             end
 
         elseif action == constants.actions.delete_hidden_keyword then
             local hidden_keyword = event.element.tags.keyword
-            keyword_list.remove_item(player_global.hidden_keywords, hidden_keyword)
-            build_hidden_keyword_table(player)
+            keyword_list.remove_item(player_global.model.hidden_keywords, hidden_keyword)
+            keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.delete_all_hidden_keywords then
-            player_global.hidden_keywords = deepCopy(keyword_list.keyword_list)
-            build_hidden_keyword_table(player)
+            player_global.model.hidden_keywords = deepCopy(keyword_list.keyword_list)
+            keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.train_schedule_create_blueprint then
@@ -628,27 +598,27 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
         local action = event.element.tags.action
         if action == constants.actions.toggle_excluded_keyword then
             local keyword = event.element.tags.keyword
-            keyword_list.toggle_enabled(player_global.excluded_keywords, keyword)
-            build_excluded_keyword_table(player)
+            keyword_list.toggle_enabled(player_global.model.excluded_keywords, keyword)
+            keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
             build_train_schedule_group_report(player)
         elseif action == constants.actions.toggle_hidden_keyword then
             local keyword = event.element.tags.keyword
-            keyword_list.toggle_enabled(player_global.hidden_keywords, keyword)
-            build_hidden_keyword_table(player)
+            keyword_list.toggle_enabled(player_global.model.hidden_keywords, keyword)
+            keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
             build_train_schedule_group_report(player)
         elseif action == constants.actions.toggle_current_surface then
-            player_global.only_current_surface = not player_global.only_current_surface
+            player_global.model.only_current_surface = not player_global.model.only_current_surface
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_show_satisfied then
-            player_global.show_satisfied = not player_global.show_satisfied
+            player_global.model.show_satisfied = not player_global.model.show_satisfied
             build_train_schedule_group_report(player)
         elseif action == constants.actions.toggle_show_invalid then
-            player_global.show_invalid = not player_global.show_invalid
+            player_global.model.show_invalid = not player_global.model.show_invalid
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
-            player_global.add_fuel = not player_global.add_fuel
+            player_global.model.add_fuel = not player_global.model.add_fuel
             build_fuel_tab(player)
         end
     end
@@ -660,8 +630,8 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
     if event.element.tags.action then
         if event.element.tags.action == constants.actions.update_fuel_amount_slider then
             local new_fuel_amount = event.element.slider_value
-            player_global.fuel_amount = new_fuel_amount
-            player_global.elements.fuel_amount_textfield.text = tostring(new_fuel_amount)
+            player_global.model.fuel_amount = new_fuel_amount
+            player_global.view.fuel_amount_textfield.text = tostring(new_fuel_amount)
         end
     end
 end)
@@ -672,10 +642,10 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
     if event.element.tags.action then
         if event.element.tags.action == constants.actions.update_fuel_amount_textfield then
             local new_fuel_amount = tonumber(event.element.text)
-            local maximum_fuel_amount = game.item_prototypes[player_global.selected_fuel].stack_size * 3
+            local maximum_fuel_amount = game.item_prototypes[player_global.model.selected_fuel].stack_size * 3
             new_fuel_amount = new_fuel_amount <= maximum_fuel_amount and new_fuel_amount or maximum_fuel_amount
-            player_global.fuel_amount = new_fuel_amount
-            player_global.elements.fuel_amount_slider.slider_value = new_fuel_amount
+            player_global.model.fuel_amount = new_fuel_amount
+            player_global.view.fuel_amount_slider.slider_value = new_fuel_amount
         end
     end
 end)
@@ -713,7 +683,7 @@ script.on_configuration_changed(function (config_changed_data)
         for _, player in pairs(game.players) do
             initialize_global(player)
             local player_global = global.players[player.index]
-            if player_global.elements.main_frame ~= nil then
+            if player_global.view.main_frame ~= nil then
                 toggle_interface(player)
             else
                 player.opened = nil
