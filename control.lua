@@ -240,16 +240,17 @@ local function build_train_schedule_group_report(player)
     local column_count = 4 + (player_global.only_current_surface and 0 or 1)
 
     local schedule_report_table = report_frame.add{type="table", style="bordered_table", column_count=column_count}
-    -- schedule_report_table.style.width = 532
+    schedule_report_table.style.maximal_width = 552
 
     if not player_global.only_current_surface then
         schedule_report_table.add{type="label", caption={"tll.surface_header"}}
     end
 
     local schedule_header_flow = schedule_report_table.add{type="flow", direction="horizontal"}
-    local schedule_header_cell = schedule_header_flow.add{type="label", caption={"tll.schedule_header"}}
+    schedule_header_flow.add{type="label", caption={"tll.schedule_header"}}
     schedule_header_flow.add{type="empty-widget"}
     schedule_header_flow.style.horizontally_stretchable = true
+    schedule_header_flow.style.horizontally_squashable = true
     schedule_header_flow.style.maximal_width = 300
 
     schedule_report_table.add{type="label", caption={"tll.train_count_header"}}
@@ -340,18 +341,31 @@ local function build_train_schedule_group_report(player)
                         table.insert(template_train_ids, train.id)
                     end
 
+                    -- cell 1
                     if not player_global.only_current_surface then
                         schedule_report_table.add{type="label", caption=surface.name}
                     end
 
-                    local schedule_cell = schedule_report_table.add{
+                    
+                    -- cell 2
+                    local schedule_cell = schedule_report_table.add{type="flow", direction="horizontal"}
+                    local schedule_cell_label = schedule_cell.add{
                         type="label",
                         caption=schedule_name,
                         tooltip=recommended_action_tooltip
                     }
-                    schedule_cell.style.font_color=train_count_label_color
-                    schedule_cell.style.width=300
+                    schedule_cell_label.style.font_color=train_count_label_color
+                    schedule_cell_label.style.horizontally_squashable = true
+                    schedule_cell_label.style.horizontally_stretchable = true
+                    -- schedule_cell_label.style.minimal_width = 200
 
+                    schedule_cell.add{type="empty-widget"}
+                    schedule_cell.style.horizontally_stretchable = true
+                    schedule_cell.style.horizontally_squashable = true
+                    schedule_cell.style.maximal_width = 300
+
+
+                    -- cell 3
                     local train_count_cell = schedule_report_table.add{
                         type="label",
                         caption=train_count_caption,
@@ -359,8 +373,10 @@ local function build_train_schedule_group_report(player)
                     }
                     train_count_cell.style.font_color=train_count_label_color
 
+                    -- cell 4
                     schedule_report_table.add{type="label", caption=train_limit_sum_caption}
 
+                    -- cell 5
                     schedule_report_table.add{
                         type="sprite-button",
                         sprite="utility/copy",
@@ -430,8 +446,9 @@ local function build_display_tab(player)
     local train_report_button = controls_flow.add{type="button", tags={action=constants.actions.train_report_update}, caption={"tll.train_report_button_update"}}
     train_report_button.style.bottom_margin = 10
 
-    local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
-    report_frame.style.horizontally_stretchable = true
+    local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical", horizontal_scroll_policy = "never"}
+    -- report_frame.style.horizontally_stretchable = true
+    -- report_frame.style.horizontally_squashable = true
     player_global.elements.report_frame = report_frame
 
     build_train_schedule_group_report(player)
