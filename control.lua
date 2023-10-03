@@ -100,7 +100,6 @@ local function get_train_station_limits(player, train_schedule_group, surface, e
             end
         end
     end
-    if sum_of_limits == 0 then return constants.train_stop_limit_enums.all_stops_excluded end
     return sum_of_limits
 end
 
@@ -282,8 +281,6 @@ local function build_train_schedule_group_report(player)
                 local train_schedule_group = train_schedule_groups[schedule_name]
                 local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
 
-                local all_stops_excluded = train_limit_sum == constants.train_stop_limit_enums.all_stops_excluded
-
                 local schedule_contains_hidden_keyword = false
                 for _, keyword in pairs(enabled_hidden_keywords) do
                     local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(keyword)
@@ -307,8 +304,7 @@ local function build_train_schedule_group_report(player)
 
                 -- barrier for showing a particular schedule
                 if (
-                    (not all_stops_excluded)
-                    and (not schedule_contains_hidden_keyword)
+                    (not schedule_contains_hidden_keyword)
                     and (player_global.model.show_satisfied or (not satisfied))
                     and (player_global.model.show_invalid or (not invalid))
                 ) then
