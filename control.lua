@@ -72,24 +72,26 @@ end
 ---@param train_schedule_group table: array[LuaTrain]
 ---@param surface LuaSurface
 ---@param enabled_excluded_keywords table: array[toggleable_item]
----@return string|number: sum of train limits, or "not set" if at least one train stop does not have a set limit, or "excluded" if all stops are excluded by keyword
+---@return string|number: sum of train limits, or enums defined in constants file to indicate special values
 local function get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
     local sum_of_limits = 0
     local shared_schedule = train_schedule_group[1].schedule
 
     for _, record in pairs(shared_schedule.records) do
+        local station_is_excluded = false
         for _, enabled_string in pairs(enabled_excluded_keywords) do
-            if string.find(record.station, enabled_string) then goto excluded_keyword_in_train_stop_name end -- TODO: crash here!
+            if string.find(record.station, enabled_string, nil, true) then station_is_excluded = true end
         end
-        for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
-            -- no train limit is implemented as limit == 2 ^ 32 - 1
-            if train_stop.trains_limit == (2 ^ 32) - 1 then
-                return constants.train_stop_limit_enums.not_set
-            else
-                sum_of_limits = sum_of_limits + train_stop.trains_limit
+        if not station_is_excluded then
+            for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
+                -- no train limit is implemented as limit == 2 ^ 32 - 1
+                if train_stop.trains_limit == (2 ^ 32) - 1 then
+                    return constants.train_stop_limit_enums.not_set
+                else
+                    sum_of_limits = sum_of_limits + train_stop.trains_limit
+                end
             end
         end
-        ::excluded_keyword_in_train_stop_name::
     end
     if sum_of_limits == 0 then return constants.train_stop_limit_enums.all_stops_excluded end
     return sum_of_limits
@@ -274,10 +276,10 @@ local function build_train_schedule_group_report(player)
                 local train_limit_sum = get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
 
                 local all_stops_excluded = train_limit_sum == constants.train_stop_limit_enums.all_stops_excluded
-                
+
                 local schedule_contains_hidden_keyword = false
                 for _, keyword in pairs(enabled_hidden_keywords) do
-                    if string.find(schedule_name, keyword) then schedule_contains_hidden_keyword = true end -- TODO: crash here!
+                    if string.find(schedule_name, keyword, nil, true) then schedule_contains_hidden_keyword = true end
                 end
 
                 local invalid = (train_limit_sum == constants.train_stop_limit_enums.not_set)
@@ -352,7 +354,6 @@ local function build_train_schedule_group_report(player)
                     local schedule_cell_label = schedule_cell.add{
                         type="label",
                         caption=schedule_name,
-                        tooltip=recommended_action_tooltip
                     }
                     schedule_cell_label.style.font_color=train_count_label_color
                     schedule_cell_label.style.horizontally_squashable = true
@@ -451,26 +452,6 @@ local function migrate_global(player)
             player_global.hidden_keywords = nil
         end
 
-        local fuel_config = utils.deep_copy(fuel_configuration.config)
-
-        local add_fuel = player_global.add_fuel
-        if add_fuel then
-            fuel_config.add_fuel = add_fuel
-            player_global.add_fuel = nil
-        end
-
-        local selected_fuel = player_global.selected_fuel
-        if selected_fuel then
-            fuel_config.selected_fuel = selected_fuel
-            player_global.selected_fuel = nil
-        end
-
-        local fuel_amount = player_global.fuel_amount
-        if fuel_amount then
-            fuel_config.fuel_amount = fuel_amount
-            player_global.fuel_amount = nil
-        end
-
         local model = {}
 
         for key, value in pairs(player_global) do
@@ -493,6 +474,7 @@ local function migrate_global(player)
         if add_fuel then
             fuel_config.add_fuel = add_fuel
             player_global.add_fuel = nil
+            player_global.model.add_fuel = nil
         end
 
         local selected_fuel
@@ -500,6 +482,7 @@ local function migrate_global(player)
         if selected_fuel then
             fuel_config.selected_fuel = selected_fuel
             player_global.selected_fuel = nil
+            player_global.model.selected_fuel = nil
         end
 
         local fuel_amount
@@ -507,7 +490,9 @@ local function migrate_global(player)
         if fuel_amount then
             fuel_config.fuel_amount = fuel_amount
             player_global.fuel_amount = nil
+            player_global.model.fuel_amount = nil
         end
+        player_global.model.fuel_configuration = fuel_config
     end
 end
 
@@ -539,10 +524,7 @@ local function build_exclude_tab(player)
     exclude_control_flow.style.bottom_margin = 5
     exclude_control_flow.add{type="label", caption={"tll.add_excluded_keyword"}, tooltip={"tll.add_excluded_keyword_tooltip"}}
     local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
-    icon_selector_textfield.build_icon_selector_textfield(exclude_textfield_flow, {"tll.apply_change"})
-
-    player_global.view.exclude_entry_textfield = exclude_textfield_flow[icon_selector_textfield.textfield_name]
-
+    icon_selector_textfield.build_icon_selector_textfield(exclude_textfield_flow, {"tll.apply_change"}, constants.actions.exclude_textfield_apply)
     local spacer = exclude_textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
     exclude_textfield_flow.add{type="sprite-button", tags={action=constants.actions.delete_all_excluded_keywords}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
@@ -564,13 +546,7 @@ local function build_hide_tab(player)
     control_flow.style.bottom_margin = 5
     control_flow.add{type="label", caption={"tll.add_hidden_keyword"}, tooltip={"tll.add_hidden_keyword_tooltip"}}
     local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
-    local entry_textfield = textfield_flow.add{type="textfield"}
-    player_global.view.hide_entry_textfield = entry_textfield
-    local choose_elem_button = textfield_flow.add{type="choose-elem-button", elem_type="signal", signal={type="virtual", name="se-select-icon"}} -- currently nonfunctional, requires SE to be enabled
-    -- local choose_elem_button = textfield_flow.add{type="sprite-button", sprite="utility/select_icon_white"}
-
-    choose_elem_button.style.size = {28, 28}
-    textfield_flow.add{type="sprite-button", tags={action=constants.actions.hide_textfield_apply}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
+    icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {"tll.apply_change"}, constants.actions.hide_textfield_apply)
     local spacer = textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
     textfield_flow.add{type="sprite-button", tags={action=constants.actions.delete_all_hidden_keywords}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
@@ -762,10 +738,9 @@ script.on_event(defines.events.on_gui_click, function (event)
             toggle_interface(player)
 
         elseif action == constants.actions.exclude_textfield_apply then
-            local text = player_global.view.exclude_entry_textfield.text
+            local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 keyword_list.set_enabled(player_global.model.excluded_keywords, text, true)
-                player_global.view.exclude_entry_textfield.text = ""
                 keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
                 build_train_schedule_group_report(player)
             end
@@ -782,10 +757,9 @@ script.on_event(defines.events.on_gui_click, function (event)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.hide_textfield_apply then
-            local text = player_global.view.hide_entry_textfield.text
+            local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 keyword_list.set_enabled(player_global.model.hidden_keywords, text, true)
-                player_global.view.hide_entry_textfield.text = ""
                 keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
                 build_train_schedule_group_report(player)
             end
