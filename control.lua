@@ -239,7 +239,7 @@ local function build_train_schedule_group_report(player)
     local enabled_excluded_keywords = keyword_list.get_enabled_strings(player_global.model.excluded_keywords)
     local enabled_hidden_keywords = keyword_list.get_enabled_strings(player_global.model.hidden_keywords)
 
-    local column_count = 4 + (player_global.only_current_surface and 0 or 1)
+    local column_count = 4 + (player_global.model.only_current_surface and 0 or 1)
 
     local schedule_report_table = report_frame.add{type="table", style="bordered_table", column_count=column_count}
     schedule_report_table.style.maximal_width = 552
@@ -344,7 +344,7 @@ local function build_train_schedule_group_report(player)
                     end
 
                     -- cell 1
-                    if not player_global.only_current_surface then
+                    if not player_global.model.only_current_surface then
                         schedule_report_table.add{type="label", caption=surface.name}
                     end
 
@@ -822,7 +822,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
-            player_global.fuel_configuration = fuel_configuration.toggle_add_fuel(player_global.fuel_configuration)
+            player_global.model.fuel_configuration = fuel_configuration.toggle_add_fuel(player_global.model.fuel_configuration)
             build_fuel_tab(player)
         end
     end
