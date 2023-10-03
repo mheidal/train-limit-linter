@@ -79,10 +79,10 @@ local function get_train_station_limits(player, train_schedule_group, surface, e
 
     for _, record in pairs(shared_schedule.records) do
         local station_is_excluded = false
-        for _, enabled_string in pairs(enabled_excluded_keywords) do
-            local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(enabled_string)
-            local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(enabled_string)
-            if (string.find(record.station, enabled_string, nil, true)
+        for _, enabled_keyword in pairs(enabled_excluded_keywords) do
+            local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(enabled_keyword)
+            local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(enabled_keyword)
+            if (string.find(record.station, enabled_keyword, nil, true)
                 or string.find(record.station, alt_rich_text_format_img, nil, true)
                 or string.find(record.station, alt_rich_text_format_entity, nil, true)
                 ) then
@@ -243,8 +243,8 @@ local function build_train_schedule_group_report(player)
     local report_frame = player_global.view.report_frame
     report_frame.clear()
 
-    local enabled_excluded_keywords = keyword_list.get_enabled_strings(player_global.model.excluded_keywords)
-    local enabled_hidden_keywords = keyword_list.get_enabled_strings(player_global.model.hidden_keywords)
+    local enabled_excluded_keywords = keyword_list.get_enabled_keywords(player_global.model.excluded_keywords)
+    local enabled_hidden_keywords = keyword_list.get_enabled_keywords(player_global.model.hidden_keywords)
 
     local column_count = 4 + (player_global.model.only_current_surface and 0 or 1)
 

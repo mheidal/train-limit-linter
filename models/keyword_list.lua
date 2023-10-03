@@ -13,7 +13,7 @@ keyword_list = {
     toggleable_items={}
 }
 
-keyword_list.get_enabled_strings = function(list)
+keyword_list.get_enabled_keywords = function(list)
     local enabled_keywords = {}
 
     for value, toggleable_item in pairs(list.toggleable_items) do
@@ -43,7 +43,7 @@ end
 Exports.toggleable_item = toggleable_item
 Exports.keyword_list = keyword_list
 
-Exports.get_enabled_strings = keyword_list.get_enabled_strings
+Exports.get_enabled_keywords = keyword_list.get_enabled_keywords
 Exports.set_enabled = keyword_list.set_enabled
 Exports.toggle_enabled = keyword_list.toggle_enabled
 Exports.remove_item = keyword_list.remove_item
