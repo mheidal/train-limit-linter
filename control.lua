@@ -3,6 +3,7 @@ local utils = require("utils")
 
 -- Models
 local keyword_list = require("models/keyword_list")
+local fuel_configuration = require("models/fuel_configuration")
 
 -- view
 local icon_selector_textfield = require("views/icon_selector_textfield")
@@ -207,9 +208,10 @@ local function create_blueprint_from_train(player, train, surface_name)
     for _, entity in pairs(aggregated_entities) do
         -- change to make more portable across mods?
         if entity.name == "locomotive" then
-            if player_global.model.add_fuel and player_global.model.selected_fuel then
+            local fuel_config = player_global.model.fuel_configuration
+            if fuel_config.add_fuel and fuel_config.selected_fuel then
                 entity.items = {}
-                entity.items[player_global.model.selected_fuel] = player_global.model.fuel_amount
+                entity.items[fuel_config.selected_fuel] = fuel_config.fuel_amount
             else
                 entity.items = {}
             end
@@ -394,9 +396,7 @@ local function get_default_global()
             only_current_surface = true,
             show_satisfied = true, -- satisfied when sum of train limits is 1 greater than sum of trains
             show_invalid = false, -- invalid when train limits are not set for all stations in name group
-            add_fuel = true, -- boolean
-            selected_fuel = nil, -- nil or string
-            fuel_amount = 0, -- 0 to 3 stacks of selected_fuel
+            fuel_configuration = utils.deep_copy(fuel_configuration.config),
             excluded_keywords = utils.deep_copy(keyword_list.keyword_list),
             hidden_keywords = utils.deep_copy(keyword_list.keyword_list),
             last_gui_location = nil, -- migration not actually necessary, since it starts as nil?
@@ -451,6 +451,26 @@ local function migrate_global(player)
             player_global.hidden_keywords = nil
         end
 
+        local fuel_config = utils.deep_copy(fuel_configuration.config)
+
+        local add_fuel = player_global.add_fuel
+        if add_fuel then
+            fuel_config.add_fuel = add_fuel
+            player_global.add_fuel = nil
+        end
+
+        local selected_fuel = player_global.selected_fuel
+        if selected_fuel then
+            fuel_config.selected_fuel = selected_fuel
+            player_global.selected_fuel = nil
+        end
+
+        local fuel_amount = player_global.fuel_amount
+        if fuel_amount then
+            fuel_config.fuel_amount = fuel_amount
+            player_global.fuel_amount = nil
+        end
+
         local model = {}
 
         for key, value in pairs(player_global) do
@@ -461,7 +481,6 @@ local function migrate_global(player)
         player_global.model = model
         model.excluded_keywords = excluded_keywords
         model.hidden_keywords = hidden_keywords
-        model.fuel_configuration = fuel_config
 
         player_global.view = {}
         global.players[player.index] = player_global
@@ -547,6 +566,10 @@ local function build_hide_tab(player)
     local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
     local entry_textfield = textfield_flow.add{type="textfield"}
     player_global.view.hide_entry_textfield = entry_textfield
+    local choose_elem_button = textfield_flow.add{type="choose-elem-button", elem_type="signal", signal={type="virtual", name="se-select-icon"}} -- currently nonfunctional, requires SE to be enabled
+    -- local choose_elem_button = textfield_flow.add{type="sprite-button", sprite="utility/select_icon_white"}
+
+    choose_elem_button.style.size = {28, 28}
     textfield_flow.add{type="sprite-button", tags={action=constants.actions.hide_textfield_apply}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
     local spacer = textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
@@ -564,17 +587,19 @@ local function build_fuel_tab(player)
     local fuel_content_frame = player_global.view.fuel_content_frame
     fuel_content_frame.clear()
 
+    local fuel_config = player_global.model.fuel_configuration
+
     fuel_content_frame.add{
         type="checkbox",
         tags={action=constants.actions.toggle_place_trains_with_fuel},
-        state=player_global.model.add_fuel,
+        state=fuel_config.add_fuel,
         caption={"tll.place_trains_with_fuel_checkbox"}
     }
 
-    local fuel_amount_frame_enabled = player_global.model.add_fuel and player_global.model.selected_fuel ~= nil
-    local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[player_global.model.selected_fuel].stack_size * 3)) or 1
+    local fuel_amount_frame_enabled = fuel_config.add_fuel and fuel_config.selected_fuel ~= nil
+    local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[fuel_config.selected_fuel].stack_size * 3)) or 1
 
-    local capped_fuel_amount = player_global.model.fuel_amount >= maximum_fuel_amount and maximum_fuel_amount or player_global.model.fuel_amount
+    local capped_fuel_amount = fuel_config.fuel_amount >= maximum_fuel_amount and maximum_fuel_amount or fuel_config.fuel_amount
 
     local slider_value_step = maximum_fuel_amount % 10 == 0 and maximum_fuel_amount / 10 or 1
 
@@ -617,8 +642,9 @@ local function build_fuel_tab(player)
 
     for _, fuel in pairs(valid_fuels) do
         local item_name = fuel.name
-        local button_style = (item_name == player_global.model.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
-        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={action=constants.actions.select_fuel, item_name=item_name}, style=button_style, enabled = player_global.model.add_fuel} -- TODO: select on click
+        local fuel_config = player_global.model.fuel_configuration
+        local button_style = (item_name == fuel_config.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
+        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={action=constants.actions.select_fuel, item_name=item_name}, style=button_style, enabled = fuel_config.add_fuel} -- TODO: select on click
     end
 end
 
@@ -721,12 +747,11 @@ script.on_event(defines.events.on_gui_click, function (event)
     if event.element.tags.action then
         local action = event.element.tags.action
          if action == constants.actions.select_fuel then
-            local item_name =  event.element.tags.item_name
-            if player_global.model.selected_fuel == item_name then
-                player_global.model.selected_fuel = nil
-            else
-                player_global.model.selected_fuel = item_name
-            end
+            local item_name = event.element.tags.item_name
+            
+            local fuel_config = player_global.model.fuel_configuration
+            fuel_config = fuel_configuration.change_selected_fuel(fuel_config, item_name)
+
             build_fuel_tab(player)
             return
 
@@ -823,7 +848,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
-            player_global.model.add_fuel = not player_global.model.add_fuel
+            player_global.fuel_configuration = fuel_configuration.toggle_add_fuel(player_global.fuel_configuration)
             build_fuel_tab(player)
         end
     end
@@ -835,8 +860,9 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
     if event.element.tags.action then
         if event.element.tags.action == constants.actions.update_fuel_amount_slider then
             local new_fuel_amount = event.element.slider_value
-            player_global.model.fuel_amount = new_fuel_amount
-            player_global.view.fuel_amount_textfield.text = tostring(new_fuel_amount)
+            local fuel_config = player_global.model.fuel_configuration
+            fuel_config = fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
+            player_global.view.fuel_amount_textfield.text = tostring(fuel_config.fuel_amount)
         end
     end
 end)
@@ -847,7 +873,7 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
     if event.element.tags.action then
         if event.element.tags.action == constants.actions.update_fuel_amount_textfield then
             local new_fuel_amount = tonumber(event.element.text)
-            local maximum_fuel_amount = game.item_prototypes[player_global.model.selected_fuel].stack_size * 3
+            local maximum_fuel_amount = game.item_prototypes[player_global.model.fuel_configuration.selected_fuel].stack_size * 3
             new_fuel_amount = new_fuel_amount <= maximum_fuel_amount and new_fuel_amount or maximum_fuel_amount
             local fuel_config = player_global.model.fuel_configuration
             fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
