@@ -174,20 +174,25 @@ end
 ---@param entities BlueprintEntity[]
 ---@return transformed_entities BlueprintEntity[]
 local function orient_train_entities_downward(entities)
-    local orientation
+    local main_orientation
     for _, entity in pairs(entities) do
-        if entity.name == "locomotive" then orientation = entity.orientation end
+        if entity.name == "locomotive" then main_orientation = entity.orientation end
         break
     end
-    if not orientation then return entities end
+    if not main_orientation then return entities end
 
-    local goal_angle = math.pi
-    local current_angle = orientation * 2 * math.pi
+    local goal_angle = 2 * math.pi * constants.orientations.d
+    local current_angle = main_orientation * 2 * math.pi
     local angle_to_rotate = goal_angle - current_angle
 
     for i, entity in pairs(entities) do
         entity.position = rotate_around_origin(entity.position.x, entity.position.y, angle_to_rotate)
-        entity.orientation = 0.5 -- maybe I should make a constants file
+        -- this will need to be refactored upon transition to other starting orientations than downward
+        if entity.orientation == main_orientation then
+            entity.orientation = constants.orientations.d
+        else
+            entity.orientation = constants.orientations.u
+        end
     end
     
     return entities
