@@ -5,6 +5,7 @@ local utils = require("utils")
 local keyword_list = require("models/keyword_list")
 
 -- view
+local icon_selector_textfield = require("views/icon_selector_textfield")
 local keyword_tables = require("views/keyword_tables")
 
 -- Util functions
@@ -460,10 +461,34 @@ local function migrate_global(player)
         player_global.model = model
         model.excluded_keywords = excluded_keywords
         model.hidden_keywords = hidden_keywords
+        model.fuel_configuration = fuel_config
 
         player_global.view = {}
         global.players[player.index] = player_global
-        return
+    end
+    if player_global.add_fuel ~= nil or player_global.model.add_fuel ~= nil then
+        local fuel_config = utils.deep_copy(fuel_configuration.config)
+
+        local add_fuel
+        if player_global.add_fuel then add_fuel = player_global.add_fuel else add_fuel = player_global.model.add_fuel end
+        if add_fuel then
+            fuel_config.add_fuel = add_fuel
+            player_global.add_fuel = nil
+        end
+
+        local selected_fuel
+        if player_global.selected_fuel then selected_fuel = player_global.selected_fuel else selected_fuel = player_global.model.selected_fuel end
+        if selected_fuel then
+            fuel_config.selected_fuel = selected_fuel
+            player_global.selected_fuel = nil
+        end
+
+        local fuel_amount
+        if player_global.fuel_amount then fuel_amount = player_global.fuel_amount else fuel_amount = player_global.model.fuel_amount end
+        if fuel_amount then
+            fuel_config.fuel_amount = fuel_amount
+            player_global.fuel_amount = nil
+        end
     end
 end
 
@@ -495,9 +520,10 @@ local function build_exclude_tab(player)
     exclude_control_flow.style.bottom_margin = 5
     exclude_control_flow.add{type="label", caption={"tll.add_excluded_keyword"}, tooltip={"tll.add_excluded_keyword_tooltip"}}
     local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
-    local exclude_entry_textfield = exclude_textfield_flow.add{type="textfield"}
-    player_global.view.exclude_entry_textfield = exclude_entry_textfield
-    exclude_textfield_flow.add{type="sprite-button", tags={action=constants.actions.exclude_textfield_apply}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
+    icon_selector_textfield.build_icon_selector_textfield(exclude_textfield_flow, {"tll.apply_change"})
+
+    player_global.view.exclude_entry_textfield = exclude_textfield_flow[icon_selector_textfield.textfield_name]
+
     local spacer = exclude_textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
     exclude_textfield_flow.add{type="sprite-button", tags={action=constants.actions.delete_all_excluded_keywords}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
@@ -823,8 +849,20 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
             local new_fuel_amount = tonumber(event.element.text)
             local maximum_fuel_amount = game.item_prototypes[player_global.model.selected_fuel].stack_size * 3
             new_fuel_amount = new_fuel_amount <= maximum_fuel_amount and new_fuel_amount or maximum_fuel_amount
-            player_global.model.fuel_amount = new_fuel_amount
-            player_global.view.fuel_amount_slider.slider_value = new_fuel_amount
+            local fuel_config = player_global.model.fuel_configuration
+            fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
+            player_global.view.fuel_amount_slider.slider_value = fuel_config.fuel_amount
+        end
+    end
+end)
+
+script.on_event(defines.events.on_gui_elem_changed, function(event)
+    local player = game.get_player(event.player_index)
+    local player_global = global.players[player.index]
+    if event.element.tags.action then
+        local action = event.element.tags.action
+        if action == constants.actions.icon_selector_icon_selected then
+            icon_selector_textfield.handle_icon_selection(event.element)
         end
     end
 end)

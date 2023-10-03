@@ -17,7 +17,9 @@ constants.actions = {
     toggle_show_satisfied="toggle_show_satisfied",
     toggle_show_invalid="toggle_show_invalid",
     update_fuel_amount_textfield="update_fuel_amount_textfield",
-    update_fuel_amount_slider="update_fuel_amount_slider"
+    update_fuel_amount_slider="update_fuel_amount_slider",
+    icon_selector_textfield_apply="icon_selector_textfield_apply",
+    icon_selector_icon_selected="icon_selector_icon_selected"
 }
 
 constants.train_stop_limit_enums = {
