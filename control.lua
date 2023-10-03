@@ -80,7 +80,14 @@ local function get_train_station_limits(player, train_schedule_group, surface, e
     for _, record in pairs(shared_schedule.records) do
         local station_is_excluded = false
         for _, enabled_string in pairs(enabled_excluded_keywords) do
-            if string.find(record.station, enabled_string, nil, true) then station_is_excluded = true end
+            local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(enabled_string)
+            local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(enabled_string)
+            if (string.find(record.station, enabled_string, nil, true)
+                or string.find(record.station, alt_rich_text_format_img, nil, true)
+                or string.find(record.station, alt_rich_text_format_entity, nil, true)
+                ) then
+                station_is_excluded = true
+            end
         end
         if not station_is_excluded then
             for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
@@ -279,7 +286,14 @@ local function build_train_schedule_group_report(player)
 
                 local schedule_contains_hidden_keyword = false
                 for _, keyword in pairs(enabled_hidden_keywords) do
-                    if string.find(schedule_name, keyword, nil, true) then schedule_contains_hidden_keyword = true end
+                    local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(keyword)
+                    local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(keyword)
+                    if (string.find(schedule_name, keyword, nil, true)
+                        or string.find(schedule_name, alt_rich_text_format_img, nil, true)
+                        or string.find(schedule_name, alt_rich_text_format_entity, nil, true)
+                        ) then
+                        schedule_contains_hidden_keyword = true
+                    end
                 end
 
                 local invalid = (train_limit_sum == constants.train_stop_limit_enums.not_set)

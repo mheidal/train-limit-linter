@@ -15,7 +15,7 @@ function deep_copy(orig)
     return copy
 end
 
-function get_table_size(t)
+function Exports.get_table_size(t)
     local count = 0
     for _, _ in pairs(t) do
         count = count + 1
@@ -23,8 +23,20 @@ function get_table_size(t)
     return count
 end
 
-Exports.deep_copy = deep_copy
-Exports.get_table_size = get_table_size
+---@param input string: string possibly containing rich text (format: [foo.bar]). Return with alt rich text format (format: [img=foo.bar])
+---@return string
+function Exports.swap_rich_text_format_to_img(input)
+    local modified = input:gsub("%[(%w+)=([%w%-_]+)%]", "[img=%1.%2]")
+    return modified
+end
 
+---@param input string: string possibly containing rich text (format: [foo.bar]). Return with alt rich text format (format: [img=foo.bar])
+---@return string
+function Exports.swap_rich_text_format_to_entity(input)
+    local modified = input:gsub("%[(%w+)=([%w%-_]+)%]", "[img=entity/%2]")
+    return modified
+end
+
+Exports.deep_copy = deep_copy
 
 return Exports
