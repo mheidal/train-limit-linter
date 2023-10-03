@@ -410,13 +410,11 @@ end
 local function migrate_global(player)
     local player_global = global.players[player.index]
     if not player_global then
-        global.players[player.index] = get_default_global
+        global.players[player.index] = get_default_global()
         return
     end
     if player_global.elements then -- data is from before we swapped elements to views
         player_global.elements = nil
-        player_global.model = {}
-        player_global.view = {}
 
         local excluded_keywords = utils.deep_copy(keyword_list.keyword_list)
 
@@ -430,27 +428,41 @@ local function migrate_global(player)
 
         local old_excluded_keywords = player_global.excluded_keywords
         if old_excluded_keywords then
-            for keyword, data in pairs(old_excluded_keywords) do
-                keyword_list.set_enabled(excluded_keywords, keyword, data.enabled)
+            local to_iter = player_global.excluded_keywords.toggleable_items and player_global.excluded_keywords.toggleable_items or player_global.excluded_keywords
+            if old_excluded_keywords then
+                for keyword, data in pairs(to_iter) do
+                    keyword_list.set_enabled(excluded_keywords, keyword, data.enabled)
+                end
+                player_global.excluded_keywords = nil
             end
-            player_global.excluded_keywords = nil
         end
 
         local hidden_keywords = utils.deep_copy(keyword_list.keyword_list)
-        local old_hidden_keywords = player_global.excluded_keywords
+
+        local old_hidden_keywords = player_global.hidden_keywords
+
         if old_hidden_keywords then
-            for keyword, data in pairs(old_hidden_keywords) do
+            local to_iter = player_global.hidden_keywords.toggleable_items and player_global.hidden_keywords.toggleable_items or player_global.hidden_keywords
+            for keyword, data in pairs(to_iter) do
                 keyword_list.set_enabled(hidden_keywords, keyword, data.enabled)
             end
             player_global.hidden_keywords = nil
         end
 
+        local model = {}
+
         for key, value in pairs(player_global) do
-            player_global.model[key] = value
+            model[key] = value
         end
 
-        player_global.model.excluded_keywords = excluded_keywords
-        player_global.model.hidden_keywords = hidden_keywords
+        player_global = {}
+        player_global.model = model
+        model.excluded_keywords = excluded_keywords
+        model.hidden_keywords = hidden_keywords
+
+        player_global.view = {}
+        global.players[player.index] = player_global
+        return
     end
 end
 
