@@ -26,4 +26,15 @@ constants.train_stop_limit_enums = {
     not_set = "not_set",
 }
 
+constants.orientations = {
+    u=0,
+    ur=0.125,
+    r=0.25,
+    dr=0.375,
+    d=0.5,
+    dl=0.625,
+    l=0.75,
+    ul=0.875
+}
+
 return constants
