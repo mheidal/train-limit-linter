@@ -397,7 +397,8 @@ local function get_default_global()
             selected_fuel = nil, -- nil or string
             fuel_amount = 0, -- 0 to 3 stacks of selected_fuel
             excluded_keywords = utils.deep_copy(keyword_list.keyword_list),
-            hidden_keywords = utils.deep_copy(keyword_list.keyword_list)
+            hidden_keywords = utils.deep_copy(keyword_list.keyword_list),
+            last_gui_location = nil, -- migration not actually necessary, since it starts as nil?
         },
         view = {}
     }
@@ -581,7 +582,11 @@ local function build_interface(player)
     main_frame.style.maximal_height = 810
     main_frame.style.vertically_stretchable = true
 
-    main_frame.auto_center = true
+    if not player_global.model.last_gui_location then
+        main_frame.auto_center = true
+    else
+        main_frame.location = player_global.model.last_gui_location
+    end
 
     player.opened = main_frame
     player_global.view.main_frame = main_frame
@@ -647,6 +652,7 @@ local function toggle_interface(player)
         player.opened = player_global.view.main_frame
         build_interface(player)
     else
+        player_global.model.last_gui_location = main_frame.location
         main_frame.destroy()
         player_global.view = {}
     end
