@@ -463,7 +463,6 @@ local function migrate_global(player)
 
         player_global.view = {}
         global.players[player.index] = player_global
-        return
     end
 end
 
@@ -521,6 +520,10 @@ local function build_hide_tab(player)
     local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
     local entry_textfield = textfield_flow.add{type="textfield"}
     player_global.view.hide_entry_textfield = entry_textfield
+    local choose_elem_button = textfield_flow.add{type="choose-elem-button", elem_type="signal", signal={type="virtual", name="se-select-icon"}} -- currently nonfunctional, requires SE to be enabled
+    -- local choose_elem_button = textfield_flow.add{type="sprite-button", sprite="utility/select_icon_white"}
+
+    choose_elem_button.style.size = {28, 28}
     textfield_flow.add{type="sprite-button", tags={action=constants.actions.hide_textfield_apply}, style="item_and_count_select_confirm", sprite="utility/enter", tooltip={"tll.apply_change"}}
     local spacer = textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
