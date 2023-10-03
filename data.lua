@@ -69,5 +69,12 @@ data:extend({
     key_sequence="CONTROL + Q",
     order = "a"
   },
+  {
+    type="virtual-signal",
+    name="tll-select-icon",
+    icon="__core__/graphics/icons/mip/select-icon-white.png",
+    icon_size=40,
+    order="a"
+  },
   cursor_blueprint
 })
