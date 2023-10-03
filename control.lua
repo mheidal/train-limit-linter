@@ -459,13 +459,13 @@ local function migrate_global(player)
         end
 
         local selected_fuel = player_global.selected_fuel
-        if add_fuel then
+        if selected_fuel then
             fuel_config.selected_fuel = selected_fuel
             player_global.selected_fuel = nil
         end
 
         local fuel_amount = player_global.fuel_amount
-        if add_fuel then
+        if fuel_amount then
             fuel_config.fuel_amount = fuel_amount
             player_global.fuel_amount = nil
         end
