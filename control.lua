@@ -2,6 +2,7 @@ local constants = require("constants")
 local utils = require("utils")
 
 -- Models
+local schedule_table_configuration = require("models/schedule_table_configuration")
 local keyword_list = require("models/keyword_list")
 local fuel_configuration = require("models/fuel_configuration")
 
@@ -250,12 +251,14 @@ local function build_train_schedule_group_report(player)
     local enabled_excluded_keywords = keyword_list.get_enabled_keywords(player_global.model.excluded_keywords)
     local enabled_hidden_keywords = keyword_list.get_enabled_keywords(player_global.model.hidden_keywords)
 
-    local column_count = 4 + (player_global.model.only_current_surface and 0 or 1)
+    local table_config = player_global.model.schedule_table_configuration
+
+    local column_count = 4 + (table_config.only_current_surface and 0 or 1)
 
     local schedule_report_table = report_frame.add{type="table", style="bordered_table", column_count=column_count}
     schedule_report_table.style.maximal_width = 552
 
-    if not player_global.model.only_current_surface then
+    if not table_config.only_current_surface then
         schedule_report_table.add{type="label", caption={"tll.surface_header"}}
     end
 
@@ -274,7 +277,7 @@ local function build_train_schedule_group_report(player)
         local surface = surface_train_schedule_groups_pair.surface
 
         -- barrier for all train schedules for a surface
-        if not (player_global.model.only_current_surface and surface.name ~= player.surface.name) then
+        if not (table_config.only_current_surface and surface.name ~= player.surface.name) then
             local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
 
             local sorted_schedule_names = {}
@@ -310,8 +313,8 @@ local function build_train_schedule_group_report(player)
                 -- barrier for showing a particular schedule
                 if (
                     (not schedule_contains_hidden_keyword)
-                    and (player_global.model.show_satisfied or (not satisfied))
-                    and (player_global.model.show_invalid or (not invalid))
+                    and (table_config.show_satisfied or (not satisfied))
+                    and (table_config.show_invalid or (not invalid))
                 ) then
 
                     local train_limit_sum_caption
@@ -359,7 +362,7 @@ local function build_train_schedule_group_report(player)
                     end
 
                     -- cell 1
-                    if not player_global.model.only_current_surface then
+                    if not table_config.only_current_surface then
                         schedule_report_table.add{type="label", caption=surface.name}
                     end
 
@@ -409,9 +412,7 @@ local function build_train_schedule_group_report(player)
 local function get_default_global()
     return deep_copy{
         model = {
-            only_current_surface = true,
-            show_satisfied = true, -- satisfied when sum of train limits is 1 greater than sum of trains
-            show_invalid = false, -- invalid when train limits are not set for all stations in name group
+            schedule_table_configuration = utils.deep_copy(schedule_table_configuration),
             fuel_configuration = utils.deep_copy(fuel_configuration.config),
             excluded_keywords = utils.deep_copy(keyword_list.keyword_list),
             hidden_keywords = utils.deep_copy(keyword_list.keyword_list),
@@ -509,6 +510,30 @@ local function migrate_global(player)
         end
         player_global.model.fuel_configuration = fuel_config
     end
+    if player_global.model.only_current_surface ~= nil then
+        local schedule_table_config = deep_copy(schedule_table_configuration)
+        schedule_table_config.only_current_surface = player_global.model.only_current_surface
+        schedule_table_config.show_satisfied = player_global.model.show_satisfied
+        schedule_table_config.show_invalid = player_global.model.show_invalid
+
+        player_global.model.only_current_surface = nil
+        player_global.model.only_current_surface = nil
+        player_global.model.show_invalid = nil
+
+        player_global.model.schedule_table_configuration = schedule_table_config
+
+    elseif player_global.only_current_surface ~= nil then
+        local schedule_table_config = deep_copy(schedule_table_configuration)
+        schedule_table_config.only_current_surface = player_global.only_current_surface
+        schedule_table_config.show_satisfied = player_global.show_satisfied
+        schedule_table_config.show_invalid = player_global.show_invalid
+
+        player_global.only_current_surface = nil
+        player_global.only_current_surface = nil
+        player_global.show_invalid = nil
+
+        player_global.model.schedule_table_configuration = schedule_table_config
+    end
 end
 
 local function build_display_tab(player)
@@ -518,9 +543,11 @@ local function build_display_tab(player)
 
     local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="ugg_controls_flow"}
 
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_current_surface}, caption={"tll.only_player_surface"}, state=player_global.model.only_current_surface}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=player_global.model.show_satisfied}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_invalid}, caption={"tll.show_invalid"}, state=player_global.model.show_invalid}
+    local table_config = player_global.model.schedule_table_configuration
+
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_current_surface}, caption={"tll.only_player_surface"}, state=table_config.only_current_surface}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=table_config.show_satisfied}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_invalid}, caption={"tll.show_invalid"}, state=table_config.show_invalid}
     local train_report_button = controls_flow.add{type="button", tags={action=constants.actions.train_report_update}, caption={"tll.train_report_button_update"}}
     train_report_button.style.bottom_margin = 10
 
@@ -820,20 +847,23 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             keyword_list.toggle_enabled(player_global.model.excluded_keywords, keyword)
             keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
             build_train_schedule_group_report(player)
+
         elseif action == constants.actions.toggle_hidden_keyword then
             local keyword = event.element.tags.keyword
             keyword_list.toggle_enabled(player_global.model.hidden_keywords, keyword)
             keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
             build_train_schedule_group_report(player)
+
         elseif action == constants.actions.toggle_current_surface then
-            player_global.model.only_current_surface = not player_global.model.only_current_surface
+            schedule_table_configuration.toggle_current_surface(player_global.model.schedule_table_configuration)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_show_satisfied then
-            player_global.model.show_satisfied = not player_global.model.show_satisfied
+            schedule_table_configuration.toggle_show_satisfied(player_global.model.schedule_table_configuration)
             build_train_schedule_group_report(player)
+
         elseif action == constants.actions.toggle_show_invalid then
-            player_global.model.show_invalid = not player_global.model.show_invalid
+            schedule_table_configuration.toggle_show_invalid(player_global.model.schedule_table_configuration)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
