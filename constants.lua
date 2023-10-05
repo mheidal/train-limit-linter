@@ -37,7 +37,7 @@ constants.orientations = {
     d=0.5,
     dl=0.625,
     l=0.75,
-    ul=0.875,
+    ul=0.875
 }
 
 return constants

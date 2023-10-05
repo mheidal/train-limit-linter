@@ -190,7 +190,6 @@ local function orient_train_entities(entities, new_orientation)
 
     for _, entity in pairs(entities) do
         entity.position = rotate_around_origin(entity.position.x, entity.position.y, angle_to_rotate)
-        -- this will need to be refactored upon transition to other starting orientations than downward
         if entity.orientation == main_orientation then
             entity.orientation = new_orientation
         else
