@@ -2,11 +2,13 @@ local constants = require("constants")
 local utils = require("utils")
 
 -- Models
+local blueprint_configuration = require("models/blueprint_configuration")
 local schedule_table_configuration = require("models/schedule_table_configuration")
 local keyword_list = require("models/keyword_list")
 local fuel_configuration = require("models/fuel_configuration")
 
 -- view
+local settings_gui = require("views/settings_gui")
 local icon_selector_textfield = require("views/icon_selector_textfield")
 local keyword_tables = require("views/keyword_tables")
 
@@ -171,10 +173,10 @@ local function rotate_around_origin(x, y, angle)
 end
 
 
----Take a train's entities. Find a locomotive. Rotate all the entities so that the locomotive should point downwards. 
+---Take a train's entities. Find a locomotive. Rotate all the entities so that the locomotive should point towards the player's currently set orientation. 
 ---@param entities BlueprintEntity[]
 ---@return transformed_entities BlueprintEntity[]
-local function orient_train_entities_downward(entities)
+local function orient_train_entities(entities, new_orientation)
     local main_orientation
     for _, entity in pairs(entities) do
         if entity.name == "locomotive" then main_orientation = entity.orientation end
@@ -182,17 +184,17 @@ local function orient_train_entities_downward(entities)
     end
     if not main_orientation then return entities end
 
-    local goal_angle = 2 * math.pi * constants.orientations.d
+    local goal_angle = 2 * math.pi * new_orientation
     local current_angle = main_orientation * 2 * math.pi
     local angle_to_rotate = goal_angle - current_angle
 
-    for i, entity in pairs(entities) do
+    for _, entity in pairs(entities) do
         entity.position = rotate_around_origin(entity.position.x, entity.position.y, angle_to_rotate)
         -- this will need to be refactored upon transition to other starting orientations than downward
         if entity.orientation == main_orientation then
-            entity.orientation = constants.orientations.d
+            entity.orientation = new_orientation
         else
-            entity.orientation = constants.orientations.u
+            entity.orientation = (new_orientation + 0.5) % 1
         end
     end
     
@@ -231,7 +233,7 @@ local function create_blueprint_from_train(player, train, surface_name)
             end
         end
     end
-    aggregated_entities = orient_train_entities_downward(aggregated_entities)
+    aggregated_entities = orient_train_entities(aggregated_entities, player_global.model.blueprint_configuration.new_blueprint_orientation)
 
     aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
     aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid_from_blueprint_entities(aggregated_entities)
@@ -412,6 +414,7 @@ local function build_train_schedule_group_report(player)
 local function get_default_global()
     return deep_copy{
         model = {
+            blueprint_configuration = utils.deep_copy(blueprint_configuration.config),
             schedule_table_configuration = utils.deep_copy(schedule_table_configuration),
             fuel_configuration = utils.deep_copy(fuel_configuration.config),
             excluded_keywords = utils.deep_copy(keyword_list.keyword_list),
@@ -533,6 +536,9 @@ local function migrate_global(player)
         player_global.show_invalid = nil
 
         player_global.model.schedule_table_configuration = schedule_table_config
+    end
+    if not player_global.model.blueprint_configuration then
+        player_global.model.blueprint_configuration = deep_copy(blueprint_configuration.config)
     end
 end
 
@@ -696,7 +702,8 @@ local function build_interface(player)
     titlebar_flow.drag_target = main_frame
     titlebar_flow.add{type="label", style="frame_title", caption={"tll.main_frame_header"}}
     titlebar_flow.add{type="empty-widget", style="flib_titlebar_drag_handle", ignored_by_interaction=true}
-
+    
+    titlebar_flow.add{type="sprite-button", tags={action=constants.actions.toggle_settings_gui}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.open_settings"}}
     titlebar_flow.add{type="sprite-button", tags={action=constants.actions.close_window}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
 
     -- tabs
@@ -776,6 +783,12 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.train_report_update then
             build_train_schedule_group_report(player)
 
+        elseif action == constants.actions.toggle_settings_gui then
+            settings_gui.toggle_settings_gui(player)
+
+        elseif action == constants.actions.close_settings_gui then
+            settings_gui.toggle_settings_gui(player)
+
         elseif action == constants.actions.close_window then
             toggle_interface(player)
 
@@ -832,6 +845,9 @@ script.on_event(defines.events.on_gui_click, function (event)
             end
             local surface_name = event.element.tags.surface
             create_blueprint_from_train(player, template_train, surface_name)
+        elseif action == constants.actions.set_blueprint_orientation then
+            blueprint_configuration.set_new_blueprint_orientation(player_global.model.blueprint_configuration, event.element.tags.orientation)
+            settings_gui.build_settings_gui(player)
         end
     end
 end)
@@ -913,9 +929,13 @@ script.on_event(defines.events.on_gui_elem_changed, function(event)
 end)
 
 script.on_event(defines.events.on_gui_closed, function(event)
-    if event.element and event.element.name == "tll_main_frame" then
+    if event.element then
         local player = game.get_player(event.player_index)
-        toggle_interface(player)
+        if event.element.name == "tll_main_frame" then
+            toggle_interface(player)
+        elseif event.element.name == "tll_settings_main_frame" then
+            settings_gui.toggle_settings_gui(player)
+        end
     end
 end)
 
