@@ -8,7 +8,7 @@ local keyword_list = require("models/keyword_list")
 local fuel_configuration = require("models/fuel_configuration")
 
 -- view
-local settings_gui = require("views/settings_gui")
+local blueprint_orientation_selector = require("views/blueprint_orientation_selector")
 local icon_selector_textfield = require("views/icon_selector_textfield")
 local keyword_tables = require("views/keyword_tables")
 
@@ -672,6 +672,15 @@ local function build_fuel_tab(player)
     end
 end
 
+local function build_settings_tab(player)
+    local player_global = global.players[player.index]
+    local settings_content_frame = player_global.view.settings_content_frame
+
+    settings_content_frame.clear()
+
+    blueprint_orientation_selector.build_blueprint_orientation_selector(player_global.model.blueprint_configuration.new_blueprint_orientation, settings_content_frame)
+end
+
 local function build_interface(player)
     local player_global = global.players[player.index]
 
@@ -702,8 +711,6 @@ local function build_interface(player)
     titlebar_flow.drag_target = main_frame
     titlebar_flow.add{type="label", style="frame_title", caption={"tll.main_frame_header"}}
     titlebar_flow.add{type="empty-widget", style="flib_titlebar_drag_handle", ignored_by_interaction=true}
-    
-    titlebar_flow.add{type="sprite-button", tags={action=constants.actions.toggle_settings_gui}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.open_settings"}}
     titlebar_flow.add{type="sprite-button", tags={action=constants.actions.close_window}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
 
     -- tabs
@@ -745,6 +752,15 @@ local function build_interface(player)
 
     build_fuel_tab(player)
 
+    -- settings tab
+    local settings_tab = tabbed_pane.add{type="tab", caption={"tll.settings_tab"}}
+    local settings_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
+    tabbed_pane.add_tab(settings_tab, settings_content_frame)
+
+    player_global.view.settings_content_frame = settings_content_frame
+
+    build_settings_tab(player)
+
 end
 
 local function toggle_interface(player)
@@ -782,12 +798,6 @@ script.on_event(defines.events.on_gui_click, function (event)
 
         elseif action == constants.actions.train_report_update then
             build_train_schedule_group_report(player)
-
-        elseif action == constants.actions.toggle_settings_gui then
-            settings_gui.toggle_settings_gui(player)
-
-        elseif action == constants.actions.close_settings_gui then
-            settings_gui.toggle_settings_gui(player)
 
         elseif action == constants.actions.close_window then
             toggle_interface(player)
@@ -845,9 +855,10 @@ script.on_event(defines.events.on_gui_click, function (event)
             end
             local surface_name = event.element.tags.surface
             create_blueprint_from_train(player, template_train, surface_name)
+
         elseif action == constants.actions.set_blueprint_orientation then
             blueprint_configuration.set_new_blueprint_orientation(player_global.model.blueprint_configuration, event.element.tags.orientation)
-            settings_gui.build_settings_gui(player)
+            build_settings_tab(player)
         end
     end
 end)
