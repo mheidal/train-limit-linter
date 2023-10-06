@@ -22,13 +22,13 @@ constants.actions = {
     icon_selector_icon_selected="icon_selector_icon_selected",
 
     set_blueprint_orientation="set_blueprint_orientation",
+    toggle_blueprint_snap="toggle_blueprint_snap"
 }
 
 constants.train_stop_limit_enums = {
     not_set = "not_set",
 }
 
--- order? natural from 0 to .875 or left to right top to bottom for ease of use with buttons?
 constants.orientations = {
     u=0,
     ur=0.125,
@@ -38,6 +38,11 @@ constants.orientations = {
     dl=0.625,
     l=0.75,
     ul=0.875
+}
+
+constants.snap_directions = {
+    vertical="vertical",
+    horizontal="horizontal"
 }
 
 return constants
