@@ -8,7 +8,7 @@ local keyword_list = require("models/keyword_list")
 local fuel_configuration = require("models/fuel_configuration")
 
 -- view
-local blueprint_orientation_selector = require("views/blueprint_orientation_selector")
+local blueprint_orientation_selector = require("views.settings_views.blueprint_orientation_selector")
 local blueprint_snap_selection = require("views/settings_views/blueprint_snap_selection")
 local slider_textfield = require("views/slider_textfield")
 local icon_selector_textfield = require("views/icon_selector_textfield")
