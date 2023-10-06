@@ -179,8 +179,10 @@ end
 local function orient_train_entities(entities, new_orientation)
     local main_orientation
     for _, entity in pairs(entities) do
-        if entity.name == "locomotive" then main_orientation = entity.orientation end
-        break
+        if entity.name == "locomotive" then
+            main_orientation = entity.orientation
+            break
+        end
     end
     if not main_orientation then return entities end
 
@@ -207,18 +209,50 @@ local function create_blueprint_from_train(player, train, surface_name)
     local player_global = global.players[player.index]
 
     local surface = game.get_surface(surface_name)
+    if surface == nil then return end
     local script_inventory = game.create_inventory(2)
     local aggregated_blueprint_slot = script_inventory[1]
     aggregated_blueprint_slot.set_stack{name="tll_cursor_blueprint"}
     local single_carriage_slot = script_inventory[2]
     single_carriage_slot.set_stack{name="tll_cursor_blueprint"}
 
-    -- add entities from train
+    local prev_vert_offset = 0
+    local prev_orientation = nil
+    local prev_was_counteraligned = false
+
     for _, carriage in pairs(train.carriages) do
         single_carriage_slot.create_blueprint{surface=surface, area=carriage.bounding_box, force=player.force, include_trains=true, include_entities=false}
-        local new_blueprint_entities = combine_blueprint_entities(aggregated_blueprint_slot.get_blueprint_entities(), single_carriage_slot.get_blueprint_entities())
-        aggregated_blueprint_slot.set_blueprint_entities(new_blueprint_entities)
+        local new_blueprint_entities = single_carriage_slot.get_blueprint_entities()
+        if new_blueprint_entities == nil then return end
+        local vert_offset = prev_vert_offset + 7
+        new_blueprint_entities[1].position = {x=0, y= -1 * vert_offset}
+
+        if prev_orientation == nil then
+            new_blueprint_entities[1].orientation = constants.orientations.d
+            prev_orientation = new_blueprint_entities[1].orientation
+        else
+            local orientation_diff = math.abs(prev_orientation - new_blueprint_entities[1].orientation) % 1
+            if orientation_diff < 0.3 or orientation_diff > 0.7 then -- I'm not 100% sure this manages to correctly orient all rolling stock when the train is curved
+                if prev_was_counteraligned then
+                    new_blueprint_entities[1].orientation = constants.orientations.u
+                else
+                    new_blueprint_entities[1].orientation = constants.orientations.d
+                end
+            else
+                if prev_was_counteraligned then
+                    new_blueprint_entities[1].orientation = constants.orientations.d
+                else
+                    new_blueprint_entities[1].orientation = constants.orientations.u
+                end
+                prev_was_counteraligned = not prev_was_counteraligned
+            end
+        end
+
+        local combined_blueprint_entities = combine_blueprint_entities(new_blueprint_entities, aggregated_blueprint_slot.get_blueprint_entities())
+        aggregated_blueprint_slot.set_blueprint_entities(combined_blueprint_entities)
+        prev_vert_offset = vert_offset
     end
+
     local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
     for _, entity in pairs(aggregated_entities) do
         -- change to make more portable across mods?
@@ -843,7 +877,11 @@ script.on_event(defines.events.on_gui_click, function (event)
             local template_train
             for _, id in pairs(event.element.tags.template_train_ids) do
                 local template_option = get_train_by_id(id)
-                if template_option and not train_is_curved(template_option) then
+                -- if template_option and not train_is_curved(template_option) then
+                --     template_train = template_option
+                --     break
+                -- end
+                if template_option then
                     template_train = template_option
                     break
                 end
