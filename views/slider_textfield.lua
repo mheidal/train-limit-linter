@@ -21,6 +21,7 @@ function Exports.add_slider_textfield(parent, action, value, value_step, minimum
         enabled=enabled_condition
     }
     slider.style.horizontally_stretchable = true
+    local negative_allowed = minimum_value < 0
     local textfield = slider_textfield_flow.add{
         type="textfield",
         name="textfield",
@@ -30,7 +31,9 @@ function Exports.add_slider_textfield(parent, action, value, value_step, minimum
         },
         style="slider_value_textfield",
         text=tostring(value),
-        enabled=enabled_condition
+        enabled=enabled_condition,
+        negative_allowed = negative_allowed,
+        numeric=true,
     }
 end
 

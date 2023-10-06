@@ -151,14 +151,18 @@ local function train_is_curved(train)
     return false
 end
 
----@param entities BlueprintEntity[]?
+---@param player LuaPlayer
 ---@return table?
-local function get_snap_to_grid_from_blueprint_entities(entities)
-    if not entities then return nil end
-    if is_horizontal(entities[1].orientation) then
-        return {x = 100, y = 4} 
+local function get_snap_to_grid(player)
+    local config = global.players[player.index].model.blueprint_configuration
+    if config.snap_enabled then
+        if config.snap_direction == constants.snap_directions.vertical then
+            return {x = 100, y = config.snap_width}
+        else
+            return {x = config.snap_width, y = 100}
+        end
     else
-        return {x = 4, y = 100}
+        return nil
     end
 end
 
@@ -273,7 +277,7 @@ local function create_blueprint_from_train(player, train, surface_name)
     aggregated_entities = orient_train_entities(aggregated_entities, player_global.model.blueprint_configuration.new_blueprint_orientation)
 
     aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
-    aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid_from_blueprint_entities(aggregated_entities)
+    aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player, aggregated_entities)
     player.add_to_clipboard(aggregated_blueprint_slot)
     player.activate_paste()
     script_inventory.destroy()
@@ -718,9 +722,11 @@ local function build_settings_tab(player)
     local player_global = global.players[player.index]
     local settings_content_frame = player_global.view.settings_content_frame
 
+    local config = player_global.model.blueprint_configuration
+
     settings_content_frame.clear()
 
-    blueprint_orientation_selector.build_blueprint_orientation_selector(player_global.model.blueprint_configuration.new_blueprint_orientation, settings_content_frame)
+    blueprint_orientation_selector.build_blueprint_orientation_selector(config.new_blueprint_orientation, settings_content_frame)
     blueprint_snap_selection.build_blueprint_snap_selector(player, settings_content_frame)
 end
 
@@ -993,7 +999,7 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
             fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
             player_global.view.fuel_amount_slider.slider_value = fuel_config.fuel_amount
         elseif action == constants.actions.set_blueprint_snap_width then
-            local new_snap_width = tostring(event.element.text)
+            local new_snap_width = tonumber(event.element.text)
             local blueprint_config = player_global.model.blueprint_configuration
             blueprint_config = blueprint_configuration.set_snap_width(blueprint_config, new_snap_width)
         end
@@ -1007,6 +1013,17 @@ script.on_event(defines.events.on_gui_elem_changed, function(event)
         local action = event.element.tags.action
         if action == constants.actions.icon_selector_icon_selected then
             icon_selector_textfield.handle_icon_selection(event.element)
+        end
+    end
+end)
+
+script.on_event(defines.events.on_gui_switch_state_changed, function(event)
+    local player = game.get_player(event.player_index)
+    local player_global = global.players[player.index]
+    if event.element.tags.action then
+        local action = event.element.tags.action
+        if action == constants.actions.toggle_blueprint_snap_direction then
+            blueprint_configuration.toggle_snap_direction(player_global.model.blueprint_configuration)
         end
     end
 end)

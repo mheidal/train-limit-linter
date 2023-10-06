@@ -21,6 +21,21 @@ local function build_blueprint_snap_selector(player, parent)
         20,
         config.snap_enabled
     )
+    local snap_direction_flow = parent.add{type="flow", direction="horizontal"}
+    snap_direction_flow.style.horizontally_stretchable = true
+    snap_direction_flow.add{type="label", caption={"tll.set_snap_direction"}}
+
+    local switch_state = (config.snap_direction == constants.snap_directions.horizontal) and "left" or "right"
+
+    local snap_direction_switch = snap_direction_flow.add{
+        type="switch",
+        switch_state=switch_state,
+        tags = {action=constants.actions.toggle_blueprint_snap_direction},
+        style="switch",
+        left_label_caption={"tll.horizontal"},
+        right_label_caption={"tll.vertical"}
+    }
+    snap_direction_switch.style.vertical_align = "center"
 end
 
 Exports.build_blueprint_snap_selector = build_blueprint_snap_selector
