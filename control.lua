@@ -224,6 +224,8 @@ local function create_blueprint_from_train(player, train, surface_name)
         single_carriage_slot.create_blueprint{surface=surface, area=carriage.bounding_box, force=player.force, include_trains=true, include_entities=false}
         local new_blueprint_entities = single_carriage_slot.get_blueprint_entities()
         if new_blueprint_entities == nil then return end
+
+        -- vertical offset only works for vanilla rolling stock! should use joint distance and connection distance but these are not visible outside data stage
         local vert_offset = prev_vert_offset + 7
         new_blueprint_entities[1].position = {x=0, y= -1 * vert_offset}
 
