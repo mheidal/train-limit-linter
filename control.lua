@@ -726,6 +726,13 @@ local function build_settings_tab(player)
 
     settings_content_frame.clear()
 
+    local blueprint_header_label = settings_content_frame.add{
+        type="label",
+        style="bold_label",
+        caption={"tll.blueprint_settings"},
+        tooltip={"tll.blueprint_settings_tooltip"}
+    }
+    blueprint_header_label.style.font_color={1, 0.901961, 0.752941}
     blueprint_orientation_selector.build_blueprint_orientation_selector(config.new_blueprint_orientation, settings_content_frame)
     blueprint_snap_selection.build_blueprint_snap_selector(player, settings_content_frame)
 end
