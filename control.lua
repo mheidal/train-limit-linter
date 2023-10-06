@@ -9,6 +9,8 @@ local fuel_configuration = require("models/fuel_configuration")
 
 -- view
 local blueprint_orientation_selector = require("views/blueprint_orientation_selector")
+local blueprint_snap_selection = require("views/settings_views/blueprint_snap_selection")
+local slider_textfield = require("views/slider_textfield")
 local icon_selector_textfield = require("views/icon_selector_textfield")
 local keyword_tables = require("views/keyword_tables")
 
@@ -575,6 +577,11 @@ local function migrate_global(player)
     if not player_global.model.blueprint_configuration then
         player_global.model.blueprint_configuration = deep_copy(blueprint_configuration.config)
     end
+    if player_global.model.blueprint_configuration.snap_enabled then
+        player_global.model.blueprint_configuration.snap_enabled = true
+        player_global.model.blueprint_configuration.snap_direction = constants.snap_directions.horizontal
+        player_global.model.blueprint_configuration.snap_width = 2
+    end
 end
 
 local function build_display_tab(player)
@@ -714,6 +721,7 @@ local function build_settings_tab(player)
     settings_content_frame.clear()
 
     blueprint_orientation_selector.build_blueprint_orientation_selector(player_global.model.blueprint_configuration.new_blueprint_orientation, settings_content_frame)
+    blueprint_snap_selection.build_blueprint_snap_selector(player, settings_content_frame)
 end
 
 local function build_interface(player)
@@ -942,12 +950,25 @@ end)
 script.on_event(defines.events.on_gui_value_changed, function (event)
     local player = game.get_player(event.player_index)
     local player_global = global.players[player.index]
+
+    -- handler for slider_textfield element: when the slider updates, update the textfield
+    if event.element.tags.slider_textfield then
+        local slider_textfield_flow = event.element.parent
+        slider_textfield.update_textfield_value(slider_textfield_flow)
+    end
+
+    -- handler for actions: if the element has a tag with key 'action' then we perform whatever operation is associated with that action.
     if event.element.tags.action then
-        if event.element.tags.action == constants.actions.update_fuel_amount_slider then
+        local action = event.element.tags.action
+        if action == constants.actions.update_fuel_amount_slider then
             local new_fuel_amount = event.element.slider_value
             local fuel_config = player_global.model.fuel_configuration
             fuel_config = fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
             player_global.view.fuel_amount_textfield.text = tostring(fuel_config.fuel_amount)
+        elseif action == constants.actions.set_blueprint_snap_width then
+            local new_snap_width = event.element.slider_value
+            local blueprint_config = player_global.model.blueprint_configuration
+            blueprint_config = blueprint_configuration.set_snap_width(blueprint_config, new_snap_width)
         end
     end
 end)
@@ -955,14 +976,26 @@ end)
 script.on_event(defines.events.on_gui_text_changed, function (event)
     local player = game.get_player(event.player_index)
     local player_global = global.players[player.index]
+
+    -- handler for slider_textfield element: when the slider updates, update the textfield
+    if event.element.tags.slider_textfield then
+        local slider_textfield_flow = event.element.parent
+        slider_textfield.update_slider_value(slider_textfield_flow)
+    end
+
     if event.element.tags.action then
-        if event.element.tags.action == constants.actions.update_fuel_amount_textfield then
+        local action = event.element.tags.action
+        if action == constants.actions.update_fuel_amount_textfield then
             local new_fuel_amount = tonumber(event.element.text)
             local maximum_fuel_amount = game.item_prototypes[player_global.model.fuel_configuration.selected_fuel].stack_size * 3
             new_fuel_amount = new_fuel_amount <= maximum_fuel_amount and new_fuel_amount or maximum_fuel_amount
             local fuel_config = player_global.model.fuel_configuration
             fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
             player_global.view.fuel_amount_slider.slider_value = fuel_config.fuel_amount
+        elseif action == constants.actions.set_blueprint_snap_width then
+            local new_snap_width = tostring(event.element.text)
+            local blueprint_config = player_global.model.blueprint_configuration
+            blueprint_config = blueprint_configuration.set_snap_width(blueprint_config, new_snap_width)
         end
     end
 end)

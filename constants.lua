@@ -22,7 +22,8 @@ constants.actions = {
     icon_selector_icon_selected="icon_selector_icon_selected",
 
     set_blueprint_orientation="set_blueprint_orientation",
-    toggle_blueprint_snap="toggle_blueprint_snap"
+    toggle_blueprint_snap="toggle_blueprint_snap",
+    set_blueprint_snap_width="set_blueprint_snap_width"
 }
 
 constants.train_stop_limit_enums = {
