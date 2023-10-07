@@ -19,7 +19,12 @@ constants.actions = {
     update_fuel_amount_textfield="update_fuel_amount_textfield",
     update_fuel_amount_slider="update_fuel_amount_slider",
     icon_selector_textfield_apply="icon_selector_textfield_apply",
-    icon_selector_icon_selected="icon_selector_icon_selected"
+    icon_selector_icon_selected="icon_selector_icon_selected",
+
+    set_blueprint_orientation="set_blueprint_orientation",
+    toggle_blueprint_snap="toggle_blueprint_snap",
+    set_blueprint_snap_width="set_blueprint_snap_width",
+    toggle_blueprint_snap_direction="toggle_blueprint_snap_direction",
 }
 
 constants.train_stop_limit_enums = {
@@ -35,6 +40,11 @@ constants.orientations = {
     dl=0.625,
     l=0.75,
     ul=0.875
+}
+
+constants.snap_directions = {
+    vertical="vertical",
+    horizontal="horizontal"
 }
 
 return constants

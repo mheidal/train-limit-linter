@@ -2,11 +2,15 @@ local constants = require("constants")
 local utils = require("utils")
 
 -- Models
+local blueprint_configuration = require("models/blueprint_configuration")
 local schedule_table_configuration = require("models/schedule_table_configuration")
 local keyword_list = require("models/keyword_list")
 local fuel_configuration = require("models/fuel_configuration")
 
 -- view
+local blueprint_orientation_selector = require("views.settings_views.blueprint_orientation_selector")
+local blueprint_snap_selection = require("views/settings_views/blueprint_snap_selection")
+local slider_textfield = require("views/slider_textfield")
 local icon_selector_textfield = require("views/icon_selector_textfield")
 local keyword_tables = require("views/keyword_tables")
 
@@ -123,38 +127,18 @@ local function combine_blueprint_entities(entity_list_1, entity_list_2)
     return combined
 end
 
----@param orientation number
----@return boolean
-local function is_horizontal(orientation)
-    local horizontal_orientations = {
-        0.25,
-        0.75
-    }
-    return orientation == horizontal_orientations[1] or orientation == horizontal_orientations[2]
-end
-
----@param train LuaTrain
----@return boolean
-local function train_is_curved(train)
-    local first_orientation
-    for _, carriage in pairs(train.carriages) do
-        if not first_orientation then first_orientation = carriage.orientation end
-        local orientation = carriage.orientation
-        if orientation ~= first_orientation and orientation ~= (first_orientation - 0.5) and orientation ~= (first_orientation + 0.5) then
-            return true
-        end
-    end
-    return false
-end
-
----@param entities BlueprintEntity[]?
+---@param player LuaPlayer
 ---@return table?
-local function get_snap_to_grid_from_blueprint_entities(entities)
-    if not entities then return nil end
-    if is_horizontal(entities[1].orientation) then
-        return {x = 100, y = 4} 
+local function get_snap_to_grid(player)
+    local config = global.players[player.index].model.blueprint_configuration
+    if config.snap_enabled then
+        if config.snap_direction == constants.snap_directions.vertical then
+            return {x = 100, y = config.snap_width}
+        else
+            return {x = config.snap_width, y = 100}
+        end
     else
-        return {x = 4, y = 100}
+        return nil
     end
 end
 
@@ -171,34 +155,42 @@ local function rotate_around_origin(x, y, angle)
 end
 
 
----Take a train's entities. Find a locomotive. Rotate all the entities so that the locomotive should point downwards. 
+---Take a train's entities. Find a locomotive. Rotate all the entities so that the locomotive should point towards the player's currently set orientation. 
 ---@param entities BlueprintEntity[]
 ---@return transformed_entities BlueprintEntity[]
-local function orient_train_entities_downward(entities)
+local function orient_train_entities(entities, new_orientation)
     local main_orientation
     for _, entity in pairs(entities) do
-        if entity.name == "locomotive" then main_orientation = entity.orientation end
-        break
+        if entity.name == "locomotive" then
+            main_orientation = entity.orientation
+            break
+        end
     end
     if not main_orientation then return entities end
 
-    local goal_angle = 2 * math.pi * constants.orientations.d
+    local goal_angle = 2 * math.pi * new_orientation
     local current_angle = main_orientation * 2 * math.pi
     local angle_to_rotate = goal_angle - current_angle
 
-    for i, entity in pairs(entities) do
+    for _, entity in pairs(entities) do
         entity.position = rotate_around_origin(entity.position.x, entity.position.y, angle_to_rotate)
-        -- this will need to be refactored upon transition to other starting orientations than downward
         if entity.orientation == main_orientation then
-            entity.orientation = constants.orientations.d
+            entity.orientation = new_orientation
         else
-            entity.orientation = constants.orientations.u
+            entity.orientation = (new_orientation + 0.5) % 1
         end
     end
     
     return entities
 end
 
+
+-- Given a template train, creates a blueprint containing a copy of that train.
+-- Can use trains at any angle.
+-- First, create a main blueprint.
+-- Next, for each carriage in the train, create a blueprint containing only that carriage and set that carriage's position in the blueprint to be 7 higher than the last and set its orientation to be either up or down.
+-- Next, combine all those blueprints.
+-- Next, add fuel to the trains and add snapping to the blueprint as configured in the model.
 ---@param player LuaPlayer
 ---@param train LuaTrain
 ---@param surface_name string
@@ -206,18 +198,53 @@ local function create_blueprint_from_train(player, train, surface_name)
     local player_global = global.players[player.index]
 
     local surface = game.get_surface(surface_name)
+    if surface == nil then return end
     local script_inventory = game.create_inventory(2)
     local aggregated_blueprint_slot = script_inventory[1]
     aggregated_blueprint_slot.set_stack{name="tll_cursor_blueprint"}
     local single_carriage_slot = script_inventory[2]
     single_carriage_slot.set_stack{name="tll_cursor_blueprint"}
 
-    -- add entities from train
+    local prev_vert_offset = 0
+    local prev_orientation = nil
+    local prev_was_counteraligned = false
+
     for _, carriage in pairs(train.carriages) do
         single_carriage_slot.create_blueprint{surface=surface, area=carriage.bounding_box, force=player.force, include_trains=true, include_entities=false}
-        local new_blueprint_entities = combine_blueprint_entities(aggregated_blueprint_slot.get_blueprint_entities(), single_carriage_slot.get_blueprint_entities())
-        aggregated_blueprint_slot.set_blueprint_entities(new_blueprint_entities)
+        local new_blueprint_entities = single_carriage_slot.get_blueprint_entities()
+        if new_blueprint_entities == nil then return end
+
+        -- vertical offset only works for vanilla rolling stock! should use joint distance and connection distance but these are not visible outside data stage
+        local vert_offset = prev_vert_offset + 7
+        new_blueprint_entities[1].position = {x=0, y= -1 * vert_offset}
+
+        if prev_orientation == nil then
+            prev_orientation = carriage.orientation
+            new_blueprint_entities[1].orientation = constants.orientations.d
+        else
+            local orientation_diff = math.abs(prev_orientation - new_blueprint_entities[1].orientation) % 1
+            orientation_diff = math.min(orientation_diff, 1 - orientation_diff)
+            if orientation_diff < 0.25 then
+                if prev_was_counteraligned then
+                    new_blueprint_entities[1].orientation = constants.orientations.u
+                else
+                    new_blueprint_entities[1].orientation = constants.orientations.d
+                end
+            else
+                if prev_was_counteraligned then
+                    new_blueprint_entities[1].orientation = constants.orientations.d
+                else
+                    new_blueprint_entities[1].orientation = constants.orientations.u
+                end
+                prev_was_counteraligned = not prev_was_counteraligned
+            end
+        end
+        prev_orientation = carriage.orientation
+        prev_vert_offset = vert_offset
+        local combined_blueprint_entities = combine_blueprint_entities(new_blueprint_entities, aggregated_blueprint_slot.get_blueprint_entities())
+        aggregated_blueprint_slot.set_blueprint_entities(combined_blueprint_entities)
     end
+
     local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
     for _, entity in pairs(aggregated_entities) do
         -- change to make more portable across mods?
@@ -231,10 +258,10 @@ local function create_blueprint_from_train(player, train, surface_name)
             end
         end
     end
-    aggregated_entities = orient_train_entities_downward(aggregated_entities)
+    aggregated_entities = orient_train_entities(aggregated_entities, player_global.model.blueprint_configuration.new_blueprint_orientation)
 
     aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
-    aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid_from_blueprint_entities(aggregated_entities)
+    aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player, aggregated_entities)
     player.add_to_clipboard(aggregated_blueprint_slot)
     player.activate_paste()
     script_inventory.destroy()
@@ -412,6 +439,7 @@ local function build_train_schedule_group_report(player)
 local function get_default_global()
     return deep_copy{
         model = {
+            blueprint_configuration = utils.deep_copy(blueprint_configuration.config),
             schedule_table_configuration = utils.deep_copy(schedule_table_configuration),
             fuel_configuration = utils.deep_copy(fuel_configuration.config),
             excluded_keywords = utils.deep_copy(keyword_list.keyword_list),
@@ -533,6 +561,14 @@ local function migrate_global(player)
         player_global.show_invalid = nil
 
         player_global.model.schedule_table_configuration = schedule_table_config
+    end
+    if not player_global.model.blueprint_configuration then
+        player_global.model.blueprint_configuration = deep_copy(blueprint_configuration.config)
+    end
+    if player_global.model.blueprint_configuration.snap_enabled then
+        player_global.model.blueprint_configuration.snap_enabled = true
+        player_global.model.blueprint_configuration.snap_direction = constants.snap_directions.horizontal
+        player_global.model.blueprint_configuration.snap_width = 2
     end
 end
 
@@ -666,6 +702,25 @@ local function build_fuel_tab(player)
     end
 end
 
+local function build_settings_tab(player)
+    local player_global = global.players[player.index]
+    local settings_content_frame = player_global.view.settings_content_frame
+
+    local config = player_global.model.blueprint_configuration
+
+    settings_content_frame.clear()
+
+    local blueprint_header_label = settings_content_frame.add{
+        type="label",
+        style="bold_label",
+        caption={"tll.blueprint_settings"},
+        tooltip={"tll.blueprint_settings_tooltip"}
+    }
+    blueprint_header_label.style.font_color={1, 0.901961, 0.752941}
+    blueprint_orientation_selector.build_blueprint_orientation_selector(config.new_blueprint_orientation, settings_content_frame)
+    blueprint_snap_selection.build_blueprint_snap_selector(player, settings_content_frame)
+end
+
 local function build_interface(player)
     local player_global = global.players[player.index]
 
@@ -696,7 +751,6 @@ local function build_interface(player)
     titlebar_flow.drag_target = main_frame
     titlebar_flow.add{type="label", style="frame_title", caption={"tll.main_frame_header"}}
     titlebar_flow.add{type="empty-widget", style="flib_titlebar_drag_handle", ignored_by_interaction=true}
-
     titlebar_flow.add{type="sprite-button", tags={action=constants.actions.close_window}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
 
     -- tabs
@@ -737,6 +791,15 @@ local function build_interface(player)
     player_global.view.fuel_content_frame = fuel_content_frame
 
     build_fuel_tab(player)
+
+    -- settings tab
+    local settings_tab = tabbed_pane.add{type="tab", caption={"tll.settings_tab"}}
+    local settings_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
+    tabbed_pane.add_tab(settings_tab, settings_content_frame)
+
+    player_global.view.settings_content_frame = settings_content_frame
+
+    build_settings_tab(player)
 
 end
 
@@ -821,7 +884,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             local template_train
             for _, id in pairs(event.element.tags.template_train_ids) do
                 local template_option = get_train_by_id(id)
-                if template_option and not train_is_curved(template_option) then
+                if template_option then
                     template_train = template_option
                     break
                 end
@@ -832,6 +895,10 @@ script.on_event(defines.events.on_gui_click, function (event)
             end
             local surface_name = event.element.tags.surface
             create_blueprint_from_train(player, template_train, surface_name)
+
+        elseif action == constants.actions.set_blueprint_orientation then
+            blueprint_configuration.set_new_blueprint_orientation(player_global.model.blueprint_configuration, event.element.tags.orientation)
+            build_settings_tab(player)
         end
     end
 end)
@@ -876,12 +943,25 @@ end)
 script.on_event(defines.events.on_gui_value_changed, function (event)
     local player = game.get_player(event.player_index)
     local player_global = global.players[player.index]
+
+    -- handler for slider_textfield element: when the slider updates, update the textfield
+    if event.element.tags.slider_textfield then
+        local slider_textfield_flow = event.element.parent
+        slider_textfield.update_textfield_value(slider_textfield_flow)
+    end
+
+    -- handler for actions: if the element has a tag with key 'action' then we perform whatever operation is associated with that action.
     if event.element.tags.action then
-        if event.element.tags.action == constants.actions.update_fuel_amount_slider then
+        local action = event.element.tags.action
+        if action == constants.actions.update_fuel_amount_slider then
             local new_fuel_amount = event.element.slider_value
             local fuel_config = player_global.model.fuel_configuration
             fuel_config = fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
             player_global.view.fuel_amount_textfield.text = tostring(fuel_config.fuel_amount)
+        elseif action == constants.actions.set_blueprint_snap_width then
+            local new_snap_width = event.element.slider_value
+            local blueprint_config = player_global.model.blueprint_configuration
+            blueprint_config = blueprint_configuration.set_snap_width(blueprint_config, new_snap_width)
         end
     end
 end)
@@ -889,14 +969,26 @@ end)
 script.on_event(defines.events.on_gui_text_changed, function (event)
     local player = game.get_player(event.player_index)
     local player_global = global.players[player.index]
+
+    -- handler for slider_textfield element: when the slider updates, update the textfield
+    if event.element.tags.slider_textfield then
+        local slider_textfield_flow = event.element.parent
+        slider_textfield.update_slider_value(slider_textfield_flow)
+    end
+
     if event.element.tags.action then
-        if event.element.tags.action == constants.actions.update_fuel_amount_textfield then
+        local action = event.element.tags.action
+        if action == constants.actions.update_fuel_amount_textfield then
             local new_fuel_amount = tonumber(event.element.text)
             local maximum_fuel_amount = game.item_prototypes[player_global.model.fuel_configuration.selected_fuel].stack_size * 3
             new_fuel_amount = new_fuel_amount <= maximum_fuel_amount and new_fuel_amount or maximum_fuel_amount
             local fuel_config = player_global.model.fuel_configuration
             fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
             player_global.view.fuel_amount_slider.slider_value = fuel_config.fuel_amount
+        elseif action == constants.actions.set_blueprint_snap_width then
+            local new_snap_width = tonumber(event.element.text)
+            local blueprint_config = player_global.model.blueprint_configuration
+            blueprint_config = blueprint_configuration.set_snap_width(blueprint_config, new_snap_width)
         end
     end
 end)
@@ -912,10 +1004,25 @@ script.on_event(defines.events.on_gui_elem_changed, function(event)
     end
 end)
 
+script.on_event(defines.events.on_gui_switch_state_changed, function(event)
+    local player = game.get_player(event.player_index)
+    local player_global = global.players[player.index]
+    if event.element.tags.action then
+        local action = event.element.tags.action
+        if action == constants.actions.toggle_blueprint_snap_direction then
+            blueprint_configuration.toggle_snap_direction(player_global.model.blueprint_configuration)
+        end
+    end
+end)
+
 script.on_event(defines.events.on_gui_closed, function(event)
-    if event.element and event.element.name == "tll_main_frame" then
+    if event.element then
         local player = game.get_player(event.player_index)
-        toggle_interface(player)
+        if event.element.name == "tll_main_frame" then
+            toggle_interface(player)
+        elseif event.element.name == "tll_settings_main_frame" then
+            settings_gui.toggle_settings_gui(player)
+        end
     end
 end)
 
