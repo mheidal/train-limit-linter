@@ -208,6 +208,13 @@ local function orient_train_entities(entities, new_orientation)
     return entities
 end
 
+
+-- Given a template train, creates a blueprint containing a copy of that train.
+-- Can use trains at any angle.
+-- First, create a main blueprint.
+-- Next, for each carriage in the train, create a blueprint containing only that carriage and set that carriage's position in the blueprint to be 7 higher than the last and set its orientation to be either up or down.
+-- Next, combine all those blueprints.
+-- Next, add fuel to the trains and add snapping to the blueprint as configured in the model.
 ---@param player LuaPlayer
 ---@param train LuaTrain
 ---@param surface_name string
@@ -257,9 +264,9 @@ local function create_blueprint_from_train(player, train, surface_name)
             end
         end
         prev_orientation = carriage.orientation
+        prev_vert_offset = vert_offset
         local combined_blueprint_entities = combine_blueprint_entities(new_blueprint_entities, aggregated_blueprint_slot.get_blueprint_entities())
         aggregated_blueprint_slot.set_blueprint_entities(combined_blueprint_entities)
-        prev_vert_offset = vert_offset
     end
 
     local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
