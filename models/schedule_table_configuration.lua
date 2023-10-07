@@ -18,6 +18,7 @@ function toggle_show_invalid(config)
     config.show_invalid = not config.show_invalid
 end
 
+Exports.config = config
 Exports.toggle_current_surface = toggle_current_surface
 Exports.toggle_show_satisfied = toggle_show_satisfied
 Exports.toggle_show_invalid = toggle_show_invalid

@@ -440,7 +440,7 @@ local function get_default_global()
     return deep_copy{
         model = {
             blueprint_configuration = utils.deep_copy(blueprint_configuration.config),
-            schedule_table_configuration = utils.deep_copy(schedule_table_configuration),
+            schedule_table_configuration = utils.deep_copy(schedule_table_configuration.config),
             fuel_configuration = utils.deep_copy(fuel_configuration.config),
             excluded_keywords = utils.deep_copy(keyword_list.keyword_list),
             hidden_keywords = utils.deep_copy(keyword_list.keyword_list),
@@ -609,6 +609,7 @@ local function build_exclude_tab(player)
 
 
     local excluded_keywords_frame = exclude_content_frame.add{type="scroll-pane", direction="vertical"}
+    excluded_keywords_frame.style.vertically_stretchable = true
     player_global.view.excluded_keywords_frame = excluded_keywords_frame
 
     keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
@@ -630,6 +631,7 @@ local function build_hide_tab(player)
     textfield_flow.add{type="sprite-button", tags={action=constants.actions.delete_all_hidden_keywords}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
 
     local hidden_keywords_frame = hide_content_frame.add{type="scroll-pane", direction="vertical"}
+    hidden_keywords_frame.style.vertically_stretchable = true
     player_global.view.hidden_keywords_frame = hidden_keywords_frame
 
     keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
@@ -645,6 +647,7 @@ local function build_settings_tab(player)
     settings_content_frame.clear()
 
     local scroll_pane = settings_content_frame.add{type="scroll-pane", direction="vertical"}
+    scroll_pane.style.vertically_stretchable = true
 
     -- blueprint settings
     local blueprint_settings_frame = scroll_pane.add{type="frame", style="bordered_frame", direction="vertical"}
@@ -702,7 +705,10 @@ local function build_settings_tab(player)
         end
     end
 
-    local fuel_button_table = fuel_settings_frame.add{type="frame", direction="horizontal", style="slot_button_deep_frame"}
+    local column_count = #valid_fuels < 10 and #valid_fuels or 10
+
+    local table_frame = fuel_settings_frame.add{type="frame", style="slot_button_deep_frame"}
+    local fuel_button_table = table_frame.add{type="table", column_count=column_count, style="filter_slot_table"}
 
     for _, fuel in pairs(valid_fuels) do
         local item_name = fuel.name
@@ -718,10 +724,7 @@ local function build_interface(player)
     local screen_element = player.gui.screen
 
     local main_frame = screen_element.add{type="frame", name="tll_main_frame", direction="vertical"}
-    main_frame.style.size = {600, 300}
-    main_frame.style.minimal_height = 300
-    main_frame.style.maximal_height = 810
-    main_frame.style.vertically_stretchable = true
+    main_frame.style.size = {600, 800}
 
     if not player_global.model.last_gui_location then
         main_frame.auto_center = true
@@ -1029,6 +1032,7 @@ end)
 script.on_configuration_changed(function (config_changed_data)
     if config_changed_data.mod_changes["train-limit-linter"] then
         for _, player in pairs(game.players) do
+            -- global.players[player.index] = deep_copy(get_default_global())
             migrate_global(player)
             local player_global = global.players[player.index]
             if player_global.view.main_frame ~= nil then
