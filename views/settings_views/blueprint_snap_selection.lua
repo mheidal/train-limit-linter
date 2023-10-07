@@ -19,7 +19,8 @@ local function build_blueprint_snap_selector(player, parent)
         2,
         2,
         20,
-        config.snap_enabled
+        config.snap_enabled,
+        false
     )
     local snap_direction_flow = parent.add{type="flow", direction="horizontal"}
     snap_direction_flow.style.horizontally_stretchable = true

@@ -636,14 +636,42 @@ local function build_hide_tab(player)
 
 end
 
-local function build_fuel_tab(player)
+local function build_settings_tab(player)
     local player_global = global.players[player.index]
-    local fuel_content_frame = player_global.view.fuel_content_frame
-    fuel_content_frame.clear()
+    local settings_content_frame = player_global.view.settings_content_frame
 
+    local blueprint_config = player_global.model.blueprint_configuration
+
+    settings_content_frame.clear()
+
+    local scroll_pane = settings_content_frame.add{type="scroll-pane", direction="vertical"}
+
+    -- blueprint settings
+    local blueprint_settings_frame = scroll_pane.add{type="frame", style="bordered_frame", direction="vertical"}
+
+    local blueprint_header_label = blueprint_settings_frame.add{
+        type="label",
+        style="bold_label",
+        caption={"tll.blueprint_settings"},
+        tooltip={"tll.blueprint_settings_tooltip"}
+    }
+    blueprint_header_label.style.font_color={1, 0.901961, 0.752941}
+    blueprint_orientation_selector.build_blueprint_orientation_selector(blueprint_config.new_blueprint_orientation, blueprint_settings_frame)
+    blueprint_snap_selection.build_blueprint_snap_selector(player, blueprint_settings_frame)
+
+    -- fuel settings
+    local fuel_settings_frame = scroll_pane.add{type="frame", style="bordered_frame", direction="vertical"}
+
+    local fuel_header_label = fuel_settings_frame.add{
+        type="label",
+        style="bold_label",
+        caption={"tll.fuel_settings"},
+        tooltip={"tll.fuel_settings_tooltip"}
+    }
+    fuel_header_label.style.font_color={1, 0.901961, 0.752941}
     local fuel_config = player_global.model.fuel_configuration
 
-    fuel_content_frame.add{
+    fuel_settings_frame.add{
         type="checkbox",
         tags={action=constants.actions.toggle_place_trains_with_fuel},
         state=fuel_config.add_fuel,
@@ -651,48 +679,30 @@ local function build_fuel_tab(player)
     }
 
     local fuel_amount_frame_enabled = fuel_config.add_fuel and fuel_config.selected_fuel ~= nil
-    local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[fuel_config.selected_fuel].stack_size * 3)) or 1
 
-    local capped_fuel_amount = fuel_config.fuel_amount >= maximum_fuel_amount and maximum_fuel_amount or fuel_config.fuel_amount
+    local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[fuel_config.selected_fuel].stack_size * 3)) or 1
 
     local slider_value_step = maximum_fuel_amount % 10 == 0 and maximum_fuel_amount / 10 or 1
 
-    local fuel_amount_frame = fuel_content_frame.add{type="frame", direction="horizontal"}
-    fuel_amount_frame.style.top_margin = 10
-    fuel_amount_frame.style.bottom_margin = 10
-    fuel_amount_frame.style.horizontally_stretchable = true
-    local fuel_amount_textfield = fuel_amount_frame.add{
-        type="textfield",
-        tags={action=constants.actions.update_fuel_amount_textfield},
-        text=tostring(capped_fuel_amount),
-        numeric=true,
-        allow_decimal=false,
-        allow_negative=false,
-        enabled=fuel_amount_frame_enabled
-    }
-    local fuel_amount_slider = fuel_amount_frame.add{
-        type="slider",
-        tags={action=constants.actions.update_fuel_amount_slider},
-        value=capped_fuel_amount,
-        value_step=slider_value_step,
-        minimum_value=0,
-        maximum_value=maximum_fuel_amount,
-        style="notched_slider",
-        enabled=fuel_amount_frame_enabled
-    }
-    fuel_amount_slider.style.horizontally_stretchable = true
-
-    player_global.view.fuel_amount_textfield = fuel_amount_textfield
-    player_global.view.fuel_amount_slider = fuel_amount_slider
+    slider_textfield.add_slider_textfield(
+        fuel_settings_frame,
+        constants.actions.update_fuel_amount,
+        fuel_config.fuel_amount,
+        slider_value_step,
+        0,
+        maximum_fuel_amount,
+        fuel_amount_frame_enabled,
+        true
+    )
 
     local valid_fuels = {}
-    for i, prototype in pairs(game.item_prototypes) do
+    for _, prototype in pairs(game.item_prototypes) do
         if prototype.fuel_category and prototype.fuel_category == "chemical" then
             table.insert(valid_fuels, prototype)
         end
     end
 
-    local fuel_button_table = fuel_content_frame.add{type="table", column_count=#valid_fuels <= 10 and #valid_fuels or 10, style="filter_slot_table"}
+    local fuel_button_table = fuel_settings_frame.add{type="frame", direction="horizontal", style="slot_button_deep_frame"}
 
     for _, fuel in pairs(valid_fuels) do
         local item_name = fuel.name
@@ -700,25 +710,6 @@ local function build_fuel_tab(player)
         local button_style = (item_name == fuel_config.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
         fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={action=constants.actions.select_fuel, item_name=item_name}, style=button_style, enabled = fuel_config.add_fuel} -- TODO: select on click
     end
-end
-
-local function build_settings_tab(player)
-    local player_global = global.players[player.index]
-    local settings_content_frame = player_global.view.settings_content_frame
-
-    local config = player_global.model.blueprint_configuration
-
-    settings_content_frame.clear()
-
-    local blueprint_header_label = settings_content_frame.add{
-        type="label",
-        style="bold_label",
-        caption={"tll.blueprint_settings"},
-        tooltip={"tll.blueprint_settings_tooltip"}
-    }
-    blueprint_header_label.style.font_color={1, 0.901961, 0.752941}
-    blueprint_orientation_selector.build_blueprint_orientation_selector(config.new_blueprint_orientation, settings_content_frame)
-    blueprint_snap_selection.build_blueprint_snap_selector(player, settings_content_frame)
 end
 
 local function build_interface(player)
@@ -782,16 +773,6 @@ local function build_interface(player)
 
     build_hide_tab(player)
 
-    -- fuel tab
-
-    local fuel_tab = tabbed_pane.add{type="tab", caption={"tll.fuel_tab"}}
-    local fuel_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
-    tabbed_pane.add_tab(fuel_tab, fuel_content_frame)
-
-    player_global.view.fuel_content_frame = fuel_content_frame
-
-    build_fuel_tab(player)
-
     -- settings tab
     local settings_tab = tabbed_pane.add{type="tab", caption={"tll.settings_tab"}}
     local settings_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
@@ -833,7 +814,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             local fuel_config = player_global.model.fuel_configuration
             fuel_config = fuel_configuration.change_selected_fuel(fuel_config, item_name)
 
-            build_fuel_tab(player)
+            build_settings_tab(player)
             return
 
         elseif action == constants.actions.train_report_update then
@@ -953,11 +934,10 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
     -- handler for actions: if the element has a tag with key 'action' then we perform whatever operation is associated with that action.
     if event.element.tags.action then
         local action = event.element.tags.action
-        if action == constants.actions.update_fuel_amount_slider then
+        if action == constants.actions.update_fuel_amount then
             local new_fuel_amount = event.element.slider_value
             local fuel_config = player_global.model.fuel_configuration
             fuel_config = fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
-            player_global.view.fuel_amount_textfield.text = tostring(fuel_config.fuel_amount)
         elseif action == constants.actions.set_blueprint_snap_width then
             local new_snap_width = event.element.slider_value
             local blueprint_config = player_global.model.blueprint_configuration
@@ -970,26 +950,25 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
     local player = game.get_player(event.player_index)
     local player_global = global.players[player.index]
 
-    -- handler for slider_textfield element: when the slider updates, update the textfield
-    if event.element.tags.slider_textfield then
-        local slider_textfield_flow = event.element.parent
-        slider_textfield.update_slider_value(slider_textfield_flow)
-    end
-
     if event.element.tags.action then
         local action = event.element.tags.action
-        if action == constants.actions.update_fuel_amount_textfield then
+        if action == constants.actions.update_fuel_amount then
+            -- this caps the textfield's value
             local new_fuel_amount = tonumber(event.element.text)
-            local maximum_fuel_amount = game.item_prototypes[player_global.model.fuel_configuration.selected_fuel].stack_size * 3
-            new_fuel_amount = new_fuel_amount <= maximum_fuel_amount and new_fuel_amount or maximum_fuel_amount
             local fuel_config = player_global.model.fuel_configuration
             fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
-            player_global.view.fuel_amount_slider.slider_value = fuel_config.fuel_amount
+       
         elseif action == constants.actions.set_blueprint_snap_width then
             local new_snap_width = tonumber(event.element.text)
             local blueprint_config = player_global.model.blueprint_configuration
             blueprint_config = blueprint_configuration.set_snap_width(blueprint_config, new_snap_width)
         end
+    end
+
+    -- handler for slider_textfield element: when the slider updates, update the textfield
+    if event.element.tags.slider_textfield then
+        local slider_textfield_flow = event.element.parent
+        slider_textfield.update_slider_value(slider_textfield_flow)
     end
 end)
 
