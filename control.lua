@@ -577,7 +577,7 @@ local function build_display_tab(player)
     local display_content_frame = player_global.view.display_content_frame
     display_content_frame.clear()
 
-    local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="ugg_controls_flow"}
+    local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="tll_controls_flow"}
 
     local table_config = player_global.model.schedule_table_configuration
 
@@ -598,7 +598,7 @@ local function build_exclude_tab(player)
     local exclude_content_frame = player_global.view.exclude_content_frame
     exclude_content_frame.clear()
 
-    local exclude_control_flow = exclude_content_frame.add{type="flow", direction="vertical", style="ugg_controls_flow"}
+    local exclude_control_flow = exclude_content_frame.add{type="flow", direction="vertical", style="tll_controls_flow"}
     exclude_control_flow.style.bottom_margin = 5
     exclude_control_flow.add{type="label", caption={"tll.add_excluded_keyword"}, tooltip={"tll.add_excluded_keyword_tooltip"}}
     local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
@@ -621,7 +621,7 @@ local function build_hide_tab(player)
     local player_global = global.players[player.index]
     local hide_content_frame = player_global.view.hide_content_frame
     hide_content_frame.clear()
-    local control_flow = hide_content_frame.add{type="flow", direction="vertical", style="ugg_controls_flow"}
+    local control_flow = hide_content_frame.add{type="flow", direction="vertical", style="tll_controls_flow"}
     control_flow.style.bottom_margin = 5
     control_flow.add{type="label", caption={"tll.add_hidden_keyword"}, tooltip={"tll.add_hidden_keyword_tooltip"}}
     local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
@@ -753,7 +753,7 @@ local function build_interface(player)
 
     -- display tab
     local display_tab = tabbed_pane.add{type="tab", caption={"tll.display_tab"}}
-    local display_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
+    local display_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="tll_tab_content_frame"}
     tabbed_pane.add_tab(display_tab, display_content_frame)
 
     player_global.view.display_content_frame = display_content_frame
@@ -762,7 +762,7 @@ local function build_interface(player)
 
     -- exclude tab
     local exclude_tab = tabbed_pane.add{type="tab", caption={"tll.exclude_tab"}}
-    local exclude_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
+    local exclude_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="tll_tab_content_frame"}
     tabbed_pane.add_tab(exclude_tab, exclude_content_frame)
     player_global.view.exclude_content_frame = exclude_content_frame
 
@@ -770,7 +770,7 @@ local function build_interface(player)
 
     -- hide tab
     local hide_tab = tabbed_pane.add{type="tab", caption={"tll.hide_tab"}}
-    local hide_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
+    local hide_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="tll_tab_content_frame"}
     tabbed_pane.add_tab(hide_tab, hide_content_frame)
     player_global.view.hide_content_frame = hide_content_frame
 
@@ -778,7 +778,7 @@ local function build_interface(player)
 
     -- settings tab
     local settings_tab = tabbed_pane.add{type="tab", caption={"tll.settings_tab"}}
-    local settings_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="ugg_content_frame"}
+    local settings_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="tll_tab_content_frame"}
     tabbed_pane.add_tab(settings_tab, settings_content_frame)
 
     player_global.view.settings_content_frame = settings_content_frame
