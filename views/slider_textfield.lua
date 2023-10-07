@@ -49,7 +49,7 @@ end
 function Exports.update_slider_value(slider_textfield_flow)
     local slider = slider_textfield_flow.slider
     local textfield = slider_textfield_flow.textfield
-    local new_value = tonumber(textfield.text)
+    local new_value = textfield.text ~= "" and tonumber(textfield.text) or 0
     if textfield.tags.cap_textfield_value then
         if new_value > slider.get_slider_maximum() then
             new_value = slider.get_slider_maximum()

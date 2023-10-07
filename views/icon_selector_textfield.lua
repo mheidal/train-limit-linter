@@ -6,10 +6,11 @@ Exports.textfield_name = "icon_selector_textfield"
 Exports.icon_selector_button_name = "icon_selector_button"
 Exports.enter_button_name = "icon_selector_enter_button"
 
-function Exports.build_icon_selector_textfield(parent, entry_button_tooltip, entry_button_action)
+function Exports.build_icon_selector_textfield(parent, entry_button_tooltip, enter_action)
     parent.add{
         type="textfield",
-        name = Exports.textfield_name
+        name = Exports.textfield_name,
+        tags={action=enter_action}
     }
 
     local elem_button = parent.add{
@@ -24,7 +25,7 @@ function Exports.build_icon_selector_textfield(parent, entry_button_tooltip, ent
 
     parent.add{
         type="sprite-button",
-        tags={action=entry_button_action},
+        tags={action=enter_action},
         style="item_and_count_select_confirm",
         sprite="utility/enter",
         tooltip=entry_button_tooltip,

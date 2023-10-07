@@ -813,7 +813,6 @@ script.on_event(defines.events.on_gui_click, function (event)
         local action = event.element.tags.action
          if action == constants.actions.select_fuel then
             local item_name = event.element.tags.item_name
-            
             local fuel_config = player_global.model.fuel_configuration
             fuel_config = fuel_configuration.change_selected_fuel(fuel_config, item_name)
 
@@ -1004,6 +1003,29 @@ script.on_event(defines.events.on_gui_closed, function(event)
             toggle_interface(player)
         elseif event.element.name == "tll_settings_main_frame" then
             settings_gui.toggle_settings_gui(player)
+        end
+    end
+end)
+
+script.on_event(defines.events.on_gui_confirmed, function(event)
+    local player = game.get_player(event.player_index)
+    local player_global = global.players[player.index]
+    if event.element.tags.action then
+        local action = event.element.tags.action
+        if action == constants.actions.exclude_textfield_apply then
+            local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
+            if text ~= "" then -- don't allow user to input the empty string
+                keyword_list.set_enabled(player_global.model.excluded_keywords, text, true)
+                keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
+                build_train_schedule_group_report(player)
+            end
+        elseif action == constants.actions.hide_textfield_apply then
+            local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
+            if text ~= "" then -- don't allow user to input the empty string
+                keyword_list.set_enabled(player_global.model.hidden_keywords, text, true)
+                keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
+                build_train_schedule_group_report(player)
+            end
         end
     end
 end)
