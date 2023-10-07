@@ -127,30 +127,6 @@ local function combine_blueprint_entities(entity_list_1, entity_list_2)
     return combined
 end
 
----@param orientation number
----@return boolean
-local function is_horizontal(orientation)
-    local horizontal_orientations = {
-        0.25,
-        0.75
-    }
-    return orientation == horizontal_orientations[1] or orientation == horizontal_orientations[2]
-end
-
----@param train LuaTrain
----@return boolean
-local function train_is_curved(train)
-    local first_orientation
-    for _, carriage in pairs(train.carriages) do
-        if not first_orientation then first_orientation = carriage.orientation end
-        local orientation = carriage.orientation
-        if orientation ~= first_orientation and orientation ~= (first_orientation - 0.5) and orientation ~= (first_orientation + 0.5) then
-            return true
-        end
-    end
-    return false
-end
-
 ---@param player LuaPlayer
 ---@return table?
 local function get_snap_to_grid(player)
@@ -908,10 +884,6 @@ script.on_event(defines.events.on_gui_click, function (event)
             local template_train
             for _, id in pairs(event.element.tags.template_train_ids) do
                 local template_option = get_train_by_id(id)
-                -- if template_option and not train_is_curved(template_option) then
-                --     template_train = template_option
-                --     break
-                -- end
                 if template_option then
                     template_train = template_option
                     break

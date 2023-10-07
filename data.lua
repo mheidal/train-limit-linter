@@ -69,7 +69,7 @@ data:extend({
     key_sequence="CONTROL + Q",
     order = "a"
   },
-    {
+  {
     type="virtual-signal",
     name="tll-select-icon",
     icon="__core__/graphics/icons/mip/select-icon-white.png",
