@@ -236,11 +236,12 @@ local function create_blueprint_from_train(player, train, surface_name)
         new_blueprint_entities[1].position = {x=0, y= -1 * vert_offset}
 
         if prev_orientation == nil then
+            prev_orientation = carriage.orientation
             new_blueprint_entities[1].orientation = constants.orientations.d
-            prev_orientation = new_blueprint_entities[1].orientation
         else
             local orientation_diff = math.abs(prev_orientation - new_blueprint_entities[1].orientation) % 1
-            if orientation_diff < 0.3 or orientation_diff > 0.7 then -- I'm not 100% sure this manages to correctly orient all rolling stock when the train is curved
+            orientation_diff = math.min(orientation_diff, 1 - orientation_diff)
+            if orientation_diff < 0.25 then
                 if prev_was_counteraligned then
                     new_blueprint_entities[1].orientation = constants.orientations.u
                 else
@@ -255,7 +256,7 @@ local function create_blueprint_from_train(player, train, surface_name)
                 prev_was_counteraligned = not prev_was_counteraligned
             end
         end
-
+        prev_orientation = carriage.orientation
         local combined_blueprint_entities = combine_blueprint_entities(new_blueprint_entities, aggregated_blueprint_slot.get_blueprint_entities())
         aggregated_blueprint_slot.set_blueprint_entities(combined_blueprint_entities)
         prev_vert_offset = vert_offset
