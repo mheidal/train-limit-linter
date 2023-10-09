@@ -445,6 +445,13 @@ local function build_train_schedule_group_report(player)
     end
     end
 
+---@return TLLPlayerView
+local function get_bare_view()
+    return {
+        fuel_amount_flows={}
+    }
+end
+
 ---@return TLLPlayerGlobal
 local function get_default_global()
 
@@ -465,7 +472,7 @@ local function get_default_global()
             hidden_keywords = keyword_list.get_new_keyword_list(),
             last_gui_location = nil, -- migration not actually necessary, since it starts as nil?
         },
-        view = {}
+        view = get_bare_view()
     }
 end
 
@@ -608,11 +615,11 @@ local function build_settings_tab(player)
 
         local fuel_amount_frame_enabled = fuel_config.add_fuel and fuel_category_config.selected_fuel ~= nil
 
-        local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[fuel_category_config.selected_fuel].stack_size * 3)) or 1
+        local maximum_fuel_amount = fuel_category_config:get_max_fuel_amount()
 
         local slider_value_step = maximum_fuel_amount % 10 == 0 and maximum_fuel_amount / 10 or 1
 
-        slider_textfield.add_slider_textfield(
+        local fuel_category_slider_textfield = slider_textfield.add_slider_textfield(
             category_settings_flow,
             {
                 action=constants.actions.update_fuel_amount,
@@ -625,6 +632,8 @@ local function build_settings_tab(player)
             fuel_amount_frame_enabled,
             true
         )
+
+        player_global.view.fuel_amount_flows[fuel_category] = fuel_category_slider_textfield
 
         local valid_fuels = global.model.fuel_category_data.fuel_categories_and_fuels[fuel_category]
 
@@ -732,7 +741,7 @@ local function toggle_interface(player)
     else
         player_global.model.last_gui_location = main_frame.location
         main_frame.destroy()
-        player_global.view = {}
+        player_global.view = get_bare_view()
     end
 end
 
@@ -755,7 +764,10 @@ script.on_event(defines.events.on_gui_click, function (event)
             local fuel_category = event.element.tags.fuel_category
             if type(item_name) ~= "string" or type(fuel_category) ~= "string" then return end
             local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[fuel_category]
-            fuel_config:change_selected_fuel(item_name)
+            if fuel_config:change_selected_fuel_and_check_overcap(item_name) then
+                local fuel_category_slider_textfield_flow = player_global.view.fuel_amount_flows[fuel_category]
+                slider_textfield.update_slider_value(fuel_category_slider_textfield_flow, fuel_config:get_max_fuel_amount())
+            end
 
             build_settings_tab(player)
 
@@ -915,7 +927,7 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
             local new_fuel_amount = tonumber(event.element.text)
             if type(new_fuel_amount) == "number" then
                 local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[event.element.tags.fuel_category]
-                fuel_configuration:set_fuel_amount(fuel_config, new_fuel_amount)
+                fuel_config:set_fuel_amount(new_fuel_amount)
             end
 
         elseif action == constants.actions.set_blueprint_snap_width then

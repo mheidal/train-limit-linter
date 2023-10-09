@@ -12,6 +12,7 @@ Exports = {}
 ---@param maximum_value number
 ---@param enabled_condition boolean
 ---@param cap_textfield_value boolean
+---@return LuaGuiElement -- the flow containing the two
 function Exports.add_slider_textfield(parent, tags, value, value_step, minimum_value, maximum_value, enabled_condition, cap_textfield_value)
     local slider_textfield_flow = parent.add{type="flow", direction="horizontal"}
 
@@ -51,25 +52,40 @@ function Exports.add_slider_textfield(parent, tags, value, value_step, minimum_v
         negative_allowed = negative_allowed,
         numeric=true,
     }
+    return slider_textfield_flow
 end
 
-function Exports.update_slider_value(slider_textfield_flow)
+---@param slider_textfield_flow LuaGuiElement
+---@param new_value number?
+function Exports.update_slider_value(slider_textfield_flow, new_value)
+    
     local slider = slider_textfield_flow.slider
-    local textfield = slider_textfield_flow.textfield
-    local new_value = textfield.text ~= "" and tonumber(textfield.text) or 0
-    if textfield.tags.cap_textfield_value then
-        if new_value > slider.get_slider_maximum() then
-            new_value = slider.get_slider_maximum()
-            textfield.text = tostring(new_value)
+    if not slider then return end
+    if new_value == nil then
+        local textfield = slider_textfield_flow.textfield
+        if not textfield then return end
+        new_value = textfield.text ~= "" and tonumber(textfield.text) or 0
+        if textfield.tags.cap_textfield_value then
+            if new_value > slider.get_slider_maximum() then
+                new_value = slider.get_slider_maximum()
+                textfield.text = tostring(new_value)
+            end
         end
     end
     slider.slider_value = new_value
 end
 
-function Exports.update_textfield_value(slider_textfield_flow)
-    local slider = slider_textfield_flow.slider
+---@param slider_textfield_flow LuaGuiElement
+---@param new_value number?
+function Exports.update_textfield_value(slider_textfield_flow, new_value)
+    if not new_value then
+        local slider = slider_textfield_flow.slider
+        if not slider then return end
+        new_value = slider.slider_value
+    end
     local textfield = slider_textfield_flow.textfield
-    textfield.text = tostring(slider.slider_value)
+    if not textfield then return end
+    textfield.text = tostring(new_value)
 end
 
 return Exports
