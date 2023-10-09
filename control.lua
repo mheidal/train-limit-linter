@@ -448,21 +448,19 @@ local function build_train_schedule_group_report(player)
 ---@return TLLPlayerGlobal
 local function get_default_global()
 
+    local fuel_config = fuel_configuration.get_new_fuel_configuration()
+
     local fuel_categories = global.model.fuel_category_data.fuel_categories_and_fuels
 
-    local fuel_category_configurations = {}
     for fuel_category, _ in pairs(fuel_categories) do
-        fuel_category_configurations[fuel_category] = fuel_configuration.get_fuel_category_configuration()
+        fuel_config:add_fuel_category_config(fuel_category)
     end
 
     return deep_copy{
         model = {
             blueprint_configuration = blueprint_configuration.get_new_blueprint_configuration(),
             schedule_table_configuration = schedule_table_configuration.get_new_schedule_table_configuration(),
-            fuel_configuration = {
-                add_fuel=true,
-                fuel_category_configurations=fuel_category_configurations
-            },
+            fuel_configuration = fuel_config,
             excluded_keywords = keyword_list.get_new_keyword_list(),
             hidden_keywords = keyword_list.get_new_keyword_list(),
             last_gui_location = nil, -- migration not actually necessary, since it starts as nil?
@@ -754,13 +752,12 @@ script.on_event(defines.events.on_gui_click, function (event)
         local action = event.element.tags.action
          if action == constants.actions.select_fuel then
             local item_name = event.element.tags.item_name
-            if type(item_name) == "string" then
-                local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[event.element.tags.fuel_category]
-                fuel_config = fuel_configuration.change_selected_fuel(fuel_config, item_name)
-            end
+            local fuel_category = event.element.tags.fuel_category
+            if type(item_name) ~= "string" or type(fuel_category) ~= "string" then return end
+            local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[fuel_category]
+            fuel_config:change_selected_fuel(item_name)
 
             build_settings_tab(player)
-            return
 
         elseif action == constants.actions.train_report_update then
             build_train_schedule_group_report(player)
@@ -870,7 +867,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
-            player_global.model.fuel_configuration = fuel_configuration.toggle_add_fuel(player_global.model.fuel_configuration)
+            player_global.model.fuel_configuration:toggle_add_fuel()
             build_settings_tab(player)
         end
     end
@@ -894,8 +891,9 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
         local action = event.element.tags.action
         if action == constants.actions.update_fuel_amount then
             local new_fuel_amount = event.element.slider_value
-            local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[event.element.tags.fuel_category]
-            fuel_config = fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
+            local fuel_category = event.element.tags.fuel_category
+            local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[fuel_category]
+            fuel_config:set_fuel_amount(new_fuel_amount)
         elseif action == constants.actions.set_blueprint_snap_width then
             local new_snap_width = event.element.slider_value
             player_global.model.blueprint_configuration:set_snap_width(new_snap_width)
@@ -917,7 +915,7 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
             local new_fuel_amount = tonumber(event.element.text)
             if type(new_fuel_amount) == "number" then
                 local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[event.element.tags.fuel_category]
-                fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
+                fuel_configuration:set_fuel_amount(fuel_config, new_fuel_amount)
             end
 
         elseif action == constants.actions.set_blueprint_snap_width then
