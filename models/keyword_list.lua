@@ -14,7 +14,7 @@
 
 Exports = {}
 
-toggleable_item = {}
+-- toggleable item
 
 TLLToggleableItem = {}
 
@@ -26,6 +26,8 @@ function TLLToggleableItem:new()
     self.__index = self
     return new_object
 end
+
+-- keyword list
 
 TLLKeywordList = {}
 
