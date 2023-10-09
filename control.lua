@@ -1018,8 +1018,9 @@ end)
 
 script.on_init(function ()
 
-    global.model = {}
-    global.model.fuel_category_data = fuel_category_data.get_fuel_category_data()
+    global.model = {
+        fuel_category_data = fuel_category_data.get_fuel_category_data()
+    }
 
     local freeplay = remote.interfaces["freeplay"]
     if freeplay then -- TODO: remove this when done with testing
