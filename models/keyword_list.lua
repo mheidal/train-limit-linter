@@ -1,5 +1,6 @@
 ---@class TLLKeywordList
 ---@field toggleable_items table<string, TLLToggleableItem>
+---@field new fun(self: TLLKeywordList): TLLKeywordList
 ---@field get_enabled_keywords fun(self: TLLKeywordList): string[]
 ---@field set_enabled fun(self: TLLKeywordList, keyword: string, enabled: boolean)
 ---@field toggle_enabled fun(self: TLLKeywordList, keyword: string)
@@ -15,19 +16,30 @@ Exports = {}
 
 toggleable_item = {}
 
-function toggleable_item.get_new_toggleable_item()
-    return deep_copy({
+TLLToggleableItem = {}
+
+function TLLToggleableItem:new()
+    local new_object = {
         enabled=true
-    })
+    }
+    setmetatable(new_object, self)
+    self.__index = self
+    return new_object
 end
 
--- Table of toggleable_item, where key is the name and value has an enabled flag
-keyword_list = {
-    toggleable_items={}
-}
+TLLKeywordList = {}
+
+function TLLKeywordList:new()
+    local new_object = {
+        toggleable_items={}
+    }
+    setmetatable(new_object, self)
+    self.__index = self
+    return new_object
+end
 
 ---@return string[]
-function keyword_list:get_enabled_keywords()
+function TLLKeywordList:get_enabled_keywords()
     local enabled_keywords = {}
 
     for value, toggleable_item in pairs(self.toggleable_items) do
@@ -38,7 +50,7 @@ end
 
 ---@param keyword string
 ---@param enabled boolean
-function keyword_list:set_enabled(keyword, enabled)
+function TLLKeywordList:set_enabled(keyword, enabled)
     if self.toggleable_items[keyword] == nil then
         self.toggleable_items[keyword] = deep_copy(toggleable_item)
     end
@@ -46,7 +58,7 @@ function keyword_list:set_enabled(keyword, enabled)
 end
 
 ---@param keyword string
-function keyword_list:toggle_enabled(keyword)
+function TLLKeywordList:toggle_enabled(keyword)
     if self.toggleable_items[keyword] == nil then
         return
     end
@@ -54,19 +66,14 @@ function keyword_list:toggle_enabled(keyword)
 end
 
 ---@param keyword string
-function keyword_list:remove_item(keyword)
+function TLLKeywordList:remove_item(keyword)
     self.toggleable_items[keyword] = nil
 end
 
-function keyword_list:remove_all()
+function TLLKeywordList:remove_all()
     self.toggleable_items = {}
 end
 
----@return TLLKeywordList
-function get_new_keyword_list()
-    return deep_copy(keyword_list)
-end
-
-Exports.get_new_keyword_list = get_new_keyword_list
+Exports.TLLKeywordList = TLLKeywordList
 
 return Exports

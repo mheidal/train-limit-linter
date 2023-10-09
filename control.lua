@@ -465,11 +465,11 @@ local function get_default_global()
 
     return {
         model = {
-            blueprint_configuration = blueprint_configuration.get_new_blueprint_configuration(),
-            schedule_table_configuration = schedule_table_configuration.get_new_schedule_table_configuration(),
+            blueprint_configuration = blueprint_configuration.TLLBlueprintConfiguration:new(),
+            schedule_table_configuration = schedule_table_configuration.TLLScheduleTableConfiguration:new(),
             fuel_configuration = fuel_config,
-            excluded_keywords = keyword_list.get_new_keyword_list(),
-            hidden_keywords = keyword_list.get_new_keyword_list(),
+            excluded_keywords = keyword_list.TLLKeywordList:new(),
+            hidden_keywords = keyword_list.TLLKeywordList:new(),
             last_gui_location = nil, -- migration not actually necessary, since it starts as nil?
         },
         view = get_bare_view()
@@ -867,15 +867,15 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_current_surface then
-            schedule_table_configuration.toggle_current_surface(player_global.model.schedule_table_configuration)
+            player_global.model.schedule_table_configuration:toggle_current_surface()
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_show_satisfied then
-            schedule_table_configuration.toggle_show_satisfied(player_global.model.schedule_table_configuration)
+            player_global.model.schedule_table_configuration:toggle_show_satisfied()
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_show_invalid then
-            schedule_table_configuration.toggle_show_invalid(player_global.model.schedule_table_configuration)
+            player_global.model.schedule_table_configuration:toggle_show_invalid()
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
