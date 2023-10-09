@@ -5,6 +5,7 @@ local slider_textfield = require("views/slider_textfield")
 Exports = {}
 
 local function build_blueprint_snap_selector(player, parent)
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local config = player_global.model.blueprint_configuration
 

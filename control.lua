@@ -251,13 +251,15 @@ local function create_blueprint_from_train(player, train, surface_name)
     local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
     for _, entity in pairs(aggregated_entities) do
         local items_to_add = {}
-        local accepted_fuel_categories = global.model.fuel_category_data.locomotives_fuel_categories[entity.name]
-        if accepted_fuel_categories then
-            for _, accepted_fuel_category in pairs(accepted_fuel_categories) do
-                local fuel_category_config = player_global.model.fuel_configuration.fuel_category_configurations[accepted_fuel_category]
-                if player_global.model.fuel_configuration.add_fuel and fuel_category_config.selected_fuel then
-                    items_to_add[fuel_category_config.selected_fuel] = fuel_category_config.fuel_amount
-                    break
+        if player_global.model.fuel_configuration.add_fuel then
+            local accepted_fuel_categories = global.model.fuel_category_data.locomotives_fuel_categories[entity.name]
+            if accepted_fuel_categories then
+                for _, accepted_fuel_category in pairs(accepted_fuel_categories) do
+                    local fuel_category_config = player_global.model.fuel_configuration.fuel_category_configurations[accepted_fuel_category]
+                    if fuel_category_config.selected_fuel then
+                        items_to_add[fuel_category_config.selected_fuel] = fuel_category_config.fuel_amount
+                        break
+                    end
                 end
             end
         end
@@ -474,15 +476,14 @@ local function initialize_global(player)
 end
 
 local function migrate_global(player)
-
-    ---@type TLLPlayerGlobal
-    local player_global = global.players[player.index]
     global.players[player.index] = get_default_global()
 end
 
 local function build_display_tab(player)
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local display_content_frame = player_global.view.display_content_frame
+    if not display_content_frame then return end
     display_content_frame.clear()
 
     local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="tll_controls_flow"}
@@ -502,8 +503,10 @@ local function build_display_tab(player)
 end
 
 local function build_exclude_tab(player)
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local exclude_content_frame = player_global.view.exclude_content_frame
+    if not exclude_content_frame then return end
     exclude_content_frame.clear()
 
     local exclude_control_flow = exclude_content_frame.add{type="flow", direction="vertical", style="tll_controls_flow"}
@@ -526,8 +529,11 @@ end
 
 -- TODO: merge a lot of this logic with exclude? building of apply textfield, at least?
 local function build_hide_tab(player)
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local hide_content_frame = player_global.view.hide_content_frame
+    if not hide_content_frame then return end
+
     hide_content_frame.clear()
     local control_flow = hide_content_frame.add{type="flow", direction="vertical", style="tll_controls_flow"}
     control_flow.style.bottom_margin = 5
@@ -547,12 +553,14 @@ local function build_hide_tab(player)
 end
 
 local function build_settings_tab(player)
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local settings_content_frame = player_global.view.settings_content_frame
-
-    local blueprint_config = player_global.model.blueprint_configuration
+    if not settings_content_frame then return end
 
     settings_content_frame.clear()
+
+    local blueprint_config = player_global.model.blueprint_configuration
 
     local scroll_pane = settings_content_frame.add{type="scroll-pane", direction="vertical"}
     scroll_pane.style.vertically_stretchable = true
@@ -583,9 +591,16 @@ local function build_settings_tab(player)
 
     local fuel_config = player_global.model.fuel_configuration
 
+    fuel_settings_frame.add{
+        type="checkbox",
+        tags={action=constants.actions.toggle_place_trains_with_fuel},
+        state=fuel_config.add_fuel,
+        caption={"tll.place_trains_with_fuel_checkbox"}
+    }
+
     fuel_category_table = fuel_settings_frame.add{type="table", column_count=3}
 
-    for fuel_category, fuel_config in pairs(fuel_config.fuel_category_configurations) do
+    for fuel_category, fuel_category_config in pairs(fuel_config.fuel_category_configurations) do
 
         fuel_category_table.add{type="label", caption={"", "'", fuel_category, "'"}}
         local spacer = fuel_category_table.add{type="empty-widget"}
@@ -593,16 +608,9 @@ local function build_settings_tab(player)
 
         local category_settings_flow = fuel_category_table.add{type="flow", direction="vertical"}
 
-        category_settings_flow.add{
-            type="checkbox",
-            tags={action=constants.actions.toggle_place_trains_with_fuel},
-            state=fuel_config.add_fuel,
-            caption={"tll.place_trains_with_fuel_checkbox"}
-        }
+        local fuel_amount_frame_enabled = fuel_config.add_fuel and fuel_category_config.selected_fuel ~= nil
 
-        local fuel_amount_frame_enabled = fuel_config.add_fuel and fuel_config.selected_fuel ~= nil
-
-        local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[fuel_config.selected_fuel].stack_size * 3)) or 1
+        local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[fuel_category_config.selected_fuel].stack_size * 3)) or 1
 
         local slider_value_step = maximum_fuel_amount % 10 == 0 and maximum_fuel_amount / 10 or 1
 
@@ -612,7 +620,7 @@ local function build_settings_tab(player)
                 action=constants.actions.update_fuel_amount,
                 fuel_category=fuel_category,
             },
-            fuel_config.fuel_amount,
+            fuel_category_config.fuel_amount,
             slider_value_step,
             0,
             maximum_fuel_amount,
@@ -628,7 +636,7 @@ local function build_settings_tab(player)
         local fuel_button_table = table_frame.add{type="table", column_count=column_count, style="filter_slot_table"}
 
         for _, fuel in pairs(valid_fuels) do
-            local button_style = (fuel == fuel_config.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
+            local button_style = (fuel == fuel_category_config.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
             fuel_button_table.add{
                 type="sprite-button",
                 sprite=("item/" .. fuel),
@@ -646,6 +654,7 @@ end
 
 ---@param player LuaPlayer
 local function build_interface(player)
+    ---@TLLPlayerGlobal
     local player_global = global.players[player.index]
 
     local screen_element = player.gui.screen
@@ -1013,8 +1022,7 @@ script.on_configuration_changed(function (config_changed_data)
 
     if config_changed_data.mod_changes["train-limit-linter"] then
         for _, player in pairs(game.players) do
-            global.players[player.index] = get_default_global()
-            -- migrate_global(player)
+            migrate_global(player)
 
             ---@type TLLPlayerGlobal
             local player_global = global.players[player.index]
