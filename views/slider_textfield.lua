@@ -5,22 +5,33 @@ Exports = {}
 -- Adds a horizontal flow containing a slider and a textfield to the parent element.
 -- The slider and the textfield will reflect each other's values.
 ---@param parent LuaGuiElement
----@param action string
+---@param tags table
 ---@param value number
 ---@param value_step number
 ---@param minimum_value number
 ---@param maximum_value number
 ---@param enabled_condition boolean
 ---@param cap_textfield_value boolean
-function Exports.add_slider_textfield(parent, action, value, value_step, minimum_value, maximum_value, enabled_condition, cap_textfield_value)
+function Exports.add_slider_textfield(parent, tags, value, value_step, minimum_value, maximum_value, enabled_condition, cap_textfield_value)
     local slider_textfield_flow = parent.add{type="flow", direction="horizontal"}
+
+    local slider_tags = {
+        slider_textfield=true,
+    }
+    local textfield_tags = {
+        slider_textfield=true,
+        cap_textfield_value=cap_textfield_value
+    }
+
+    for tag, tag_value in pairs(tags) do
+        slider_tags[tag] = tag_value
+        textfield_tags[tag] = tag_value
+    end
+
     local slider = slider_textfield_flow.add{
         type="slider",
         name="slider",
-        tags={
-            action=action,
-            slider_textfield=true,
-        },
+        tags=slider_tags,
         value=value,
         value_step=value_step,
         minimum_value=minimum_value,
@@ -33,11 +44,7 @@ function Exports.add_slider_textfield(parent, action, value, value_step, minimum
     local textfield = slider_textfield_flow.add{
         type="textfield",
         name="textfield",
-        tags={
-            action=action,
-            slider_textfield=true,
-            cap_textfield_value=cap_textfield_value
-        },
+        tags=textfield_tags,
         style="slider_value_textfield",
         text=tostring(value),
         enabled=enabled_condition,
