@@ -1,6 +1,7 @@
 ---@class TLLFuelConfiguration
 ---@field add_fuel boolean
 ---@field fuel_category_configurations table<string, TLLFuelCategoryConfiguration>
+---@field new fun(): TLLFuelCategoryConfiguration
 ---@field toggle_add_fuel fun(self: TLLFuelConfiguration)
 ---@field add_fuel_category_config fun(self: TLLFuelConfiguration, fuel_category: string)
 

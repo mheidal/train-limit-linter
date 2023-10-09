@@ -752,7 +752,7 @@ end)
 
 script.on_event(defines.events.on_gui_click, function (event)
     local player = game.get_player(event.player_index)
-    if not player then return end -- assure vscode that player is not nil
+    if not player then return end
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -845,7 +845,7 @@ end)
 
 script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     local player = game.get_player(event.player_index)
-    if not player then return end -- assure vscode that player is not nil
+    if not player then return end -- 
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -887,7 +887,7 @@ end)
 
 script.on_event(defines.events.on_gui_value_changed, function (event)
     local player = game.get_player(event.player_index)
-    if not player then return end -- assure vscode that player is not nil
+    if not player then return end
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -915,7 +915,7 @@ end)
 
 script.on_event(defines.events.on_gui_text_changed, function (event)
     local player = game.get_player(event.player_index)
-    if not player then return end -- assure vscode that player is not nil
+    if not player then return end -- 
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -946,7 +946,7 @@ end)
 
 script.on_event(defines.events.on_gui_elem_changed, function(event)
     local player = game.get_player(event.player_index)
-    if not player then return end -- assure vscode that player is not nil
+    if not player then return end -- 
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -960,7 +960,7 @@ end)
 
 script.on_event(defines.events.on_gui_switch_state_changed, function(event)
     local player = game.get_player(event.player_index)
-    if not player then return end -- assure vscode that player is not nil
+    if not player then return end -- 
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -983,7 +983,7 @@ end)
 
 script.on_event(defines.events.on_gui_confirmed, function(event)
     local player = game.get_player(event.player_index)
-    if not player then return end -- assure vscode that player is not nil
+    if not player then return end -- 
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
