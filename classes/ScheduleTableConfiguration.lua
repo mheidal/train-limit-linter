@@ -1,4 +1,0 @@
----@class TLLScheduleTableConfiguration
----@field only_current_surface boolean
----@field show_satisfied boolean
----@field show_invalid boolean

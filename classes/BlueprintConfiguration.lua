@@ -1,5 +1,0 @@
----@class TLLBlueprintConfiguration
----@field new_blueprint_orientation string -- add type hints to constants?
----@field snap_enabled boolean
----@field snap_direction string,
----@field snap_width number
