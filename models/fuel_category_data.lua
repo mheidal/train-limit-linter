@@ -1,4 +1,8 @@
 
+---@class TLLFuelCategoryData
+---@field locomotives_fuel_categories table<string, string[]>
+---@field fuel_categories_and_fuels table<string, string[]>
+
 local Exports = {}
 
 local function get_fuel_categories_consumed_by_locomotives()

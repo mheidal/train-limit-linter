@@ -8,10 +8,6 @@ utils = require("utils")
 ---@field selected_fuel string?
 ---@field fuel_amount number
 
----@class TLLFuelCategoryData
----@field locomotives_fuel_categories table<string, string[]>
----@field fuel_categories_and_fuels table<string, string[]>
-
 Exports = {}
 
 -- Fuel category configuration
