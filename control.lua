@@ -455,7 +455,7 @@ end
 ---@return TLLPlayerGlobal
 local function get_default_global()
 
-    local fuel_config = fuel_configuration.get_new_fuel_configuration()
+    local fuel_config = fuel_configuration.TLLFuelConfiguration:new()
 
     local fuel_categories = global.model.fuel_category_data.fuel_categories_and_fuels
 
@@ -463,7 +463,7 @@ local function get_default_global()
         fuel_config:add_fuel_category_config(fuel_category)
     end
 
-    return deep_copy{
+    return {
         model = {
             blueprint_configuration = blueprint_configuration.get_new_blueprint_configuration(),
             schedule_table_configuration = schedule_table_configuration.get_new_schedule_table_configuration(),
