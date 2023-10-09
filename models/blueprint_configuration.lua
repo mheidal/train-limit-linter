@@ -2,7 +2,7 @@ local constants = require("constants")
 
 Exports = {}
 
-config = {
+fuel_category_config = {
     new_blueprint_orientation = constants.orientations.d,
     snap_enabled = true,
     snap_direction = constants.snap_directions.horizontal,
@@ -24,7 +24,7 @@ function toggle_snap_direction(config)
     return config
 end
 
-Exports.config = config
+Exports.fuel_category_config = fuel_category_config
 Exports.set_new_blueprint_orientation = set_new_blueprint_orientation
 Exports.set_snap_width = set_snap_width
 Exports.toggle_snap_direction = toggle_snap_direction

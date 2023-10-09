@@ -1,0 +1,2 @@
+---@class TLLGlobalModel
+---@field fuel_category_data TLLFuelCategoryData

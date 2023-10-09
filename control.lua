@@ -5,7 +5,7 @@ local utils = require("utils")
 local blueprint_configuration = require("models/blueprint_configuration")
 local schedule_table_configuration = require("models/schedule_table_configuration")
 local keyword_list = require("models/keyword_list")
-local fuel_configuration = require("models/fuel_configuration")
+local fuel_configuration = require("models.fuel_configuration")
 local fuel_category_data = require("models.fuel_category_data")
 
 -- view
@@ -158,7 +158,7 @@ end
 
 ---Take a train's entities. Find a locomotive. Rotate all the entities so that the locomotive should point towards the player's currently set orientation. 
 ---@param entities BlueprintEntity[]
----@return transformed_entities BlueprintEntity[]
+---@return BlueprintEntity[]
 local function orient_train_entities(entities, new_orientation)
     local main_orientation
     for _, entity in pairs(entities) do
@@ -196,6 +196,8 @@ end
 ---@param train LuaTrain
 ---@param surface_name string
 local function create_blueprint_from_train(player, train, surface_name)
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
     local surface = game.get_surface(surface_name)
@@ -252,9 +254,9 @@ local function create_blueprint_from_train(player, train, surface_name)
         local accepted_fuel_categories = global.model.fuel_category_data.locomotives_fuel_categories[entity.name]
         if accepted_fuel_categories then
             for _, accepted_fuel_category in pairs(accepted_fuel_categories) do
-                local fuel_config = player_global.model.fuel_configurations[accepted_fuel_category]
-                if fuel_config.add_fuel and fuel_config.selected_fuel then
-                    items_to_add[fuel_config.selected_fuel] = fuel_config.fuel_amount
+                local fuel_category_config = player_global.model.fuel_configuration.fuel_category_configurations[accepted_fuel_category]
+                if player_global.model.fuel_configuration.add_fuel and fuel_category_config.selected_fuel then
+                    items_to_add[fuel_category_config.selected_fuel] = fuel_category_config.fuel_amount
                     break
                 end
             end
@@ -273,6 +275,8 @@ end
 
 ---@param player LuaPlayer
 local function build_train_schedule_group_report(player)
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local surface_train_schedule_groups_pairs = get_train_schedule_groups_by_surface()
     local report_frame = player_global.view.report_frame
@@ -439,20 +443,24 @@ local function build_train_schedule_group_report(player)
     end
     end
 
+---@return TLLPlayerGlobal
 local function get_default_global()
 
     local fuel_categories = global.model.fuel_category_data.fuel_categories_and_fuels
 
-    local fuel_configurations = {}
+    local fuel_category_configurations = {}
     for fuel_category, _ in pairs(fuel_categories) do
-        fuel_configurations[fuel_category] = utils.deep_copy(fuel_configuration.config)
+        fuel_category_configurations[fuel_category] = fuel_configuration.get_fuel_category_configuration()
     end
 
     return deep_copy{
         model = {
-            blueprint_configuration = utils.deep_copy(blueprint_configuration.config),
-            schedule_table_configuration = utils.deep_copy(schedule_table_configuration.config),
-            fuel_configurations = fuel_configurations,
+            blueprint_configuration = utils.deep_copy(blueprint_configuration.fuel_category_config),
+            schedule_table_configuration = utils.deep_copy(schedule_table_configuration.fuel_category_config),
+            fuel_configuration = {
+                add_fuel=true,
+                fuel_category_configurations=fuel_category_configurations
+            },
             excluded_keywords = utils.deep_copy(keyword_list.keyword_list),
             hidden_keywords = utils.deep_copy(keyword_list.keyword_list),
             last_gui_location = nil, -- migration not actually necessary, since it starts as nil?
@@ -466,121 +474,10 @@ local function initialize_global(player)
 end
 
 local function migrate_global(player)
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
-    if not player_global then
-        global.players[player.index] = get_default_global()
-        return
-    end
-    if player_global.elements then -- data is from before we swapped elements to views
-        player_global.elements = nil
-
-        local excluded_keywords = utils.deep_copy(keyword_list.keyword_list)
-
-        local old_excluded_strings = player_global.excluded_strings
-        if old_excluded_strings then
-            for keyword, data in pairs(old_excluded_strings) do
-                keyword_list.set_enabled(excluded_keywords, keyword, data.enabled)
-            end
-            player_global.excluded_strings = nil
-        end
-
-        local old_excluded_keywords = player_global.excluded_keywords
-        if old_excluded_keywords then
-            local to_iter = player_global.excluded_keywords.toggleable_items and player_global.excluded_keywords.toggleable_items or player_global.excluded_keywords
-            if old_excluded_keywords then
-                for keyword, data in pairs(to_iter) do
-                    keyword_list.set_enabled(excluded_keywords, keyword, data.enabled)
-                end
-                player_global.excluded_keywords = nil
-            end
-        end
-
-        local hidden_keywords = utils.deep_copy(keyword_list.keyword_list)
-
-        local old_hidden_keywords = player_global.hidden_keywords
-
-        if old_hidden_keywords then
-            local to_iter = player_global.hidden_keywords.toggleable_items and player_global.hidden_keywords.toggleable_items or player_global.hidden_keywords
-            for keyword, data in pairs(to_iter) do
-                keyword_list.set_enabled(hidden_keywords, keyword, data.enabled)
-            end
-            player_global.hidden_keywords = nil
-        end
-
-        local model = {}
-
-        for key, value in pairs(player_global) do
-            model[key] = value
-        end
-
-        player_global = {}
-        player_global.model = model
-        model.excluded_keywords = excluded_keywords
-        model.hidden_keywords = hidden_keywords
-
-        player_global.view = {}
-        global.players[player.index] = player_global
-    end
-    if player_global.add_fuel ~= nil or player_global.model.add_fuel ~= nil then
-        local fuel_config = utils.deep_copy(fuel_configuration.config)
-
-        local add_fuel
-        if player_global.add_fuel then add_fuel = player_global.add_fuel else add_fuel = player_global.model.add_fuel end
-        if add_fuel then
-            fuel_config.add_fuel = add_fuel
-            player_global.add_fuel = nil
-            player_global.model.add_fuel = nil
-        end
-
-        local selected_fuel
-        if player_global.selected_fuel then selected_fuel = player_global.selected_fuel else selected_fuel = player_global.model.selected_fuel end
-        if selected_fuel then
-            fuel_config.selected_fuel = selected_fuel
-            player_global.selected_fuel = nil
-            player_global.model.selected_fuel = nil
-        end
-
-        local fuel_amount
-        if player_global.fuel_amount then fuel_amount = player_global.fuel_amount else fuel_amount = player_global.model.fuel_amount end
-        if fuel_amount then
-            fuel_config.fuel_amount = fuel_amount
-            player_global.fuel_amount = nil
-            player_global.model.fuel_amount = nil
-        end
-        player_global.model.fuel_configuration = fuel_config
-    end
-    if player_global.model.only_current_surface ~= nil then
-        local schedule_table_config = deep_copy(schedule_table_configuration)
-        schedule_table_config.only_current_surface = player_global.model.only_current_surface
-        schedule_table_config.show_satisfied = player_global.model.show_satisfied
-        schedule_table_config.show_invalid = player_global.model.show_invalid
-
-        player_global.model.only_current_surface = nil
-        player_global.model.only_current_surface = nil
-        player_global.model.show_invalid = nil
-
-        player_global.model.schedule_table_configuration = schedule_table_config
-
-    elseif player_global.only_current_surface ~= nil then
-        local schedule_table_config = deep_copy(schedule_table_configuration)
-        schedule_table_config.only_current_surface = player_global.only_current_surface
-        schedule_table_config.show_satisfied = player_global.show_satisfied
-        schedule_table_config.show_invalid = player_global.show_invalid
-
-        player_global.only_current_surface = nil
-        player_global.only_current_surface = nil
-        player_global.show_invalid = nil
-
-        player_global.model.schedule_table_configuration = schedule_table_config
-    end
-    if not player_global.model.blueprint_configuration then
-        player_global.model.blueprint_configuration = deep_copy(blueprint_configuration.config)
-    end
-    if player_global.model.blueprint_configuration.snap_enabled then
-        player_global.model.blueprint_configuration.snap_enabled = true
-        player_global.model.blueprint_configuration.snap_direction = constants.snap_directions.horizontal
-        player_global.model.blueprint_configuration.snap_width = 2
-    end
+    global.players[player.index] = get_default_global()
 end
 
 local function build_display_tab(player)
@@ -684,11 +581,11 @@ local function build_settings_tab(player)
     }
     fuel_header_label.style.font_color={1, 0.901961, 0.752941}
 
-    local fuel_configs = player_global.model.fuel_configurations
+    local fuel_config = player_global.model.fuel_configuration
 
     fuel_category_table = fuel_settings_frame.add{type="table", column_count=3}
 
-    for fuel_category, fuel_config in pairs(fuel_configs) do
+    for fuel_category, fuel_config in pairs(fuel_config.fuel_category_configurations) do
 
         fuel_category_table.add{type="label", caption={"", "'", fuel_category, "'"}}
         local spacer = fuel_category_table.add{type="empty-widget"}
@@ -747,6 +644,7 @@ local function build_settings_tab(player)
     end
 end
 
+---@param player LuaPlayer
 local function build_interface(player)
     local player_global = global.players[player.index]
 
@@ -817,6 +715,8 @@ local function build_interface(player)
 end
 
 local function toggle_interface(player)
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local main_frame = player_global.view.main_frame
     if main_frame == nil then
@@ -837,13 +737,18 @@ end)
 script.on_event(defines.events.on_gui_click, function (event)
     local player = game.get_player(event.player_index)
     if not player then return end -- assure vscode that player is not nil
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+
     if event.element.tags.action then
         local action = event.element.tags.action
          if action == constants.actions.select_fuel then
             local item_name = event.element.tags.item_name
-            local fuel_config = player_global.model.fuel_configurations[event.element.tags.fuel_category]
-            fuel_config = fuel_configuration.change_selected_fuel(fuel_config, item_name)
+            if type(item_name) == "string" then
+                local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[event.element.tags.fuel_category]
+                fuel_config = fuel_configuration.change_selected_fuel(fuel_config, item_name)
+            end
 
             build_settings_tab(player)
             return
@@ -918,7 +823,10 @@ end)
 script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     local player = game.get_player(event.player_index)
     if not player then return end -- assure vscode that player is not nil
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+
     if event.element.tags.action then
         local action = event.element.tags.action
         if action == constants.actions.toggle_excluded_keyword then
@@ -947,13 +855,16 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
             player_global.model.fuel_configuration = fuel_configuration.toggle_add_fuel(player_global.model.fuel_configuration)
-            build_fuel_tab(player)
+            build_settings_tab(player)
         end
     end
 end)
 
 script.on_event(defines.events.on_gui_value_changed, function (event)
     local player = game.get_player(event.player_index)
+    if not player then return end -- assure vscode that player is not nil
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
     -- handler for slider_textfield element: when the slider updates, update the textfield
@@ -967,7 +878,7 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
         local action = event.element.tags.action
         if action == constants.actions.update_fuel_amount then
             local new_fuel_amount = event.element.slider_value
-            local fuel_config = player_global.model.fuel_configurations[event.element.tags.fuel_category]
+            local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[event.element.tags.fuel_category]
             fuel_config = fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
         elseif action == constants.actions.set_blueprint_snap_width then
             local new_snap_width = event.element.slider_value
@@ -979,6 +890,9 @@ end)
 
 script.on_event(defines.events.on_gui_text_changed, function (event)
     local player = game.get_player(event.player_index)
+    if not player then return end -- assure vscode that player is not nil
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
     if event.element.tags.action then
@@ -986,9 +900,11 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
         if action == constants.actions.update_fuel_amount then
             -- this caps the textfield's value
             local new_fuel_amount = tonumber(event.element.text)
-            local fuel_config = player_global.model.fuel_configurations[event.element.tags.fuel_category]
-            fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
-       
+            if type(new_fuel_amount) == "number" then
+                local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[event.element.tags.fuel_category]
+                fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
+            end
+
         elseif action == constants.actions.set_blueprint_snap_width then
             local new_snap_width = tonumber(event.element.text)
             local blueprint_config = player_global.model.blueprint_configuration
@@ -1005,6 +921,9 @@ end)
 
 script.on_event(defines.events.on_gui_elem_changed, function(event)
     local player = game.get_player(event.player_index)
+    if not player then return end -- assure vscode that player is not nil
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     if event.element.tags.action then
         local action = event.element.tags.action
@@ -1016,6 +935,9 @@ end)
 
 script.on_event(defines.events.on_gui_switch_state_changed, function(event)
     local player = game.get_player(event.player_index)
+    if not player then return end -- assure vscode that player is not nil
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     if event.element.tags.action then
         local action = event.element.tags.action
@@ -1036,6 +958,9 @@ end)
 
 script.on_event(defines.events.on_gui_confirmed, function(event)
     local player = game.get_player(event.player_index)
+    if not player then return end -- assure vscode that player is not nil
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     if event.element.tags.action then
         local action = event.element.tags.action
@@ -1090,6 +1015,8 @@ script.on_configuration_changed(function (config_changed_data)
         for _, player in pairs(game.players) do
             global.players[player.index] = get_default_global()
             -- migrate_global(player)
+
+            ---@type TLLPlayerGlobal
             local player_global = global.players[player.index]
             if player_global.view.main_frame ~= nil then
                 toggle_interface(player)

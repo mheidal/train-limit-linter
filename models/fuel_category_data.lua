@@ -49,6 +49,7 @@ function get_locomotives_and_fuel_categories()
     return locomotives_fuel_categories
 end
 
+---@return TLLFuelCategoryData
 function Exports.get_fuel_category_data()
     return {
         locomotives_fuel_categories = get_locomotives_and_fuel_categories(),
