@@ -446,7 +446,7 @@ local function build_train_schedule_group_report(player)
     end
 
 ---@return TLLPlayerView
-local function get_bare_view()
+local function get_empty_player_view()
     return {
         fuel_amount_flows={}
     }
@@ -472,7 +472,7 @@ local function get_default_global()
             hidden_keywords = keyword_list.TLLKeywordList:new(),
             last_gui_location = nil, -- migration not actually necessary, since it starts as nil?
         },
-        view = get_bare_view()
+        view = get_empty_player_view()
     }
 end
 
@@ -741,7 +741,7 @@ local function toggle_interface(player)
     else
         player_global.model.last_gui_location = main_frame.location
         main_frame.destroy()
-        player_global.view = get_bare_view()
+        player_global.view = get_empty_player_view()
     end
 end
 
