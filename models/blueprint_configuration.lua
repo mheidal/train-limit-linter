@@ -1,10 +1,13 @@
 local constants = require("constants")
 
 ---@class TLLBlueprintConfiguration
----@field new_blueprint_orientation string -- add type hints to constants?
+---@field new_blueprint_orientation number -- add type hints to constants?
 ---@field snap_enabled boolean
 ---@field snap_direction string,
 ---@field snap_width number
+---@field set_new_blueprint_orientation fun(self: TLLBlueprintConfiguration, new_orientation: number)
+---@field set_snap_width fun(self: TLLBlueprintConfiguration, new_snap_width: number)
+---@field toggle_snap_direction fun(self: TLLBlueprintConfiguration)
 
 Exports = {}
 
@@ -15,27 +18,18 @@ blueprint_config = {
     snap_width = 2
 }
 
----@param config TLLBlueprintConfiguration
----@param new_orientation string
----@return TLLBlueprintConfiguration
-function set_new_blueprint_orientation(config, new_orientation)
-    config.new_blueprint_orientation = new_orientation
-    return config
+---@param new_orientation number
+function blueprint_config:set_new_blueprint_orientation(new_orientation)
+    self.new_blueprint_orientation = new_orientation
 end
 
----@param config TLLBlueprintConfiguration
 ---@param new_snap_width number
----@return TLLBlueprintConfiguration
-function set_snap_width(config, new_snap_width)
-    config.snap_width = new_snap_width
-    return config
+function blueprint_config:set_snap_width(new_snap_width)
+    self.snap_width = new_snap_width
 end
 
----@param config TLLBlueprintConfiguration
----@return TLLBlueprintConfiguration
-function toggle_snap_direction(config)
-    config.snap_direction = config.snap_direction == constants.snap_directions.horizontal and constants.snap_directions.vertical or constants.snap_directions.horizontal
-    return config
+function blueprint_config:toggle_snap_direction()
+    self.snap_direction = self.snap_direction == constants.snap_directions.horizontal and constants.snap_directions.vertical or constants.snap_directions.horizontal
 end
 
 ---@return TLLBlueprintConfiguration
@@ -44,8 +38,5 @@ function get_new_blueprint_configuration()
 end
 
 Exports.get_new_blueprint_configuration = get_new_blueprint_configuration
-Exports.set_new_blueprint_orientation = set_new_blueprint_orientation
-Exports.set_snap_width = set_snap_width
-Exports.toggle_snap_direction = toggle_snap_direction
 
 return Exports

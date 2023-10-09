@@ -826,7 +826,9 @@ script.on_event(defines.events.on_gui_click, function (event)
             create_blueprint_from_train(player, template_train, surface_name)
 
         elseif action == constants.actions.set_blueprint_orientation then
-            blueprint_configuration.set_new_blueprint_orientation(player_global.model.blueprint_configuration, event.element.tags.orientation)
+            local orientation = event.element.tags.orientation
+            if type(orientation) ~= "number" then return end
+            player_global.model.blueprint_configuration:set_new_blueprint_orientation(orientation)
             build_settings_tab(player)
         end
     end
@@ -896,8 +898,7 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
             fuel_config = fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
         elseif action == constants.actions.set_blueprint_snap_width then
             local new_snap_width = event.element.slider_value
-            local blueprint_config = player_global.model.blueprint_configuration
-            blueprint_config = blueprint_configuration.set_snap_width(blueprint_config, new_snap_width)
+            player_global.model.blueprint_configuration:set_snap_width(new_snap_width)
         end
     end
 end)
@@ -921,8 +922,8 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
 
         elseif action == constants.actions.set_blueprint_snap_width then
             local new_snap_width = tonumber(event.element.text)
-            local blueprint_config = player_global.model.blueprint_configuration
-            blueprint_config = blueprint_configuration.set_snap_width(blueprint_config, new_snap_width)
+            if not new_snap_width then return end
+            player_global.model.blueprint_configuration:set_snap_width(new_snap_width)
         end
     end
 
@@ -956,7 +957,7 @@ script.on_event(defines.events.on_gui_switch_state_changed, function(event)
     if event.element.tags.action then
         local action = event.element.tags.action
         if action == constants.actions.toggle_blueprint_snap_direction then
-            blueprint_configuration.toggle_snap_direction(player_global.model.blueprint_configuration)
+            player_global.model.blueprint_configuration:toggle_snap_direction()
         end
     end
 end)
