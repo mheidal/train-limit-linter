@@ -1,51 +1,72 @@
-utils = require("utils")
+---@class TLLKeywordList
+---@field toggleable_items table<string, TLLToggleableItem>
+---@field get_enabled_keywords fun(self: TLLKeywordList): string[]
+---@field set_enabled fun(self: TLLKeywordList, keyword: string, enabled: boolean)
+---@field toggle_enabled fun(self: TLLKeywordList, keyword: string)
+---@field remove_item fun(self: TLLKeywordList, keyword: string)
+---@field remove_all fun(self: TLLKeywordList)
+---@field get_new_keyword_list fun(): TLLKeywordList
+
+---@class TLLToggleableItem
+---@field enabled boolean
+---@field get_new_toggleable_item fun(): TLLToggleableItem
 
 Exports = {}
 
----@class ToggleableItem
-toggleable_item = {
-    enabled=true
-}
+toggleable_item = {}
 
----@class UniqueToggleableList
--- Array of toggleable_item, where key is the name and value has an enabled flag
+function toggleable_item.get_new_toggleable_item()
+    return deep_copy({
+        enabled=true
+    })
+end
+
+-- Table of toggleable_item, where key is the name and value has an enabled flag
 keyword_list = {
     toggleable_items={}
 }
 
-keyword_list.get_enabled_keywords = function(list)
+---@return string[]
+function keyword_list:get_enabled_keywords()
     local enabled_keywords = {}
 
-    for value, toggleable_item in pairs(list.toggleable_items) do
+    for value, toggleable_item in pairs(self.toggleable_items) do
         if toggleable_item.enabled then table.insert(enabled_keywords, value) end
     end
     return enabled_keywords
 end
 
-keyword_list.set_enabled = function(list, keyword, enabled)
-    if list.toggleable_items[keyword] == nil then
-        list.toggleable_items[keyword] = utils.deep_copy(toggleable_item)
+---@param keyword string
+---@param enabled boolean
+function keyword_list:set_enabled(keyword, enabled)
+    if self.toggleable_items[keyword] == nil then
+        self.toggleable_items[keyword] = deep_copy(toggleable_item)
     end
-    list.toggleable_items[keyword].enabled = enabled
+    self.toggleable_items[keyword].enabled = enabled
 end
 
-keyword_list.toggle_enabled = function(list, keyword)
-    if list.toggleable_items[keyword] == nil then
+---@param keyword string
+function keyword_list:toggle_enabled(keyword)
+    if self.toggleable_items[keyword] == nil then
         return
     end
-    list.toggleable_items[keyword].enabled = not list.toggleable_items[keyword].enabled
+    self.toggleable_items[keyword].enabled = not self.toggleable_items[keyword].enabled
 end
 
-keyword_list.remove_item = function(list, keyword)
-    list.toggleable_items[keyword] = nil
+---@param keyword string
+function keyword_list:remove_item(keyword)
+    self.toggleable_items[keyword] = nil
 end
 
-Exports.toggleable_item = toggleable_item
-Exports.keyword_list = keyword_list
+function keyword_list:remove_all()
+    self.toggleable_items = {}
+end
 
-Exports.get_enabled_keywords = keyword_list.get_enabled_keywords
-Exports.set_enabled = keyword_list.set_enabled
-Exports.toggle_enabled = keyword_list.toggle_enabled
-Exports.remove_item = keyword_list.remove_item
+---@return TLLKeywordList
+function get_new_keyword_list()
+    return deep_copy(keyword_list)
+end
+
+Exports.get_new_keyword_list = get_new_keyword_list
 
 return Exports

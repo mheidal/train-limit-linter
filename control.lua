@@ -284,8 +284,8 @@ local function build_train_schedule_group_report(player)
     local report_frame = player_global.view.report_frame
     report_frame.clear()
 
-    local enabled_excluded_keywords = keyword_list.get_enabled_keywords(player_global.model.excluded_keywords)
-    local enabled_hidden_keywords = keyword_list.get_enabled_keywords(player_global.model.hidden_keywords)
+    local enabled_excluded_keywords = player_global.model.excluded_keywords:get_enabled_keywords()
+    local enabled_hidden_keywords = player_global.model.hidden_keywords:get_enabled_keywords()
 
     local table_config = player_global.model.schedule_table_configuration
 
@@ -463,8 +463,8 @@ local function get_default_global()
                 add_fuel=true,
                 fuel_category_configurations=fuel_category_configurations
             },
-            excluded_keywords = utils.deep_copy(keyword_list.keyword_list),
-            hidden_keywords = utils.deep_copy(keyword_list.keyword_list),
+            excluded_keywords = keyword_list.get_new_keyword_list(),
+            hidden_keywords = keyword_list.get_new_keyword_list(),
             last_gui_location = nil, -- migration not actually necessary, since it starts as nil?
         },
         view = {}
@@ -771,38 +771,41 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.exclude_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
-                keyword_list.set_enabled(player_global.model.excluded_keywords, text, true)
+                player_global.model.excluded_keywords:set_enabled(text, true)
                 keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
                 build_train_schedule_group_report(player)
             end
 
         elseif action == constants.actions.delete_excluded_keyword then
             local excluded_keyword = event.element.tags.keyword
-            keyword_list.remove_item(player_global.model.excluded_keywords, excluded_keyword)
+            if type(excluded_keyword) ~= "string" then return end
+            player_global.model.excluded_keywords:remove_item(excluded_keyword)
             keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.delete_all_excluded_keywords then
-            player_global.model.excluded_keywords = deep_copy(keyword_list.keyword_list)
+
+            player_global.model.excluded_keywords:remove_all()
             keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.hide_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
-                keyword_list.set_enabled(player_global.model.hidden_keywords, text, true)
+                player_global.model.hidden_keywords:set_enabled(text, true)
                 keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
                 build_train_schedule_group_report(player)
             end
 
         elseif action == constants.actions.delete_hidden_keyword then
             local hidden_keyword = event.element.tags.keyword
-            keyword_list.remove_item(player_global.model.hidden_keywords, hidden_keyword)
+            if type(hidden_keyword) ~= "string" then return end
+            player_global.model.hidden_keywords:remove_item(hidden_keyword)
             keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.delete_all_hidden_keywords then
-            player_global.model.hidden_keywords = deep_copy(keyword_list.keyword_list)
+            player_global.model.hidden_keywords:remove_all()
             keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
             build_train_schedule_group_report(player)
 
@@ -840,13 +843,15 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
         local action = event.element.tags.action
         if action == constants.actions.toggle_excluded_keyword then
             local keyword = event.element.tags.keyword
-            keyword_list.toggle_enabled(player_global.model.excluded_keywords, keyword)
+            if type(keyword) ~= "string" then return end
+            player_global.model.excluded_keywords:toggle_enabled(keyword)
             keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_hidden_keyword then
             local keyword = event.element.tags.keyword
-            keyword_list.toggle_enabled(player_global.model.hidden_keywords, keyword)
+            if type(keyword) ~= "string" then return end
+            player_global.model.hidden_keywords:toggle_enabled(keyword)
             keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
             build_train_schedule_group_report(player)
 
@@ -976,14 +981,14 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
         if action == constants.actions.exclude_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
-                keyword_list.set_enabled(player_global.model.excluded_keywords, text, true)
+                player_global.model.excluded_keywords:set_enabled(text, true)
                 keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
                 build_train_schedule_group_report(player)
             end
         elseif action == constants.actions.hide_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
-                keyword_list.set_enabled(player_global.model.hidden_keywords, text, true)
+                player_global.model.hidden_keywords:set_enabled(text, true)
                 keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
                 build_train_schedule_group_report(player)
             end

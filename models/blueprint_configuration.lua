@@ -8,7 +8,7 @@ local constants = require("constants")
 
 Exports = {}
 
-schedule_table_config = {
+blueprint_config = {
     new_blueprint_orientation = constants.orientations.d,
     snap_enabled = true,
     snap_direction = constants.snap_directions.horizontal,
@@ -40,7 +40,7 @@ end
 
 ---@return TLLBlueprintConfiguration
 function get_new_blueprint_configuration()
-    return deep_copy(schedule_table_config)
+    return deep_copy(blueprint_config)
 end
 
 Exports.get_new_blueprint_configuration = get_new_blueprint_configuration
