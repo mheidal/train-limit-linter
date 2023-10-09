@@ -5,7 +5,8 @@ local utils = require("utils")
 local blueprint_configuration = require("models/blueprint_configuration")
 local schedule_table_configuration = require("models/schedule_table_configuration")
 local keyword_list = require("models/keyword_list")
-local fuel_configuration = require("models/fuel_configuration")
+local fuel_configuration = require("models.fuel_configuration")
+local fuel_category_data = require("models.fuel_category_data")
 
 -- view
 local blueprint_orientation_selector = require("views.settings_views.blueprint_orientation_selector")
@@ -157,7 +158,7 @@ end
 
 ---Take a train's entities. Find a locomotive. Rotate all the entities so that the locomotive should point towards the player's currently set orientation. 
 ---@param entities BlueprintEntity[]
----@return transformed_entities BlueprintEntity[]
+---@return BlueprintEntity[]
 local function orient_train_entities(entities, new_orientation)
     local main_orientation
     for _, entity in pairs(entities) do
@@ -195,6 +196,8 @@ end
 ---@param train LuaTrain
 ---@param surface_name string
 local function create_blueprint_from_train(player, train, surface_name)
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
     local surface = game.get_surface(surface_name)
@@ -247,16 +250,20 @@ local function create_blueprint_from_train(player, train, surface_name)
 
     local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
     for _, entity in pairs(aggregated_entities) do
-        -- change to make more portable across mods?
-        if entity.name == "locomotive" then
-            local fuel_config = player_global.model.fuel_configuration
-            if fuel_config.add_fuel and fuel_config.selected_fuel then
-                entity.items = {}
-                entity.items[fuel_config.selected_fuel] = fuel_config.fuel_amount
-            else
-                entity.items = {}
+        local items_to_add = {}
+        if player_global.model.fuel_configuration.add_fuel then
+            local accepted_fuel_categories = global.model.fuel_category_data.locomotives_fuel_categories[entity.name]
+            if accepted_fuel_categories then
+                for _, accepted_fuel_category in pairs(accepted_fuel_categories) do
+                    local fuel_category_config = player_global.model.fuel_configuration.fuel_category_configurations[accepted_fuel_category]
+                    if fuel_category_config.selected_fuel then
+                        items_to_add[fuel_category_config.selected_fuel] = fuel_category_config.fuel_amount
+                        break
+                    end
+                end
             end
         end
+        entity.items = items_to_add
     end
     aggregated_entities = orient_train_entities(aggregated_entities, player_global.model.blueprint_configuration.new_blueprint_orientation)
 
@@ -270,13 +277,15 @@ end
 
 ---@param player LuaPlayer
 local function build_train_schedule_group_report(player)
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local surface_train_schedule_groups_pairs = get_train_schedule_groups_by_surface()
     local report_frame = player_global.view.report_frame
     report_frame.clear()
 
-    local enabled_excluded_keywords = keyword_list.get_enabled_keywords(player_global.model.excluded_keywords)
-    local enabled_hidden_keywords = keyword_list.get_enabled_keywords(player_global.model.hidden_keywords)
+    local enabled_excluded_keywords = player_global.model.excluded_keywords:get_enabled_keywords()
+    local enabled_hidden_keywords = player_global.model.hidden_keywords:get_enabled_keywords()
 
     local table_config = player_global.model.schedule_table_configuration
 
@@ -436,17 +445,34 @@ local function build_train_schedule_group_report(player)
     end
     end
 
+---@return TLLPlayerView
+local function get_empty_player_view()
+    return {
+        fuel_amount_flows={}
+    }
+end
+
+---@return TLLPlayerGlobal
 local function get_default_global()
-    return deep_copy{
+
+    local fuel_config = fuel_configuration.TLLFuelConfiguration:new()
+
+    local fuel_categories = global.model.fuel_category_data.fuel_categories_and_fuels
+
+    for fuel_category, _ in pairs(fuel_categories) do
+        fuel_config:add_fuel_category_config(fuel_category)
+    end
+
+    return {
         model = {
-            blueprint_configuration = utils.deep_copy(blueprint_configuration.config),
-            schedule_table_configuration = utils.deep_copy(schedule_table_configuration.config),
-            fuel_configuration = utils.deep_copy(fuel_configuration.config),
-            excluded_keywords = utils.deep_copy(keyword_list.keyword_list),
-            hidden_keywords = utils.deep_copy(keyword_list.keyword_list),
+            blueprint_configuration = blueprint_configuration.TLLBlueprintConfiguration:new(),
+            schedule_table_configuration = schedule_table_configuration.TLLScheduleTableConfiguration:new(),
+            fuel_configuration = fuel_config,
+            excluded_keywords = keyword_list.TLLKeywordList:new(),
+            hidden_keywords = keyword_list.TLLKeywordList:new(),
             last_gui_location = nil, -- migration not actually necessary, since it starts as nil?
         },
-        view = {}
+        view = get_empty_player_view()
     }
 end
 
@@ -455,126 +481,14 @@ local function initialize_global(player)
 end
 
 local function migrate_global(player)
-    local player_global = global.players[player.index]
-    if not player_global then
-        global.players[player.index] = get_default_global()
-        return
-    end
-    if player_global.elements then -- data is from before we swapped elements to views
-        player_global.elements = nil
-
-        local excluded_keywords = utils.deep_copy(keyword_list.keyword_list)
-
-        local old_excluded_strings = player_global.excluded_strings
-        if old_excluded_strings then
-            for keyword, data in pairs(old_excluded_strings) do
-                keyword_list.set_enabled(excluded_keywords, keyword, data.enabled)
-            end
-            player_global.excluded_strings = nil
-        end
-
-        local old_excluded_keywords = player_global.excluded_keywords
-        if old_excluded_keywords then
-            local to_iter = player_global.excluded_keywords.toggleable_items and player_global.excluded_keywords.toggleable_items or player_global.excluded_keywords
-            if old_excluded_keywords then
-                for keyword, data in pairs(to_iter) do
-                    keyword_list.set_enabled(excluded_keywords, keyword, data.enabled)
-                end
-                player_global.excluded_keywords = nil
-            end
-        end
-
-        local hidden_keywords = utils.deep_copy(keyword_list.keyword_list)
-
-        local old_hidden_keywords = player_global.hidden_keywords
-
-        if old_hidden_keywords then
-            local to_iter = player_global.hidden_keywords.toggleable_items and player_global.hidden_keywords.toggleable_items or player_global.hidden_keywords
-            for keyword, data in pairs(to_iter) do
-                keyword_list.set_enabled(hidden_keywords, keyword, data.enabled)
-            end
-            player_global.hidden_keywords = nil
-        end
-
-        local model = {}
-
-        for key, value in pairs(player_global) do
-            model[key] = value
-        end
-
-        player_global = {}
-        player_global.model = model
-        model.excluded_keywords = excluded_keywords
-        model.hidden_keywords = hidden_keywords
-
-        player_global.view = {}
-        global.players[player.index] = player_global
-    end
-    if player_global.add_fuel ~= nil or player_global.model.add_fuel ~= nil then
-        local fuel_config = utils.deep_copy(fuel_configuration.config)
-
-        local add_fuel
-        if player_global.add_fuel then add_fuel = player_global.add_fuel else add_fuel = player_global.model.add_fuel end
-        if add_fuel then
-            fuel_config.add_fuel = add_fuel
-            player_global.add_fuel = nil
-            player_global.model.add_fuel = nil
-        end
-
-        local selected_fuel
-        if player_global.selected_fuel then selected_fuel = player_global.selected_fuel else selected_fuel = player_global.model.selected_fuel end
-        if selected_fuel then
-            fuel_config.selected_fuel = selected_fuel
-            player_global.selected_fuel = nil
-            player_global.model.selected_fuel = nil
-        end
-
-        local fuel_amount
-        if player_global.fuel_amount then fuel_amount = player_global.fuel_amount else fuel_amount = player_global.model.fuel_amount end
-        if fuel_amount then
-            fuel_config.fuel_amount = fuel_amount
-            player_global.fuel_amount = nil
-            player_global.model.fuel_amount = nil
-        end
-        player_global.model.fuel_configuration = fuel_config
-    end
-    if player_global.model.only_current_surface ~= nil then
-        local schedule_table_config = deep_copy(schedule_table_configuration)
-        schedule_table_config.only_current_surface = player_global.model.only_current_surface
-        schedule_table_config.show_satisfied = player_global.model.show_satisfied
-        schedule_table_config.show_invalid = player_global.model.show_invalid
-
-        player_global.model.only_current_surface = nil
-        player_global.model.only_current_surface = nil
-        player_global.model.show_invalid = nil
-
-        player_global.model.schedule_table_configuration = schedule_table_config
-
-    elseif player_global.only_current_surface ~= nil then
-        local schedule_table_config = deep_copy(schedule_table_configuration)
-        schedule_table_config.only_current_surface = player_global.only_current_surface
-        schedule_table_config.show_satisfied = player_global.show_satisfied
-        schedule_table_config.show_invalid = player_global.show_invalid
-
-        player_global.only_current_surface = nil
-        player_global.only_current_surface = nil
-        player_global.show_invalid = nil
-
-        player_global.model.schedule_table_configuration = schedule_table_config
-    end
-    if not player_global.model.blueprint_configuration then
-        player_global.model.blueprint_configuration = deep_copy(blueprint_configuration.config)
-    end
-    if player_global.model.blueprint_configuration.snap_enabled then
-        player_global.model.blueprint_configuration.snap_enabled = true
-        player_global.model.blueprint_configuration.snap_direction = constants.snap_directions.horizontal
-        player_global.model.blueprint_configuration.snap_width = 2
-    end
+    global.players[player.index] = get_default_global()
 end
 
 local function build_display_tab(player)
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local display_content_frame = player_global.view.display_content_frame
+    if not display_content_frame then return end
     display_content_frame.clear()
 
     local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="tll_controls_flow"}
@@ -594,8 +508,10 @@ local function build_display_tab(player)
 end
 
 local function build_exclude_tab(player)
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local exclude_content_frame = player_global.view.exclude_content_frame
+    if not exclude_content_frame then return end
     exclude_content_frame.clear()
 
     local exclude_control_flow = exclude_content_frame.add{type="flow", direction="vertical", style="tll_controls_flow"}
@@ -618,8 +534,11 @@ end
 
 -- TODO: merge a lot of this logic with exclude? building of apply textfield, at least?
 local function build_hide_tab(player)
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local hide_content_frame = player_global.view.hide_content_frame
+    if not hide_content_frame then return end
+
     hide_content_frame.clear()
     local control_flow = hide_content_frame.add{type="flow", direction="vertical", style="tll_controls_flow"}
     control_flow.style.bottom_margin = 5
@@ -639,12 +558,14 @@ local function build_hide_tab(player)
 end
 
 local function build_settings_tab(player)
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local settings_content_frame = player_global.view.settings_content_frame
-
-    local blueprint_config = player_global.model.blueprint_configuration
+    if not settings_content_frame then return end
 
     settings_content_frame.clear()
+
+    local blueprint_config = player_global.model.blueprint_configuration
 
     local scroll_pane = settings_content_frame.add{type="scroll-pane", direction="vertical"}
     scroll_pane.style.vertically_stretchable = true
@@ -672,6 +593,7 @@ local function build_settings_tab(player)
         tooltip={"tll.fuel_settings_tooltip"}
     }
     fuel_header_label.style.font_color={1, 0.901961, 0.752941}
+
     local fuel_config = player_global.model.fuel_configuration
 
     fuel_settings_frame.add{
@@ -681,44 +603,65 @@ local function build_settings_tab(player)
         caption={"tll.place_trains_with_fuel_checkbox"}
     }
 
-    local fuel_amount_frame_enabled = fuel_config.add_fuel and fuel_config.selected_fuel ~= nil
+    fuel_category_table = fuel_settings_frame.add{type="table", column_count=3}
 
-    local maximum_fuel_amount = (fuel_amount_frame_enabled and (game.item_prototypes[fuel_config.selected_fuel].stack_size * 3)) or 1
+    for fuel_category, fuel_category_config in pairs(fuel_config.fuel_category_configurations) do
 
-    local slider_value_step = maximum_fuel_amount % 10 == 0 and maximum_fuel_amount / 10 or 1
+        fuel_category_table.add{type="label", caption={"", "'", fuel_category, "'"}}
+        local spacer = fuel_category_table.add{type="empty-widget"}
+        spacer.style.horizontally_stretchable = true
 
-    slider_textfield.add_slider_textfield(
-        fuel_settings_frame,
-        constants.actions.update_fuel_amount,
-        fuel_config.fuel_amount,
-        slider_value_step,
-        0,
-        maximum_fuel_amount,
-        fuel_amount_frame_enabled,
-        true
-    )
+        local category_settings_flow = fuel_category_table.add{type="flow", direction="vertical"}
 
-    local valid_fuels = {}
-    for _, prototype in pairs(game.item_prototypes) do
-        if prototype.fuel_category and prototype.fuel_category == "chemical" then
-            table.insert(valid_fuels, prototype)
-        end
-    end
+        local fuel_amount_frame_enabled = fuel_config.add_fuel and fuel_category_config.selected_fuel ~= nil
 
-    local column_count = #valid_fuels < 10 and #valid_fuels or 10
+        local maximum_fuel_amount = fuel_category_config:get_max_fuel_amount()
 
-    local table_frame = fuel_settings_frame.add{type="frame", style="slot_button_deep_frame"}
-    local fuel_button_table = table_frame.add{type="table", column_count=column_count, style="filter_slot_table"}
+        local slider_value_step = maximum_fuel_amount % 10 == 0 and maximum_fuel_amount / 10 or 1
 
-    for _, fuel in pairs(valid_fuels) do
-        local item_name = fuel.name
-        local fuel_config = player_global.model.fuel_configuration
-        local button_style = (item_name == fuel_config.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
-        fuel_button_table.add{type="sprite-button", sprite=("item/" .. item_name), tags={action=constants.actions.select_fuel, item_name=item_name}, style=button_style, enabled = fuel_config.add_fuel} -- TODO: select on click
+        local fuel_category_slider_textfield = slider_textfield.add_slider_textfield(
+            category_settings_flow,
+            {
+                action=constants.actions.update_fuel_amount,
+                fuel_category=fuel_category,
+            },
+            fuel_category_config.fuel_amount,
+            slider_value_step,
+            0,
+            maximum_fuel_amount,
+            fuel_amount_frame_enabled,
+            true
+        )
+
+        player_global.view.fuel_amount_flows[fuel_category] = fuel_category_slider_textfield
+
+        local valid_fuels = global.model.fuel_category_data.fuel_categories_and_fuels[fuel_category]
+
+        local column_count = #valid_fuels < 10 and #valid_fuels or 10
+
+        local table_frame = category_settings_flow.add{type="frame", style="slot_button_deep_frame"}
+        local fuel_button_table = table_frame.add{type="table", column_count=column_count, style="filter_slot_table"}
+
+        for _, fuel in pairs(valid_fuels) do
+            local button_style = (fuel == fuel_category_config.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
+            fuel_button_table.add{
+                type="sprite-button",
+                sprite=("item/" .. fuel),
+                tags={
+                    action=constants.actions.select_fuel,
+                    item_name=fuel,
+                    fuel_category=fuel_category
+                },
+                style=button_style,
+                enabled=fuel_config.add_fuel
+            }
+        end 
     end
 end
 
+---@param player LuaPlayer
 local function build_interface(player)
+    ---@TLLPlayerGlobal
     local player_global = global.players[player.index]
 
     local screen_element = player.gui.screen
@@ -788,6 +731,8 @@ local function build_interface(player)
 end
 
 local function toggle_interface(player)
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local main_frame = player_global.view.main_frame
     if main_frame == nil then
@@ -796,7 +741,7 @@ local function toggle_interface(player)
     else
         player_global.model.last_gui_location = main_frame.location
         main_frame.destroy()
-        player_global.view = {}
+        player_global.view = get_empty_player_view()
     end
 end
 
@@ -807,17 +752,24 @@ end)
 
 script.on_event(defines.events.on_gui_click, function (event)
     local player = game.get_player(event.player_index)
-    if not player then return end -- assure vscode that player is not nil
+    if not player then return end
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+
     if event.element.tags.action then
         local action = event.element.tags.action
          if action == constants.actions.select_fuel then
             local item_name = event.element.tags.item_name
-            local fuel_config = player_global.model.fuel_configuration
-            fuel_config = fuel_configuration.change_selected_fuel(fuel_config, item_name)
+            local fuel_category = event.element.tags.fuel_category
+            if type(item_name) ~= "string" or type(fuel_category) ~= "string" then return end
+            local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[fuel_category]
+            if fuel_config:change_selected_fuel_and_check_overcap(item_name) then
+                local fuel_category_slider_textfield_flow = player_global.view.fuel_amount_flows[fuel_category]
+                slider_textfield.update_slider_value(fuel_category_slider_textfield_flow, fuel_config:get_max_fuel_amount())
+            end
 
             build_settings_tab(player)
-            return
 
         elseif action == constants.actions.train_report_update then
             build_train_schedule_group_report(player)
@@ -828,38 +780,41 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.exclude_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
-                keyword_list.set_enabled(player_global.model.excluded_keywords, text, true)
+                player_global.model.excluded_keywords:set_enabled(text, true)
                 keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
                 build_train_schedule_group_report(player)
             end
 
         elseif action == constants.actions.delete_excluded_keyword then
             local excluded_keyword = event.element.tags.keyword
-            keyword_list.remove_item(player_global.model.excluded_keywords, excluded_keyword)
+            if type(excluded_keyword) ~= "string" then return end
+            player_global.model.excluded_keywords:remove_item(excluded_keyword)
             keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.delete_all_excluded_keywords then
-            player_global.model.excluded_keywords = deep_copy(keyword_list.keyword_list)
+
+            player_global.model.excluded_keywords:remove_all()
             keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.hide_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
-                keyword_list.set_enabled(player_global.model.hidden_keywords, text, true)
+                player_global.model.hidden_keywords:set_enabled(text, true)
                 keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
                 build_train_schedule_group_report(player)
             end
 
         elseif action == constants.actions.delete_hidden_keyword then
             local hidden_keyword = event.element.tags.keyword
-            keyword_list.remove_item(player_global.model.hidden_keywords, hidden_keyword)
+            if type(hidden_keyword) ~= "string" then return end
+            player_global.model.hidden_keywords:remove_item(hidden_keyword)
             keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.delete_all_hidden_keywords then
-            player_global.model.hidden_keywords = deep_copy(keyword_list.keyword_list)
+            player_global.model.hidden_keywords:remove_all()
             keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
             build_train_schedule_group_report(player)
 
@@ -880,7 +835,9 @@ script.on_event(defines.events.on_gui_click, function (event)
             create_blueprint_from_train(player, template_train, surface_name)
 
         elseif action == constants.actions.set_blueprint_orientation then
-            blueprint_configuration.set_new_blueprint_orientation(player_global.model.blueprint_configuration, event.element.tags.orientation)
+            local orientation = event.element.tags.orientation
+            if type(orientation) ~= "number" then return end
+            player_global.model.blueprint_configuration:set_new_blueprint_orientation(orientation)
             build_settings_tab(player)
         end
     end
@@ -888,43 +845,51 @@ end)
 
 script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     local player = game.get_player(event.player_index)
-    if not player then return end -- assure vscode that player is not nil
+    if not player then return end -- 
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+
     if event.element.tags.action then
         local action = event.element.tags.action
         if action == constants.actions.toggle_excluded_keyword then
             local keyword = event.element.tags.keyword
-            keyword_list.toggle_enabled(player_global.model.excluded_keywords, keyword)
+            if type(keyword) ~= "string" then return end
+            player_global.model.excluded_keywords:toggle_enabled(keyword)
             keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_hidden_keyword then
             local keyword = event.element.tags.keyword
-            keyword_list.toggle_enabled(player_global.model.hidden_keywords, keyword)
+            if type(keyword) ~= "string" then return end
+            player_global.model.hidden_keywords:toggle_enabled(keyword)
             keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_current_surface then
-            schedule_table_configuration.toggle_current_surface(player_global.model.schedule_table_configuration)
+            player_global.model.schedule_table_configuration:toggle_current_surface()
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_show_satisfied then
-            schedule_table_configuration.toggle_show_satisfied(player_global.model.schedule_table_configuration)
+            player_global.model.schedule_table_configuration:toggle_show_satisfied()
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_show_invalid then
-            schedule_table_configuration.toggle_show_invalid(player_global.model.schedule_table_configuration)
+            player_global.model.schedule_table_configuration:toggle_show_invalid()
             build_train_schedule_group_report(player)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
-            player_global.model.fuel_configuration = fuel_configuration.toggle_add_fuel(player_global.model.fuel_configuration)
-            build_fuel_tab(player)
+            player_global.model.fuel_configuration:toggle_add_fuel()
+            build_settings_tab(player)
         end
     end
 end)
 
 script.on_event(defines.events.on_gui_value_changed, function (event)
     local player = game.get_player(event.player_index)
+    if not player then return end
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
     -- handler for slider_textfield element: when the slider updates, update the textfield
@@ -938,18 +903,21 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
         local action = event.element.tags.action
         if action == constants.actions.update_fuel_amount then
             local new_fuel_amount = event.element.slider_value
-            local fuel_config = player_global.model.fuel_configuration
-            fuel_config = fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
+            local fuel_category = event.element.tags.fuel_category
+            local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[fuel_category]
+            fuel_config:set_fuel_amount(new_fuel_amount)
         elseif action == constants.actions.set_blueprint_snap_width then
             local new_snap_width = event.element.slider_value
-            local blueprint_config = player_global.model.blueprint_configuration
-            blueprint_config = blueprint_configuration.set_snap_width(blueprint_config, new_snap_width)
+            player_global.model.blueprint_configuration:set_snap_width(new_snap_width)
         end
     end
 end)
 
 script.on_event(defines.events.on_gui_text_changed, function (event)
     local player = game.get_player(event.player_index)
+    if not player then return end -- 
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
     if event.element.tags.action then
@@ -957,13 +925,15 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
         if action == constants.actions.update_fuel_amount then
             -- this caps the textfield's value
             local new_fuel_amount = tonumber(event.element.text)
-            local fuel_config = player_global.model.fuel_configuration
-            fuel_configuration.set_fuel_amount(fuel_config, new_fuel_amount)
-       
+            if type(new_fuel_amount) == "number" then
+                local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[event.element.tags.fuel_category]
+                fuel_config:set_fuel_amount(new_fuel_amount)
+            end
+
         elseif action == constants.actions.set_blueprint_snap_width then
             local new_snap_width = tonumber(event.element.text)
-            local blueprint_config = player_global.model.blueprint_configuration
-            blueprint_config = blueprint_configuration.set_snap_width(blueprint_config, new_snap_width)
+            if not new_snap_width then return end
+            player_global.model.blueprint_configuration:set_snap_width(new_snap_width)
         end
     end
 
@@ -976,6 +946,9 @@ end)
 
 script.on_event(defines.events.on_gui_elem_changed, function(event)
     local player = game.get_player(event.player_index)
+    if not player then return end -- 
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     if event.element.tags.action then
         local action = event.element.tags.action
@@ -987,11 +960,14 @@ end)
 
 script.on_event(defines.events.on_gui_switch_state_changed, function(event)
     local player = game.get_player(event.player_index)
+    if not player then return end -- 
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     if event.element.tags.action then
         local action = event.element.tags.action
         if action == constants.actions.toggle_blueprint_snap_direction then
-            blueprint_configuration.toggle_snap_direction(player_global.model.blueprint_configuration)
+            player_global.model.blueprint_configuration:toggle_snap_direction()
         end
     end
 end)
@@ -1001,28 +977,29 @@ script.on_event(defines.events.on_gui_closed, function(event)
         local player = game.get_player(event.player_index)
         if event.element.name == "tll_main_frame" then
             toggle_interface(player)
-        elseif event.element.name == "tll_settings_main_frame" then
-            settings_gui.toggle_settings_gui(player)
         end
     end
 end)
 
 script.on_event(defines.events.on_gui_confirmed, function(event)
     local player = game.get_player(event.player_index)
+    if not player then return end -- 
+
+    ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     if event.element.tags.action then
         local action = event.element.tags.action
         if action == constants.actions.exclude_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
-                keyword_list.set_enabled(player_global.model.excluded_keywords, text, true)
+                player_global.model.excluded_keywords:set_enabled(text, true)
                 keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
                 build_train_schedule_group_report(player)
             end
         elseif action == constants.actions.hide_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
-                keyword_list.set_enabled(player_global.model.hidden_keywords, text, true)
+                player_global.model.hidden_keywords:set_enabled(text, true)
                 keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
                 build_train_schedule_group_report(player)
             end
@@ -1040,6 +1017,11 @@ script.on_event(defines.events.on_player_removed, function(event)
 end)
 
 script.on_init(function ()
+
+    global.model = {
+        fuel_category_data = fuel_category_data.get_fuel_category_data()
+    }
+
     local freeplay = remote.interfaces["freeplay"]
     if freeplay then -- TODO: remove this when done with testing
         if freeplay["set_skip_intro"] then remote.call("freeplay", "set_skip_intro", true) end
@@ -1052,10 +1034,14 @@ script.on_init(function ()
 end)
 
 script.on_configuration_changed(function (config_changed_data)
+    if not global.model then global.model = {} end
+    global.model.fuel_category_data = fuel_category_data.get_fuel_category_data()
+
     if config_changed_data.mod_changes["train-limit-linter"] then
         for _, player in pairs(game.players) do
-            -- global.players[player.index] = deep_copy(get_default_global())
             migrate_global(player)
+
+            ---@type TLLPlayerGlobal
             local player_global = global.players[player.index]
             if player_global.view.main_frame ~= nil then
                 toggle_interface(player)
