@@ -457,8 +457,8 @@ local function get_default_global()
 
     return deep_copy{
         model = {
-            blueprint_configuration = utils.deep_copy(blueprint_configuration.fuel_category_config),
-            schedule_table_configuration = utils.deep_copy(schedule_table_configuration.fuel_category_config),
+            blueprint_configuration = blueprint_configuration.get_new_blueprint_configuration(),
+            schedule_table_configuration = schedule_table_configuration.get_new_schedule_table_configuration(),
             fuel_configuration = {
                 add_fuel=true,
                 fuel_category_configurations=fuel_category_configurations

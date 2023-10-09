@@ -19,9 +19,3 @@
 ---@field exclude_content_frame LuaGuiElement?
 ---@field settings_content_frame LuaGuiElement?
 ---@field hidden_keywords_frame LuaGuiElement?
-
----@class TLLKeywordList
----@field toggleable_items table<string, TLLToggleableItemData>
-
----@class TLLToggleableItemData
----@field enabled boolean

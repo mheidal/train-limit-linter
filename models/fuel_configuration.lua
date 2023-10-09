@@ -13,7 +13,7 @@ Exports = {}
 -- Fuel category configuration
 
 ---@type TLLFuelCategoryConfiguration
-fuel_category_config = {
+schedule_table_config = {
     selected_fuel = nil, -- nil or string
     fuel_amount = 0 -- 0 to 3 stacks of selected_fuel
 }
@@ -42,7 +42,7 @@ end
 
 ---@return TLLFuelCategoryConfiguration
 function get_fuel_category_configuration()
-    return deep_copy(fuel_category_config)
+    return deep_copy(schedule_table_config)
 end
 
 -- Fuel configuration
