@@ -19,4 +19,5 @@
 ---@field exclude_content_frame LuaGuiElement?
 ---@field settings_content_frame LuaGuiElement?
 ---@field hidden_keywords_frame LuaGuiElement?
+---@field excluded_keywords_frame LuaGuiElement?
 ---@field fuel_amount_flows table<string, LuaGuiElement> -- string is a fuel category (e.g. 'chemical')

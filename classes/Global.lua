@@ -1,3 +1,5 @@
+---@diagnostic disable: missing-fields
+
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
 ---@field players table<number, TLLPlayerGlobal>
