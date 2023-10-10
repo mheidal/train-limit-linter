@@ -1,6 +1,5 @@
 local constants = require("constants")
 
-local keyword_tables = require("views/keyword_tables")
 local icon_selector_textfield = require("views/icon_selector_textfield")
 
 Exports = {}
@@ -37,12 +36,20 @@ local function build_keyword_tab(
     local keyword_table_scroll_pane = parent.add{type="scroll-pane", direction="vertical"}
     keyword_table_scroll_pane.style.vertically_stretchable = true
 
-    keyword_tables.build_keyword_table(
-        keyword_list,
-        keyword_table_scroll_pane,
-        toggle_keyword_action,
-        delete_keyword_action
-    )
+    if keyword_list:get_number_of_keywords() == 0 then
+        keyword_table_scroll_pane.add{type="label", caption={"tll.no_keywords"}}
+        return
+    end
+
+    for keyword, string_data in pairs(keyword_list.toggleable_items) do
+        local keyword_line_flow = keyword_table_scroll_pane.add{type="flow", direction="horizontal"}
+        keyword_line_flow.add{type="checkbox", state=string_data.enabled, tags={action=toggle_keyword_action, keyword=keyword}}
+        keyword_line_flow.add{type="label", caption=keyword}
+        local spacer = keyword_line_flow.add{type="empty-widget"}
+        spacer.style.horizontally_stretchable = true
+        keyword_line_flow.add{type="sprite-button", tags={action=delete_keyword_action, keyword=keyword}, sprite="utility/trash", style="tool_button_red"}
+    end
+
 end
 
 function Exports.build_exclude_tab(player)
