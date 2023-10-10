@@ -156,7 +156,10 @@ end
 local function orient_train_entities(entities, new_orientation)
     local main_orientation
     for _, entity in pairs(entities) do
-        if entity.name == "locomotive" then
+        -- check if the entity is a locomotive
+        -- type == "locomotive" is not available on BlueprintEntity, but it is visible on the LuaEntityPrototype
+        local entity_proto = game.entity_prototypes[entity.name]
+        if entity_proto.type == "locomotive" then
             main_orientation = entity.orientation
             break
         end
