@@ -1,6 +1,3 @@
-local utils = require("utils")
-local constants = require("constants")
-
 Exports = {}
 
 ---@param keywords TLLKeywordList
@@ -8,7 +5,7 @@ Exports = {}
 ---@param toggle_keyword_enabled_tag string
 ---@param delete_action_tag string
 local function build_keyword_table(keywords, parent, toggle_keyword_enabled_tag, delete_action_tag)
-    if utils.get_table_size(keywords) == 0 then
+    if keywords:get_number_of_keywords() == 0 then
         parent.add{type="label", caption={"tll.no_keywords"}}
         return
     end
