@@ -37,6 +37,50 @@ function Exports.swap_rich_text_format_to_entity(input)
     return modified
 end
 
+
+---@param value number
+---@param unit string
+---@param round number
+---@return string
+function Exports.localize_to_metric(value, unit, round)
+    local prefixes = {"Y", "Z", "E", "P", "T", "G", "M", "k", "", "m", "µ", "n", "p", "f", "a", "z", "y"}
+    local index = 9
+
+    if not round then round = 2 end
+
+    -- Handle negative values
+    local sign = ""
+    if value < 0 then
+        sign = "-"
+        value = -value
+    end
+
+    -- Determine the appropriate prefix based on the magnitude of the value
+    while value >= 1000 and index > 1 do
+        value = value / 1000
+        index = index - 1
+    end
+
+    local formatted_value
+    if index <= 8 then
+        formatted_value = string.format("%." .. tostring(round) .. "f", value)
+    else
+        formatted_value = string.format("%.0f", value)
+    end
+
+    formatted_value = string.match(formatted_value, "^(.-)%.0*$") or formatted_value
+
+    return sign .. formatted_value .. " " .. prefixes[index] .. unit
+end
+
+function Exports.localize_to_percentage(value, round)
+    if not round then round = 2 end
+    local format_string = "%." .. tostring(round) .. "f"
+    local formatted_string = string.format(format_string, value * 100)
+    formatted_string = string.match(formatted_string, "^(.-)%.0*$") or formatted_string
+    return formatted_string .. "%"
+end
+
 Exports.deep_copy = deep_copy
 
 return Exports
