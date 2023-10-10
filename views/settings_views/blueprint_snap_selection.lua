@@ -11,7 +11,12 @@ local function build_blueprint_snap_selector(player, parent)
 
     local blueprint_snap_selector_flow = parent.add{type="flow", direction="vertical"}
     blueprint_snap_selector_flow.style.top_margin = 5
-    blueprint_snap_selector_flow.add{type="checkbox", state=config.snap_enabled, caption={"tll.enable_blueprint_snap"}}
+    blueprint_snap_selector_flow.add{
+        type="checkbox",
+        state=config.snap_enabled,
+        tags={action=constants.actions.toggle_blueprint_snap},
+        caption={"tll.enable_blueprint_snap"}
+    }
     blueprint_snap_selector_flow.add{type="label", caption={"tll.set_snap_width"}}
     slider_textfield.add_slider_textfield(
         blueprint_snap_selector_flow,
@@ -35,7 +40,8 @@ local function build_blueprint_snap_selector(player, parent)
         tags = {action=constants.actions.toggle_blueprint_snap_direction},
         style="switch",
         left_label_caption={"tll.horizontal"},
-        right_label_caption={"tll.vertical"}
+        right_label_caption={"tll.vertical"},
+        enabled=config.snap_enabled
     }
     snap_direction_switch.style.vertical_align = "center"
 end
