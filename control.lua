@@ -1,11 +1,8 @@
 local constants = require("constants")
 local utils = require("utils")
+local globals = require("scripts.globals")
 
 -- Models
-local blueprint_configuration = require("models/blueprint_configuration")
-local schedule_table_configuration = require("models/schedule_table_configuration")
-local keyword_list = require("models/keyword_list")
-local fuel_configuration = require("models.fuel_configuration")
 local fuel_category_data = require("models.fuel_category_data")
 
 -- view
@@ -17,14 +14,14 @@ local keyword_tables = require("views/keyword_tables")
 
 -- scripts
 
-local schedule_report_table = require("scripts/schedule_report_table")
+local schedule_report_table_scripts = require("scripts/schedule_report_table")
 
 ---@param player LuaPlayer
 local function build_train_schedule_group_report(player)
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
-    local surface_train_schedule_groups_pairs = schedule_report_table.get_train_schedule_groups_by_surface()
+    local surface_train_schedule_groups_pairs = schedule_report_table_scripts.get_train_schedule_groups_by_surface()
     local report_frame = player_global.view.report_frame
     if not report_frame then return end
     report_frame.clear()
@@ -68,7 +65,7 @@ local function build_train_schedule_group_report(player)
             for _, schedule_name in pairs(sorted_schedule_names) do
 
                 local train_schedule_group = train_schedule_groups[schedule_name]
-                local train_limit_sum = schedule_report_table.get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
+                local train_limit_sum = schedule_report_table_scripts.get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
 
                 local schedule_contains_hidden_keyword = false
                 for _, keyword in pairs(enabled_hidden_keywords) do
@@ -189,45 +186,6 @@ local function build_train_schedule_group_report(player)
         end
     end
     end
-
----@return TLLPlayerView
-local function get_empty_player_view()
-    return {
-        fuel_amount_flows={}
-    }
-end
-
----@return TLLPlayerGlobal
-local function get_default_global()
-
-    local fuel_config = fuel_configuration.TLLFuelConfiguration:new()
-
-    local fuel_categories = global.model.fuel_category_data.fuel_categories_and_fuels
-
-    for fuel_category, _ in pairs(fuel_categories) do
-        fuel_config:add_fuel_category_config(fuel_category)
-    end
-
-    return {
-        model = {
-            blueprint_configuration = blueprint_configuration.TLLBlueprintConfiguration:new(),
-            schedule_table_configuration = schedule_table_configuration.TLLScheduleTableConfiguration:new(),
-            fuel_configuration = fuel_config,
-            excluded_keywords = keyword_list.TLLKeywordList:new(),
-            hidden_keywords = keyword_list.TLLKeywordList:new(),
-            last_gui_location = nil, -- migration not actually necessary, since it starts as nil?
-        },
-        view = get_empty_player_view()
-    }
-end
-
-local function initialize_global(player)
-    global.players[player.index] = get_default_global()
-end
-
-local function migrate_global(player)
-    global.players[player.index] = get_default_global()
-end
 
 local function build_display_tab(player)
     ---@type TLLPlayerGlobal
@@ -512,7 +470,7 @@ local function toggle_interface(player)
     else
         player_global.model.last_gui_location = main_frame.location
         main_frame.destroy()
-        player_global.view = get_empty_player_view()
+        player_global.view = globals.get_empty_player_view()
     end
 end
 
@@ -594,7 +552,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             local template_train_ids = event.element.tags.template_train_ids
             if type(template_train_ids) ~= "table" then return end
             for _, id in pairs(template_train_ids) do
-                local template_option = schedule_report_table.get_train_by_id(id)
+                local template_option = schedule_report_table_scripts.get_train_by_id(id)
                 if template_option then
                     template_train = template_option
                     break
@@ -606,7 +564,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             end
             local surface_name = event.element.tags.surface
             if type(surface_name) ~= "string" then return end
-            schedule_report_table.create_blueprint_from_train(player, template_train, surface_name)
+            schedule_report_table_scripts.create_blueprint_from_train(player, template_train, surface_name)
 
         elseif action == constants.actions.set_blueprint_orientation then
             local orientation = event.element.tags.orientation
@@ -651,6 +609,10 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
         elseif action == constants.actions.toggle_show_invalid then
             player_global.model.schedule_table_configuration:toggle_show_invalid()
             build_train_schedule_group_report(player)
+
+        elseif action == constants.actions.toggle_blueprint_snap then
+            player_global.model.blueprint_configuration:toggle_blueprint_snap()
+            build_settings_tab(player)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
             player_global.model.fuel_configuration:toggle_add_fuel()
@@ -785,7 +747,7 @@ end)
 
 script.on_event(defines.events.on_player_created, function(event)
     local player = game.get_player(event.player_index)
-    initialize_global(player)
+    globals.initialize_global(player)
 end)
 
 script.on_event(defines.events.on_player_removed, function(event)
@@ -805,7 +767,7 @@ script.on_init(function ()
     end
     global.players = {}
     for _, player in pairs(game.players) do
-        initialize_global(player)
+        globals.initialize_global(player)
     end
 end)
 
@@ -815,7 +777,7 @@ script.on_configuration_changed(function (config_changed_data)
 
     if config_changed_data.mod_changes["train-limit-linter"] then
         for _, player in pairs(game.players) do
-            migrate_global(player)
+            globals.migrate_global(player)
 
             ---@type TLLPlayerGlobal
             local player_global = global.players[player.index]

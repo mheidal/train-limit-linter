@@ -9,6 +9,7 @@ local constants = require("constants")
 ---@field set_new_blueprint_orientation fun(self: TLLBlueprintConfiguration, new_orientation: number)
 ---@field set_snap_width fun(self: TLLBlueprintConfiguration, new_snap_width: number)
 ---@field toggle_snap_direction fun(self: TLLBlueprintConfiguration)
+---@field toggle_blueprint_snap fun(self: TLLBlueprintConfiguration)
 
 Exports = {}
 
@@ -38,6 +39,10 @@ end
 
 function TLLBlueprintConfiguration:toggle_snap_direction()
     self.snap_direction = self.snap_direction == constants.snap_directions.horizontal and constants.snap_directions.vertical or constants.snap_directions.horizontal
+end
+
+function TLLBlueprintConfiguration:toggle_blueprint_snap()
+    self.snap_enabled = not self.snap_enabled
 end
 
 Exports.TLLBlueprintConfiguration = TLLBlueprintConfiguration
