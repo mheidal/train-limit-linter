@@ -33,10 +33,6 @@ local fuel_configuration = require("models.fuel_configuration")
 ---@field excluded_keywords_frame LuaGuiElement?
 ---@field fuel_amount_flows table<string, LuaGuiElement> -- string is a fuel category (e.g. 'chemical')
 
----@type TLLGlobal
----@diagnostic disable-next-line: missing-fields
-global = {}
-
 local Exports = {}
 
 ---@return TLLPlayerView
