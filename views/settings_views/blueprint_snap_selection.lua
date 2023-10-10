@@ -40,7 +40,8 @@ local function build_blueprint_snap_selector(player, parent)
         tags = {action=constants.actions.toggle_blueprint_snap_direction},
         style="switch",
         left_label_caption={"tll.horizontal"},
-        right_label_caption={"tll.vertical"}
+        right_label_caption={"tll.vertical"},
+        enabled=config.snap_enabled
     }
     snap_direction_switch.style.vertical_align = "center"
 end
