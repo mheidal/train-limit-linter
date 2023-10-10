@@ -18,7 +18,7 @@ local keyword_tables = require("views/keyword_tables")
 -- Util functions
 
 ---@param id string
----@return LuaTrain
+---@return LuaTrain?
 local function get_train_by_id(id)
     for _, surface in pairs(game.surfaces) do
         for _, train in pairs(surface.get_trains()) do
@@ -249,6 +249,7 @@ local function create_blueprint_from_train(player, train, surface_name)
     end
 
     local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
+    if not aggregated_entities then return end
     for _, entity in pairs(aggregated_entities) do
         local items_to_add = {}
         if player_global.model.fuel_configuration.add_fuel then
@@ -268,7 +269,7 @@ local function create_blueprint_from_train(player, train, surface_name)
     aggregated_entities = orient_train_entities(aggregated_entities, player_global.model.blueprint_configuration.new_blueprint_orientation)
 
     aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
-    aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player, aggregated_entities)
+    aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player)
     player.add_to_clipboard(aggregated_blueprint_slot)
     player.activate_paste()
     script_inventory.destroy()
@@ -282,6 +283,7 @@ local function build_train_schedule_group_report(player)
     local player_global = global.players[player.index]
     local surface_train_schedule_groups_pairs = get_train_schedule_groups_by_surface()
     local report_frame = player_global.view.report_frame
+    if not report_frame then return end
     report_frame.clear()
 
     local enabled_excluded_keywords = player_global.model.excluded_keywords:get_enabled_keywords()
@@ -820,7 +822,9 @@ script.on_event(defines.events.on_gui_click, function (event)
 
         elseif action == constants.actions.train_schedule_create_blueprint then
             local template_train
-            for _, id in pairs(event.element.tags.template_train_ids) do
+            local template_train_ids = event.element.tags.template_train_ids
+            if type(template_train_ids) ~= "table" then return end
+            for _, id in pairs(template_train_ids) do
                 local template_option = get_train_by_id(id)
                 if template_option then
                     template_train = template_option
@@ -832,6 +836,7 @@ script.on_event(defines.events.on_gui_click, function (event)
                 return
             end
             local surface_name = event.element.tags.surface
+            if type(surface_name) ~= "string" then return end
             create_blueprint_from_train(player, template_train, surface_name)
 
         elseif action == constants.actions.set_blueprint_orientation then
@@ -895,6 +900,7 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
     -- handler for slider_textfield element: when the slider updates, update the textfield
     if event.element.tags.slider_textfield then
         local slider_textfield_flow = event.element.parent
+        if not slider_textfield_flow then return end
         slider_textfield.update_textfield_value(slider_textfield_flow)
     end
 
@@ -940,6 +946,7 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
     -- handler for slider_textfield element: when the slider updates, update the textfield
     if event.element.tags.slider_textfield then
         local slider_textfield_flow = event.element.parent
+        if not slider_textfield_flow then return end
         slider_textfield.update_slider_value(slider_textfield_flow)
     end
 end)
