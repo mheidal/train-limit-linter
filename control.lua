@@ -12,203 +12,11 @@ local slider_textfield = require("views/slider_textfield")
 local icon_selector_textfield = require("views/icon_selector_textfield")
 local keyword_tables = require("views/keyword_tables")
 
+local display_tab_view = require("views/display_tab")
+
 -- scripts
 
 local schedule_report_table_scripts = require("scripts/schedule_report_table")
-
----@param player LuaPlayer
-local function build_train_schedule_group_report(player)
-
-    ---@type TLLPlayerGlobal
-    local player_global = global.players[player.index]
-    local surface_train_schedule_groups_pairs = schedule_report_table_scripts.get_train_schedule_groups_by_surface()
-    local report_frame = player_global.view.report_frame
-    if not report_frame then return end
-    report_frame.clear()
-
-    local enabled_excluded_keywords = player_global.model.excluded_keywords:get_enabled_keywords()
-    local enabled_hidden_keywords = player_global.model.hidden_keywords:get_enabled_keywords()
-
-    local table_config = player_global.model.schedule_table_configuration
-
-    local column_count = 4 + (table_config.only_current_surface and 0 or 1)
-
-    local schedule_report_table = report_frame.add{type="table", style="bordered_table", column_count=column_count}
-    schedule_report_table.style.maximal_width = 552
-
-    if not table_config.only_current_surface then
-        schedule_report_table.add{type="label", caption={"tll.surface_header"}}
-    end
-
-    local schedule_header_flow = schedule_report_table.add{type="flow", direction="horizontal"}
-    schedule_header_flow.add{type="label", caption={"tll.schedule_header"}}
-    schedule_header_flow.add{type="empty-widget"}
-    schedule_header_flow.style.horizontally_stretchable = true
-    schedule_header_flow.style.horizontally_squashable = true
-    schedule_header_flow.style.maximal_width = 300
-
-    schedule_report_table.add{type="label", caption={"tll.train_count_header"}}
-    schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
-    schedule_report_table.add{type="empty-widget"}
-
-    for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
-        local surface = surface_train_schedule_groups_pair.surface
-
-        -- barrier for all train schedules for a surface
-        if not (table_config.only_current_surface and surface.name ~= player.surface.name) then
-            local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
-
-            local sorted_schedule_names = {}
-            for schedule_name, _ in pairs(train_schedule_groups) do table.insert(sorted_schedule_names, schedule_name) end
-            table.sort(sorted_schedule_names)
-
-            for _, schedule_name in pairs(sorted_schedule_names) do
-
-                local train_schedule_group = train_schedule_groups[schedule_name]
-                local train_limit_sum = schedule_report_table_scripts.get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
-
-                local schedule_contains_hidden_keyword = false
-                for _, keyword in pairs(enabled_hidden_keywords) do
-                    local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(keyword)
-                    local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(keyword)
-                    if (string.find(schedule_name, keyword, nil, true)
-                        or string.find(schedule_name, alt_rich_text_format_img, nil, true)
-                        or string.find(schedule_name, alt_rich_text_format_entity, nil, true)
-                        ) then
-                        schedule_contains_hidden_keyword = true
-                    end
-                end
-
-                local invalid = (train_limit_sum == constants.train_stop_limit_enums.not_set)
-
-                local satisfied
-                if type(train_limit_sum) ~= "number" then
-                    satisfied = false
-                else
-                    satisfied = (train_limit_sum - #train_schedule_group == 1)
-                end
-
-                -- barrier for showing a particular schedule
-                if (
-                    (not schedule_contains_hidden_keyword)
-                    and (table_config.show_satisfied or (not satisfied))
-                    and (table_config.show_invalid or (not invalid))
-                ) then
-
-                    local train_limit_sum_caption
-                    if train_limit_sum == constants.train_stop_limit_enums.not_set then
-                        train_limit_sum_caption = {"tll.train_limit_sum_not_set"}
-                    else
-                        train_limit_sum_caption = tostring(train_limit_sum)
-                    end
-
-
-                    local train_count_difference -- nil or number
-                    if train_limit_sum ~= constants.train_stop_limit_enums.not_set then
-                        train_count_difference = train_limit_sum - 1 -  #train_schedule_group
-                    end
-
-                    -- caption
-                    local train_count_caption = tostring(#train_schedule_group)
-                    if train_count_difference and train_count_difference ~= 0 then -- check non-nil
-                        local diff_str = train_count_difference > 0 and "+" or ""
-                        train_count_caption = train_count_caption .. " (" .. diff_str .. tostring(train_count_difference) .. ") [img=info]"
-                    end
-
-                    -- tooltip
-                    local recommended_action_tooltip = nil
-                    if train_count_difference and train_count_difference ~= 0 then
-                        local abs_diff = train_count_difference > 0 and train_count_difference or -1 * train_count_difference
-                        recommended_action_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip", abs_diff} or {"tll.remove_n_trains_tooltip", abs_diff}
-                    end
-                    
-                    -- color
-                    local train_count_label_color
-                    if train_count_difference then
-                        if train_count_difference ~= 0 then
-                            train_count_label_color = {1, 0.541176, 0.541176}
-                        else
-                            train_count_label_color = {0.375, 0.703125, 0.390625} -- copied from "confirm" buttons in game
-                        end
-                    else
-                        train_count_label_color = {1, 1, 1}
-                    end
-
-                    local template_train_ids = {}
-                    for _, train in pairs(train_schedule_group) do
-                        table.insert(template_train_ids, train.id)
-                    end
-
-                    -- cell 1
-                    if not table_config.only_current_surface then
-                        schedule_report_table.add{type="label", caption=surface.name}
-                    end
-
-                    
-                    -- cell 2
-                    local schedule_cell = schedule_report_table.add{type="flow", direction="horizontal"}
-                    local schedule_cell_label = schedule_cell.add{
-                        type="label",
-                        caption=schedule_name,
-                    }
-                    schedule_cell_label.style.font_color=train_count_label_color
-                    schedule_cell_label.style.horizontally_squashable = true
-                    schedule_cell_label.style.horizontally_stretchable = true
-                    -- schedule_cell_label.style.minimal_width = 200
-
-                    schedule_cell.add{type="empty-widget"}
-                    schedule_cell.style.horizontally_stretchable = true
-                    schedule_cell.style.horizontally_squashable = true
-                    schedule_cell.style.maximal_width = 300
-
-
-                    -- cell 3
-                    local train_count_cell = schedule_report_table.add{
-                        type="label",
-                        caption=train_count_caption,
-                        tooltip=recommended_action_tooltip
-                    }
-                    train_count_cell.style.font_color=train_count_label_color
-
-                    -- cell 4
-                    schedule_report_table.add{type="label", caption=train_limit_sum_caption}
-
-                    -- cell 5
-                    schedule_report_table.add{
-                        type="sprite-button",
-                        sprite="utility/copy",
-                        style="tool_button_blue",
-                        tags={action=constants.actions.train_schedule_create_blueprint, template_train_ids=template_train_ids, surface=surface.name},
-                        tooltip={"tll.copy_train_blueprint_tooltip"}
-                    }
-                end
-            end
-        end
-    end
-    end
-
-local function build_display_tab(player)
-    ---@type TLLPlayerGlobal
-    local player_global = global.players[player.index]
-    local display_content_frame = player_global.view.display_content_frame
-    if not display_content_frame then return end
-    display_content_frame.clear()
-
-    local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="tll_controls_flow"}
-
-    local table_config = player_global.model.schedule_table_configuration
-
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_current_surface}, caption={"tll.only_player_surface"}, state=table_config.only_current_surface}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=table_config.show_satisfied}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_invalid}, caption={"tll.show_invalid"}, state=table_config.show_invalid}
-    local train_report_button = controls_flow.add{type="button", tags={action=constants.actions.train_report_update}, caption={"tll.train_report_button_update"}}
-    train_report_button.style.bottom_margin = 10
-
-    local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
-    player_global.view.report_frame = report_frame
-
-    build_train_schedule_group_report(player)
-end
 
 local function build_exclude_tab(player)
     ---@type TLLPlayerGlobal
@@ -430,7 +238,7 @@ local function build_interface(player)
 
     player_global.view.display_content_frame = display_content_frame
 
-    build_display_tab(player)
+    display_tab_view.build_display_tab(player)
 
     -- exclude tab
     local exclude_tab = tabbed_pane.add{type="tab", caption={"tll.exclude_tab"}}
@@ -501,7 +309,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             build_settings_tab(player)
 
         elseif action == constants.actions.train_report_update then
-            build_train_schedule_group_report(player)
+            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.close_window then
             toggle_interface(player)
@@ -511,7 +319,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.excluded_keywords:set_enabled(text, true)
                 keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
-                build_train_schedule_group_report(player)
+                display_tab_view.build_display_tab(player)
             end
 
         elseif action == constants.actions.delete_excluded_keyword then
@@ -519,20 +327,20 @@ script.on_event(defines.events.on_gui_click, function (event)
             if type(excluded_keyword) ~= "string" then return end
             player_global.model.excluded_keywords:remove_item(excluded_keyword)
             keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
-            build_train_schedule_group_report(player)
+            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.delete_all_excluded_keywords then
 
             player_global.model.excluded_keywords:remove_all()
             keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
-            build_train_schedule_group_report(player)
+            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.hide_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.hidden_keywords:set_enabled(text, true)
                 keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
-                build_train_schedule_group_report(player)
+                display_tab_view.build_display_tab(player)
             end
 
         elseif action == constants.actions.delete_hidden_keyword then
@@ -540,12 +348,12 @@ script.on_event(defines.events.on_gui_click, function (event)
             if type(hidden_keyword) ~= "string" then return end
             player_global.model.hidden_keywords:remove_item(hidden_keyword)
             keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
-            build_train_schedule_group_report(player)
+            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.delete_all_hidden_keywords then
             player_global.model.hidden_keywords:remove_all()
             keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
-            build_train_schedule_group_report(player)
+            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.train_schedule_create_blueprint then
             local template_train
@@ -589,26 +397,26 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             if type(keyword) ~= "string" then return end
             player_global.model.excluded_keywords:toggle_enabled(keyword)
             keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
-            build_train_schedule_group_report(player)
+            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.toggle_hidden_keyword then
             local keyword = event.element.tags.keyword
             if type(keyword) ~= "string" then return end
             player_global.model.hidden_keywords:toggle_enabled(keyword)
             keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
-            build_train_schedule_group_report(player)
+            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.toggle_current_surface then
             player_global.model.schedule_table_configuration:toggle_current_surface()
-            build_train_schedule_group_report(player)
+            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.toggle_show_satisfied then
             player_global.model.schedule_table_configuration:toggle_show_satisfied()
-            build_train_schedule_group_report(player)
+            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.toggle_show_invalid then
             player_global.model.schedule_table_configuration:toggle_show_invalid()
-            build_train_schedule_group_report(player)
+            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.toggle_blueprint_snap then
             player_global.model.blueprint_configuration:toggle_blueprint_snap()
@@ -732,14 +540,14 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.excluded_keywords:set_enabled(text, true)
                 keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
-                build_train_schedule_group_report(player)
+                display_tab_view.build_display_tab(player)
             end
         elseif action == constants.actions.hide_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.hidden_keywords:set_enabled(text, true)
                 keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
-                build_train_schedule_group_report(player)
+                display_tab_view.build_display_tab(player)
             end
         end
     end
