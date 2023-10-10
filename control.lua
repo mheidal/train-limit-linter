@@ -17,6 +17,49 @@ local keyword_tables = require("views/keyword_tables")
 
 -- Util functions
 
+---@param value number
+---@param unit string
+---@param round number
+---@return string
+function localize_to_metric(value, unit, round)
+    local prefixes = {"Y", "Z", "E", "P", "T", "G", "M", "k", "", "m", "µ", "n", "p", "f", "a", "z", "y"}
+    local index = 9
+
+    if not round then round = 2 end
+
+    -- Handle negative values
+    local sign = ""
+    if value < 0 then
+        sign = "-"
+        value = -value
+    end
+
+    -- Determine the appropriate prefix based on the magnitude of the value
+    while value >= 1000 and index > 1 do
+        value = value / 1000
+        index = index - 1
+    end
+
+    local formatted_value
+    if index <= 8 then
+        formatted_value = string.format("%." .. tostring(round) .. "f", value)
+    else
+        formatted_value = string.format("%.0f", value)
+    end
+
+    formatted_value = string.match(formatted_value, "^(.-)%.0*$") or formatted_value
+
+    return sign .. formatted_value .. " " .. prefixes[index] .. unit
+end
+
+function localize_to_percentage(value, round)
+    if not round then round = 2 end
+    local format_string = "%." .. tostring(round) .. "f"
+    local formatted_string = string.format(format_string, value * 100)
+    formatted_string = string.match(formatted_string, "^(.-)%.0*$") or formatted_string
+    return formatted_string .. "%"
+end
+
 ---@param id string
 ---@return LuaTrain?
 local function get_train_by_id(id)
@@ -645,6 +688,31 @@ local function build_settings_tab(player)
         local fuel_button_table = table_frame.add{type="table", column_count=column_count, style="filter_slot_table"}
 
         for _, fuel in pairs(valid_fuels) do
+            local fuel_proto = game.item_prototypes[fuel]
+            local localized_name = fuel_proto.localised_name
+            local fuel_value = fuel_proto.fuel_value
+            local fuel_acceleration_multiplier = fuel_proto.fuel_acceleration_multiplier
+            local fuel_top_speed_multiplier = fuel_proto.fuel_top_speed_multiplier
+            local fuel_burnt_result = fuel_proto.burnt_result
+            local fuel_burnt_result_text
+            if fuel_burnt_result then
+                fuel_burnt_result_text = {
+                    "",
+                    "[img=item." .. fuel_burnt_result.name .. "] ",
+                    fuel_burnt_result.localised_name
+                }
+            end
+
+            local tooltip = {
+                "",
+                {"tll.tooltip_title", localized_name},
+                {"tll.attribute_line", {"tll.fuel_value"}, localize_to_metric(fuel_value, "J", 2)},
+                {"tll.attribute_line", {"tll.vehicle_acceleration"}, localize_to_percentage(fuel_acceleration_multiplier, 0)},
+                {"tll.attribute_line", {"tll.vehicle_top_speed"}, localize_to_percentage(fuel_top_speed_multiplier, 0)},
+                fuel_burnt_result and {"tll.attribute_line", {"tll.spent_result"}, fuel_burnt_result_text} or "",
+
+            }
+
             local button_style = (fuel == fuel_category_config.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
             fuel_button_table.add{
                 type="sprite-button",
@@ -655,7 +723,8 @@ local function build_settings_tab(player)
                     fuel_category=fuel_category
                 },
                 style=button_style,
-                enabled=fuel_config.add_fuel
+                enabled=fuel_config.add_fuel,
+                tooltip=tooltip
             }
         end 
     end
