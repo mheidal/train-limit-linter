@@ -3,6 +3,10 @@ local constants = require("constants")
 
 Exports = {}
 
+---@param keywords TLLKeywordList
+---@param parent LuaGuiElement
+---@param toggle_keyword_enabled_tag string
+---@param delete_action_tag string
 local function build_keyword_table(keywords, parent, toggle_keyword_enabled_tag, delete_action_tag)
     if utils.get_table_size(keywords) == 0 then
         parent.add{type="label", caption={"tll.no_keywords"}}
@@ -18,19 +22,6 @@ local function build_keyword_table(keywords, parent, toggle_keyword_enabled_tag,
     end
 end
 
-local function build_excluded_keyword_table(player_global, excluded_keywords)
-    local excluded_keywords_frame = player_global.view.excluded_keywords_frame
-    excluded_keywords_frame.clear()
-    build_keyword_table(excluded_keywords, excluded_keywords_frame, constants.actions.toggle_excluded_keyword, constants.actions.delete_excluded_keyword)
-end
-
-local function build_hidden_keyword_table(player_global, hidden_keywords)
-    local hidden_keywords_frame = player_global.view.hidden_keywords_frame
-    hidden_keywords_frame.clear()
-    build_keyword_table(hidden_keywords, hidden_keywords_frame, constants.actions.toggle_hidden_keyword, constants.actions.delete_hidden_keyword)
-end
-
-Exports.build_excluded_keyword_table = build_excluded_keyword_table
-Exports.build_hidden_keyword_table = build_hidden_keyword_table
+Exports.build_keyword_table = build_keyword_table
 
 return Exports

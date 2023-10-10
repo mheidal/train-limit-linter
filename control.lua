@@ -18,53 +18,82 @@ local display_tab_view = require("views/display_tab")
 
 local schedule_report_table_scripts = require("scripts/schedule_report_table")
 
+---@param parent LuaGuiElement
+---@param label_caption LocalisedString
+---@param label_tooltip LocalisedString
+---@param apply_button_action string
+---@param delete_all_keywords_action string
+---@param toggle_keyword_action string
+---@param delete_keyword_action string
+---@param keyword_list TLLKeywordList
+local function build_keyword_tab(
+    parent,
+    label_caption,
+    label_tooltip,
+    apply_button_action,
+    delete_all_keywords_action,
+    toggle_keyword_action,
+    delete_keyword_action,
+    keyword_list
+)
+    parent.clear()
+
+    local control_flow = parent.add{type="flow", direction="vertical", style="tll_controls_flow"}
+    control_flow.style.bottom_margin = 5
+    control_flow.add{type="label", caption=label_caption, tooltip=label_tooltip}
+    local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
+    icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {"tll.apply_change"}, apply_button_action)
+    local spacer = textfield_flow.add{type="empty-widget"}
+    spacer.style.horizontally_stretchable = true
+    textfield_flow.add{type="sprite-button", tags={action=delete_all_keywords_action}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
+
+    local keyword_table_scroll_pane = parent.add{type="scroll-pane", direction="vertical"}
+    keyword_table_scroll_pane.style.vertically_stretchable = true
+
+    keyword_tables.build_keyword_table(
+        keyword_list,
+        keyword_table_scroll_pane,
+        toggle_keyword_action,
+        delete_keyword_action
+    )
+end
+
 local function build_exclude_tab(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local exclude_content_frame = player_global.view.exclude_content_frame
     if not exclude_content_frame then return end
-    exclude_content_frame.clear()
 
-    local exclude_control_flow = exclude_content_frame.add{type="flow", direction="vertical", style="tll_controls_flow"}
-    exclude_control_flow.style.bottom_margin = 5
-    exclude_control_flow.add{type="label", caption={"tll.add_excluded_keyword"}, tooltip={"tll.add_excluded_keyword_tooltip"}}
-    local exclude_textfield_flow = exclude_control_flow.add{type="flow", direction="horizontal"}
-    icon_selector_textfield.build_icon_selector_textfield(exclude_textfield_flow, {"tll.apply_change"}, constants.actions.exclude_textfield_apply)
-    local spacer = exclude_textfield_flow.add{type="empty-widget"}
-    spacer.style.horizontally_stretchable = true
-    exclude_textfield_flow.add{type="sprite-button", tags={action=constants.actions.delete_all_excluded_keywords}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
-
-
-    local excluded_keywords_frame = exclude_content_frame.add{type="scroll-pane", direction="vertical"}
-    excluded_keywords_frame.style.vertically_stretchable = true
-    player_global.view.excluded_keywords_frame = excluded_keywords_frame
-
-    keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
-
+    build_keyword_tab(
+        exclude_content_frame,
+        {"tll.add_excluded_keyword"},
+        {"tll.add_excluded_keyword_tooltip"},
+        constants.actions.exclude_textfield_apply,
+        constants.actions.delete_all_excluded_keywords,
+        constants.actions.toggle_excluded_keyword,
+        constants.actions.delete_excluded_keyword,
+        player_global.model.excluded_keywords
+    )
 end
 
--- TODO: merge a lot of this logic with exclude? building of apply textfield, at least?
 local function build_hide_tab(player)
+
+    
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local hide_content_frame = player_global.view.hide_content_frame
     if not hide_content_frame then return end
 
-    hide_content_frame.clear()
-    local control_flow = hide_content_frame.add{type="flow", direction="vertical", style="tll_controls_flow"}
-    control_flow.style.bottom_margin = 5
-    control_flow.add{type="label", caption={"tll.add_hidden_keyword"}, tooltip={"tll.add_hidden_keyword_tooltip"}}
-    local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
-    icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {"tll.apply_change"}, constants.actions.hide_textfield_apply)
-    local spacer = textfield_flow.add{type="empty-widget"}
-    spacer.style.horizontally_stretchable = true
-    textfield_flow.add{type="sprite-button", tags={action=constants.actions.delete_all_hidden_keywords}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
-
-    local hidden_keywords_frame = hide_content_frame.add{type="scroll-pane", direction="vertical"}
-    hidden_keywords_frame.style.vertically_stretchable = true
-    player_global.view.hidden_keywords_frame = hidden_keywords_frame
-
-    keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
+    build_keyword_tab(
+        hide_content_frame,
+        {"tll.add_excluded_keyword"},
+        {"tll.add_excluded_keyword_tooltip"},
+        constants.actions.hide_textfield_apply,
+        constants.actions.delete_all_hidden_keywords,
+        constants.actions.toggle_hidden_keyword,
+        constants.actions.delete_hidden_keyword,
+        player_global.model.hidden_keywords
+    )
 
 end
 
@@ -318,7 +347,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.excluded_keywords:set_enabled(text, true)
-                keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
+                build_exclude_tab(player)
                 display_tab_view.build_display_tab(player)
             end
 
@@ -326,20 +355,20 @@ script.on_event(defines.events.on_gui_click, function (event)
             local excluded_keyword = event.element.tags.keyword
             if type(excluded_keyword) ~= "string" then return end
             player_global.model.excluded_keywords:remove_item(excluded_keyword)
-            keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
+            build_exclude_tab(player)
             display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.delete_all_excluded_keywords then
 
             player_global.model.excluded_keywords:remove_all()
-            keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
+            build_exclude_tab(player)
             display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.hide_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.hidden_keywords:set_enabled(text, true)
-                keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
+                build_hide_tab(player)
                 display_tab_view.build_display_tab(player)
             end
 
@@ -347,12 +376,12 @@ script.on_event(defines.events.on_gui_click, function (event)
             local hidden_keyword = event.element.tags.keyword
             if type(hidden_keyword) ~= "string" then return end
             player_global.model.hidden_keywords:remove_item(hidden_keyword)
-            keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
+            build_hide_tab(player)
             display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.delete_all_hidden_keywords then
             player_global.model.hidden_keywords:remove_all()
-            keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
+            build_hide_tab(player)
             display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.train_schedule_create_blueprint then
@@ -396,14 +425,14 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             local keyword = event.element.tags.keyword
             if type(keyword) ~= "string" then return end
             player_global.model.excluded_keywords:toggle_enabled(keyword)
-            keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
+            build_exclude_tab(player)
             display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.toggle_hidden_keyword then
             local keyword = event.element.tags.keyword
             if type(keyword) ~= "string" then return end
             player_global.model.hidden_keywords:toggle_enabled(keyword)
-            keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
+            build_hide_tab(player)
             display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.toggle_current_surface then
@@ -539,14 +568,14 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.excluded_keywords:set_enabled(text, true)
-                keyword_tables.build_excluded_keyword_table(player_global, player_global.model.excluded_keywords)
+                build_exclude_tab(player)
                 display_tab_view.build_display_tab(player)
             end
         elseif action == constants.actions.hide_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.hidden_keywords:set_enabled(text, true)
-                keyword_tables.build_hidden_keyword_table(player_global, player_global.model.hidden_keywords)
+                build_hide_tab(player)
                 display_tab_view.build_display_tab(player)
             end
         end
