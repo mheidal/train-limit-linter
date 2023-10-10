@@ -23,6 +23,13 @@ function Exports.get_table_size(t)
     return count
 end
 
+function Exports.contains(t, v)
+    for _, val in pairs(t) do
+        if val == v then return true end
+    end
+    return false
+end
+
 ---@param input string: string possibly containing rich text (format: [foo.bar]). Return with alt rich text format (format: [img=foo.bar])
 ---@return string
 function Exports.swap_rich_text_format_to_img(input)

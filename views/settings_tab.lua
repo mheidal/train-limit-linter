@@ -57,7 +57,21 @@ function Exports.build_settings_tab(player)
 
     for fuel_category, fuel_category_config in pairs(fuel_config.fuel_category_configurations) do
 
-        fuel_category_table.add{type="label", caption={"", "'", fuel_category, "'"}}
+        local fuel_category_caption = {"tll.fuel_category_caption", game.fuel_category_prototypes[fuel_category].localised_name}
+
+        local locomotive_consumers = {}
+        for locomotive, fuel_categories in pairs(global.model.fuel_category_data.locomotives_fuel_categories) do
+            if utils.contains(fuel_categories, fuel_category) then
+                table.insert(locomotive_consumers, locomotive)
+            end
+        end
+        local tooltip_title = {"tll.tooltip_title", {"tll.fuel_category_consumed_by"}}
+        local locomotive_consumer_tooltip = {"", tooltip_title}
+        for _, locomotive_consumer in pairs(locomotive_consumers) do
+            table.insert(locomotive_consumer_tooltip, {"", "\n[img=item." .. locomotive_consumer .. "] ", game.item_prototypes[locomotive_consumer].localised_name})
+        end
+
+        fuel_category_table.add{type="label", caption=fuel_category_caption, tooltip=locomotive_consumer_tooltip}
         local spacer = fuel_category_table.add{type="empty-widget"}
         spacer.style.horizontally_stretchable = true
 
