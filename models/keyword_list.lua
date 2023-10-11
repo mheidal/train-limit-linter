@@ -9,6 +9,7 @@ local utils = require("utils")
 ---@field remove_item fun(self: TLLKeywordList, keyword: string)
 ---@field remove_all fun(self: TLLKeywordList)
 ---@field get_number_of_keywords fun(): number
+---@field get_keywords fun(): table<string, TLLToggleableItem>
 
 ---@class TLLToggleableItem
 ---@field enabled boolean
@@ -33,6 +34,7 @@ end
 
 TLLKeywordList = {}
 
+---@return TLLKeywordList
 function TLLKeywordList:new()
     local new_object = {
         toggleable_items={}
@@ -81,6 +83,11 @@ end
 ---@return number
 function TLLKeywordList:get_number_of_keywords()
     return utils.get_table_size(self.toggleable_items)
+end
+
+---@return table<string, TLLToggleableItem>
+function TLLKeywordList:get_keywords()
+    return utils.deep_copy(self.toggleable_items)
 end
 
 Exports.TLLKeywordList = TLLKeywordList

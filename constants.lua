@@ -26,6 +26,9 @@ constants.actions = {
     toggle_place_trains_with_fuel="toggle_place_trains_with_fuel",
     update_fuel_amount="update_fuel_amount",
     select_fuel="select_fuel",
+
+    open_modal="open_modal",
+    close_modal="close_modal",
 }
 
 constants.train_stop_limit_enums = {
@@ -46,6 +49,15 @@ constants.orientations = {
 constants.snap_directions = {
     vertical="vertical",
     horizontal="horizontal"
+}
+
+constants.modal_functions = {
+    export_keyword_list="export_keyword_list"
+}
+
+constants.keyword_lists = {
+    exclude="exclude",
+    hide="hide",
 }
 
 return constants

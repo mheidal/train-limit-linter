@@ -12,6 +12,8 @@ local display_tab_view = require("views/display_tab")
 local keyword_tabs_view = require("views/keyword_tabs")
 local settings_tab_view = require("views/settings_tab")
 
+local modal = require("views/modal")
+
 -- scripts
 
 local schedule_report_table_scripts = require("scripts/schedule_report_table")
@@ -90,6 +92,7 @@ local function build_interface(player)
 
 end
 
+---@param player LuaPlayer
 local function toggle_interface(player)
 
     ---@type TLLPlayerGlobal
@@ -99,9 +102,14 @@ local function toggle_interface(player)
         player.opened = player_global.view.main_frame
         build_interface(player)
     else
-        player_global.model.last_gui_location = main_frame.location
-        main_frame.destroy()
-        player_global.view = globals.get_empty_player_view()
+        local modal_main_frame = player_global.view.modal_main_frame
+        if modal_main_frame then
+            main_frame.ignored_by_interaction = true
+        else
+            player_global.model.last_gui_location = main_frame.location
+            main_frame.destroy()
+            player_global.view = globals.get_empty_player_view()
+        end
     end
 end
 
@@ -204,6 +212,16 @@ script.on_event(defines.events.on_gui_click, function (event)
             if type(orientation) ~= "number" then return end
             player_global.model.blueprint_configuration:set_new_blueprint_orientation(orientation)
             settings_tab_view.build_settings_tab(player)
+
+        elseif action == constants.actions.open_modal then
+            local modal_caption = event.element.tags.modal_caption
+            local modal_function = event.element.tags.modal_function
+            local args = event.element.tags.args
+            if not modal_caption or not modal_function then return end
+            if type(modal_function) ~= "string" or not constants.modal_functions[modal_function] then return end
+            modal.toggle_modal(player, modal_caption, modal_function, args)
+        elseif action == action == constants.actions.close_modal then
+            modal.toggle_modal(player)
         end
     end
 end)
@@ -343,11 +361,27 @@ script.on_event(defines.events.on_gui_switch_state_changed, function(event)
     end
 end)
 
+script.on_event(defines.events.on_gui_opened, function(event)
+    if event.element then
+        local player = game.get_player(event.player_index)
+        if not player then return end
+        ---@type TLLPlayerGlobal
+        local player_global = global.players[player.index]
+        if player_global.view.modal_main_frame then
+            player.opened = player_global.view.modal_main_frame
+        end
+    end
+end)
+
 script.on_event(defines.events.on_gui_closed, function(event)
     if event.element then
         local player = game.get_player(event.player_index)
+        if not player then return end
+        local name = event.element.name
         if event.element.name == "tll_main_frame" then
             toggle_interface(player)
+        elseif name == "tll_modal_main_frame" then
+            modal.toggle_modal(player)
         end
     end
 end)
