@@ -16,7 +16,10 @@ Exports[constants.modal_functions.export_keyword_list] = function (player, paren
     local player_global = global.players[player.index]
 
     local content_frame = parent.add{type="flow", direction="vertical", name="modal_content_frame"}
-    
+
+    local textfield = content_frame.add{type="textfield"}
+    textfield.style.horizontally_stretchable = true
+
     local keyword_list
     if args.keywords == constants.keyword_lists.exclude then
         keyword_list = player_global.model.excluded_keywords
@@ -24,7 +27,7 @@ Exports[constants.modal_functions.export_keyword_list] = function (player, paren
         keyword_list = player_global.model.hidden_keywords
     end
 
-    local label = content_frame.add{type="label", caption="Hello, world!"}
+    textfield.text = keyword_list:serialize()
 
     return modal_content_data.TLLModalContentData:new()
 end

@@ -87,7 +87,23 @@ end
 
 ---@return table<string, TLLToggleableItem>
 function TLLKeywordList:get_keywords()
-    return utils.deep_copy(self.toggleable_items)
+    return self.toggleable_items
+end
+
+---@return string
+function TLLKeywordList:serialize()
+    local keywords = {}
+    for keyword, _ in pairs(self.toggleable_items) do
+        table.insert(keywords, keyword)
+    end
+    return serpent.dump(keywords)
+end
+
+function TLLKeywordList:add_from_serialized(serialized)
+    local keywords = serpent.load(serialized)
+    for _, keyword in pairs(keywords) do
+        self:set_enabled(keyword, true)
+    end
 end
 
 Exports.TLLKeywordList = TLLKeywordList
