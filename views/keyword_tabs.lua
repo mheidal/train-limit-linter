@@ -31,13 +31,25 @@ local function build_keyword_tab(
     control_flow.add{type="label", caption=label_caption, tooltip=label_tooltip}
     local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
     icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {action=apply_button_action})
-    parent.add{
+    textfield_flow.add{
         type="sprite-button",
         tags={action=apply_button_action},
         style="item_and_count_select_confirm",
         sprite="utility/enter",
         tooltip={"tll.apply_change"},
         name = Exports.enter_button_name
+    }
+
+    textfield_flow.add{
+        type="sprite-button",
+        tags={
+            action=constants.actions.open_modal,
+            modal_function=constants.modal_functions.train_stop_name_selector,
+            args={}
+        },
+        style="tool_button",
+        sprite="utility/station_name",
+        tooltip={"tll.train_stop_name_selector_button_tooltip"}
     }
 
     textfield_flow.add{

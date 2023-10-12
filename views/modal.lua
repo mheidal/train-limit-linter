@@ -16,9 +16,7 @@ end
 local Exports = {}
 
 ---@param player LuaPlayer
----@param modal_function string -- must be a value in constants.modal_functions
----@param args table? -- arguments for the modal function
-function Exports.build_modal(player,modal_function, args)
+function Exports.build_modal(player)
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -48,8 +46,11 @@ function Exports.build_modal(player,modal_function, args)
     titlebar_flow.add{type="empty-widget", style="flib_titlebar_drag_handle", ignored_by_interaction=true}
     local close_button = titlebar_flow.add{type="sprite-button", tags={action=constants.actions.close_modal}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
 
+    local modal_function_name = player_global.model.modal_function_configuration:get_modal_content_function()
+    local modal_args = player_global.model.modal_function_configuration:get_modal_content_args()
+
     ---@type TLLModalContentData
-    local modal_content_data = modal_content_frame_functions[modal_function](player, modal_main_frame, args)
+    local modal_content_data = modal_content_frame_functions[modal_function_name](player, modal_main_frame, modal_args)
     close_button.visible = modal_content_data.close_button_visible
     titlebar_flow.visible = modal_content_data.titlebar_visible
     if modal_content_data.titlebar_caption then titlebar_caption.caption = modal_content_data.titlebar_caption end

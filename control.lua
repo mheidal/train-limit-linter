@@ -113,9 +113,7 @@ local function toggle_interface(player)
 end
 
 ---@param player LuaPlayer
----@param modal_function string?
----@param args table?
-function toggle_modal(player, modal_function, args)
+function toggle_modal(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
@@ -133,8 +131,7 @@ function toggle_modal(player, modal_function, args)
             dimmer.location = main_frame.location
             player_global.view.main_frame_dimmer = dimmer
         end
-        if not modal_function then return end
-        modal.build_modal(player, modal_function, args)
+        modal.build_modal(player)
     else
         modal_main_frame.destroy()
         if player_global.view.main_frame_dimmer ~= nil then
@@ -255,9 +252,14 @@ script.on_event(defines.events.on_gui_click, function (event)
             if not modal_function then return end
             if type(modal_function) ~= "string" or not constants.modal_functions[modal_function] then return end
             if type(args) ~= "table" and args ~= nil then return end
-            toggle_modal(player, modal_function, args)
+
+            player_global.model.modal_function_configuration:set_modal_content_function(modal_function)
+            player_global.model.modal_function_configuration:set_modal_content_args(args)
+            toggle_modal(player)
 
         elseif action == constants.actions.close_modal then
+            player_global.model.modal_function_configuration:clear_modal_content_function()
+            player_global.model.modal_function_configuration:clear_modal_content_args()
             toggle_modal(player)
 
         elseif action == constants.actions.import_keywords_button then
