@@ -288,6 +288,18 @@ script.on_event(defines.events.on_gui_click, function (event)
                 player.opened = modal_main_frame
                 modal_main_frame.bring_to_front()
             end
+        elseif action == constants.actions.train_stop_name_selector_select_name then
+            if not event.element.tags.train_stop_name then return end
+            if not event.element.tags.keywords then return end
+            local keywords_tag = event.element.tags.keywords
+            local keyword_textfield
+            if keywords_tag == constants.keyword_lists.exclude then keyword_textfield = player_global.view.exclude_textfield
+            elseif keywords_tag == constants.keyword_lists.hide then keyword_textfield = player_global.view.hide_textfield
+            end
+            if not keyword_textfield then return end
+            keyword_textfield.text = keyword_textfield.text .. event.element.tags.train_stop_name
+            keyword_textfield.focus()
+            toggle_modal(player)
         end
     end
 end)

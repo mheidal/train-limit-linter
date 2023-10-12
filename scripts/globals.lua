@@ -34,6 +34,8 @@ local modal_function_configuration = require("models/modal_function_configuratio
 ---@field modal_main_frame LuaGuiElement?
 ---@field main_frame_dimmer LuaGuiElement?
 ---@field fuel_amount_flows table<string, LuaGuiElement> -- string is a fuel category (e.g. 'chemical')
+---@field exclude_textfield LuaGuiElement?
+---@field hide_textfield LuaGuiElement?
 
 local Exports = {}
 

@@ -33,7 +33,8 @@ constants.actions = {
     import_keywords_button="import_keywords_button",
     import_keywords_textfield="import_keywords_textfield",
 
-    train_stop_name_selector_search="train_stop_name_selector_search"
+    train_stop_name_selector_search="train_stop_name_selector_search",
+    train_stop_name_selector_select_name="train_stop_name_selector_select_name",
 }
 
 constants.train_stop_limit_enums = {
