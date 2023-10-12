@@ -26,6 +26,11 @@ styles["tll_frame_semitransparent"] = {
   }
 }
 
+styles["tll_spacer"] = {
+  type="empty_widget_style",
+  horizontally_stretchable="on"
+}
+
 local cursor_blueprint = utils.deep_copy(data.raw["blueprint"]["blueprint"])
 cursor_blueprint.name = "tll_cursor_blueprint"
 cursor_blueprint.order = "z_tll"

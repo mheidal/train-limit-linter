@@ -2,6 +2,7 @@ local blueprint_configuration = require("models/blueprint_configuration")
 local schedule_table_configuration = require("models/schedule_table_configuration")
 local keyword_list = require("models/keyword_list")
 local fuel_configuration = require("models.fuel_configuration")
+local modal_function_configuration = require("models/modal_function_configuration")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
@@ -21,6 +22,7 @@ local fuel_configuration = require("models.fuel_configuration")
 ---@field excluded_keywords TLLKeywordList
 ---@field hidden_keywords TLLKeywordList
 ---@field last_gui_location GuiLocation?
+---@field modal_function_configuration TLLModalFunctionConfiguration
 
 ---@class TLLPlayerView
 ---@field main_frame LuaGuiElement?
@@ -32,6 +34,8 @@ local fuel_configuration = require("models.fuel_configuration")
 ---@field modal_main_frame LuaGuiElement?
 ---@field main_frame_dimmer LuaGuiElement?
 ---@field fuel_amount_flows table<string, LuaGuiElement> -- string is a fuel category (e.g. 'chemical')
+---@field exclude_textfield LuaGuiElement?
+---@field hide_textfield LuaGuiElement?
 
 local Exports = {}
 
@@ -60,7 +64,8 @@ function Exports.get_default_global()
             fuel_configuration = fuel_config,
             excluded_keywords = keyword_list.TLLKeywordList:new(),
             hidden_keywords = keyword_list.TLLKeywordList:new(),
-            last_gui_location = nil, -- migration not actually necessary, since it starts as nil?
+            last_gui_location = nil, -- migration not actually necessary, since it starts as nil?,
+            modal_function_configuration = modal_function_configuration.TLLModalFunctionConfiguration:new(),
         },
         view = Exports.get_empty_player_view()
     }

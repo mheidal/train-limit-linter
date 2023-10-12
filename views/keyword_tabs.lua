@@ -13,6 +13,7 @@ Exports = {}
 ---@param delete_keyword_action string
 ---@param keyword_list TLLKeywordList
 ---@param keyword_list_name string
+---@return LuaGuiElement -- the textfield, so the train stop name selector can find it. Gross!
 local function build_keyword_tab(
     parent,
     label_caption,
@@ -30,7 +31,27 @@ local function build_keyword_tab(
     control_flow.style.bottom_margin = 5
     control_flow.add{type="label", caption=label_caption, tooltip=label_tooltip}
     local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
-    icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {"tll.apply_change"}, apply_button_action)
+    icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {action=apply_button_action})
+    textfield_flow.add{
+        type="sprite-button",
+        tags={action=apply_button_action},
+        style="item_and_count_select_confirm",
+        sprite="utility/enter",
+        tooltip={"tll.apply_change"},
+        name = Exports.enter_button_name
+    }
+
+    textfield_flow.add{
+        type="sprite-button",
+        tags={
+            action=constants.actions.open_modal,
+            modal_function=constants.modal_functions.train_stop_name_selector,
+            args={keywords=keyword_list_name}
+        },
+        style="tool_button",
+        sprite="utility/station_name",
+        tooltip={"tll.train_stop_name_selector_button_tooltip"}
+    }
 
     textfield_flow.add{
         type="sprite-button",
@@ -65,7 +86,7 @@ local function build_keyword_tab(
 
     if keyword_list:get_number_of_keywords() == 0 then
         keyword_table_scroll_pane.add{type="label", caption={"tll.no_keywords"}}
-        return
+        return textfield_flow[icon_selector_textfield.textfield_name]
     end
 
     for keyword, string_data in pairs(keyword_list:get_keywords()) do
@@ -77,6 +98,8 @@ local function build_keyword_tab(
         keyword_line_flow.add{type="sprite-button", tags={action=delete_keyword_action, keyword=keyword}, sprite="utility/trash", style="tool_button_red"}
     end
 
+    return textfield_flow[icon_selector_textfield.textfield_name]
+
 end
 
 function Exports.build_exclude_tab(player)
@@ -85,7 +108,7 @@ function Exports.build_exclude_tab(player)
     local exclude_content_frame = player_global.view.exclude_content_frame
     if not exclude_content_frame then return end
 
-    build_keyword_tab(
+    local textfield = build_keyword_tab(
         exclude_content_frame,
         {"tll.add_excluded_keyword"},
         {"tll.add_excluded_keyword_tooltip"},
@@ -96,6 +119,7 @@ function Exports.build_exclude_tab(player)
         player_global.model.excluded_keywords,
         constants.keyword_lists.exclude
     )
+    player_global.view.exclude_textfield = textfield
 end
 
 
@@ -105,7 +129,7 @@ function Exports.build_hide_tab(player)
     local hide_content_frame = player_global.view.hide_content_frame
     if not hide_content_frame then return end
 
-    build_keyword_tab(
+    local textfield = build_keyword_tab(
         hide_content_frame,
         {"tll.add_hidden_keyword"},
         {"tll.add_hidden_keyword_tooltip"},
@@ -116,7 +140,7 @@ function Exports.build_hide_tab(player)
         player_global.model.hidden_keywords,
         constants.keyword_lists.hide
     )
-
+    player_global.view.hide_textfield = textfield
 end
 
 return Exports

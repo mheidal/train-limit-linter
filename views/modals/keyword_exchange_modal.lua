@@ -1,4 +1,3 @@
-local icon_selector_textfield = require("views/icon_selector_textfield")
 local constants = require("constants")
 local modal_content_data = require("models/modal_content_data")
 
