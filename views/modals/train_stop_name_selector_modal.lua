@@ -20,21 +20,6 @@ Exports[constants.modal_functions.train_stop_name_selector] = function (player, 
     local content_frame = parent.add{type="frame", direction="vertical", name="modal_content_frame", style="inside_shallow_frame"}
     local content_flow = content_frame.add{type="flow", direction="vertical"}
     content_flow.style.margin = 10
-    local search_bar = content_flow.add{type="flow", direction="horizontal"}
-    local spacer = search_bar.add{type="empty-widget"}
-    spacer.style.horizontally_stretchable = true
-    local textfield_frame = search_bar.add{type="frame", direction="horizontal", style="search_popup_frame"}
-    icon_selector_textfield.build_icon_selector_textfield(textfield_frame, {action=constants.actions.train_stop_name_selector_search})
-
-    local search_button = search_bar.add{
-        type="sprite-button",
-        tags={
-            action=constants.actions.open_modal,
-        },
-        style="tool_button",
-        sprite="utility/search_icon",
-    }
-    -- todo: toggle search frame
 
     local train_stop_name_to_count = {}
     for _, surface in pairs(game.surfaces) do
