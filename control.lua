@@ -214,14 +214,34 @@ script.on_event(defines.events.on_gui_click, function (event)
             settings_tab_view.build_settings_tab(player)
 
         elseif action == constants.actions.open_modal then
-            local modal_caption = event.element.tags.modal_caption
             local modal_function = event.element.tags.modal_function
             local args = event.element.tags.args
-            if not modal_caption or not modal_function then return end
+            if not modal_function then return end
             if type(modal_function) ~= "string" or not constants.modal_functions[modal_function] then return end
-            modal.toggle_modal(player, modal_caption, modal_function, args)
-        elseif action == action == constants.actions.close_modal then
+            modal.toggle_modal(player, modal_function, args)
+        
+        elseif action == constants.actions.close_modal then
             modal.toggle_modal(player)
+
+        elseif action == constants.actions.import_keywords_button then
+            local textfield_flow = event.element.parent
+            if not textfield_flow then return end
+            local text = textfield_flow["textfield"].text
+            if text == "" then return end -- don't allow user to input the empty string
+            textfield_flow["textfield"].text = ""
+            if not event.element.tags.keywords then return end
+            local keywords_tag = event.element.tags.keywords
+            local keyword_list
+            if keywords_tag == constants.keyword_lists.exclude then keyword_list = player_global.model.excluded_keywords
+            elseif keywords_tag == constants.keyword_lists.hide then keyword_list = player_global.model.hidden_keywords
+            end
+
+            keyword_list:add_from_serialized(text)
+
+
+            if keywords_tag == constants.keyword_lists.exclude then keyword_tabs_view.build_exclude_tab(player)
+            elseif keywords_tag == constants.keyword_lists.hide then keyword_tabs_view.build_hide_tab(player)
+            end
         end
     end
 end)
