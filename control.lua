@@ -442,7 +442,7 @@ script.on_event(defines.events.on_gui_closed, function(event)
         local player = game.get_player(event.player_index)
         if not player then return end
         local name = event.element.name
-        if event.element.name == "tll_main_frame" then
+        if name == "tll_main_frame" then
             toggle_interface(player)
         elseif name == "tll_modal_main_frame" then
             toggle_modal(player)
