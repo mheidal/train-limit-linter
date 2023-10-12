@@ -3,6 +3,7 @@ local constants = require("constants")
 -- if you make a new modal, it should be imported here
 local modal_content_frame_imports = {
     require("views.modals.keyword_exchange_modal"),
+    require("views.modals.train_stop_name_selector_modal"),
 }
 
 local modal_content_frame_functions = {}

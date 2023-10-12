@@ -30,7 +30,15 @@ local function build_keyword_tab(
     control_flow.style.bottom_margin = 5
     control_flow.add{type="label", caption=label_caption, tooltip=label_tooltip}
     local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
-    icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {"tll.apply_change"}, apply_button_action)
+    icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {action=apply_button_action})
+    parent.add{
+        type="sprite-button",
+        tags={action=apply_button_action},
+        style="item_and_count_select_confirm",
+        sprite="utility/enter",
+        tooltip={"tll.apply_change"},
+        name = Exports.enter_button_name
+    }
 
     textfield_flow.add{
         type="sprite-button",

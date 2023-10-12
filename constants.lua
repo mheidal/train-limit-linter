@@ -32,6 +32,8 @@ constants.actions = {
     focus_modal="focus_modal",
     import_keywords_button="import_keywords_button",
     import_keywords_textfield="import_keywords_textfield",
+
+    train_stop_name_selector_search="train_stop_name_selector_search"
 }
 
 constants.train_stop_limit_enums = {
@@ -56,7 +58,8 @@ constants.snap_directions = {
 
 constants.modal_functions = {
     export_keyword_list="export_keyword_list",
-    import_keyword_list="import_keyword_list"
+    import_keyword_list="import_keyword_list",
+    train_stop_name_selector="train_stop_name_selector"
 }
 
 constants.keyword_lists = {
