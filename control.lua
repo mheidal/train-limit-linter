@@ -94,7 +94,6 @@ end
 
 ---@param player LuaPlayer
 local function toggle_interface(player)
-
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local main_frame = player_global.view.main_frame
@@ -109,6 +108,27 @@ local function toggle_interface(player)
             player_global.model.last_gui_location = main_frame.location
             main_frame.destroy()
             player_global.view = globals.get_empty_player_view()
+        end
+    end
+end
+
+---@param player LuaPlayer
+---@param modal_function string?
+---@param args table?
+function toggle_modal(player, modal_function, args)
+    ---@type TLLPlayerGlobal
+    local player_global = global.players[player.index]
+    local modal_main_frame = player_global.view.modal_main_frame
+    if modal_main_frame == nil then
+        if not modal_function then return end
+        modal.build_modal(player, modal_function, args)
+    else
+        modal_main_frame.destroy()
+        player_global.view.modal_main_frame = nil
+        local main_frame = player_global.view.main_frame
+        if main_frame then
+            player.opened = main_frame
+            main_frame.ignored_by_interaction = false
         end
     end
 end
@@ -218,10 +238,11 @@ script.on_event(defines.events.on_gui_click, function (event)
             local args = event.element.tags.args
             if not modal_function then return end
             if type(modal_function) ~= "string" or not constants.modal_functions[modal_function] then return end
-            modal.toggle_modal(player, modal_function, args)
+            if type(args) ~= "table" and args ~= nil then return end
+            toggle_modal(player, modal_function, args)
         
         elseif action == constants.actions.close_modal then
-            modal.toggle_modal(player)
+            toggle_modal(player)
 
         elseif action == constants.actions.import_keywords_button then
             local textfield_flow = event.element.parent

@@ -55,27 +55,4 @@ function Exports.build_modal(player,modal_function, args)
 
 end
 
----@param player LuaPlayer
----@param modal_function string?
----@param args table?
-function Exports.toggle_modal(player, modal_function, args)
-
-    ---@type TLLPlayerGlobal
-    local player_global = global.players[player.index]
-    local modal_main_frame = player_global.view.modal_main_frame
-    if modal_main_frame == nil then
-        if not modal_function then return end
-        Exports.build_modal(player, modal_function, args)
-    else
-        modal_main_frame.destroy()
-        player_global.view.modal_main_frame = nil
-        local main_frame = player_global.view.main_frame
-        if main_frame then
-            player.opened = main_frame
-            main_frame.ignored_by_interaction = false
-        end
-    end
-
-end
-
 return Exports
