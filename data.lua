@@ -14,6 +14,18 @@ styles["tll_controls_flow"] = {
     horizontal_spacing = 16
 }
 
+styles["tll_frame_semitransparent"] = {
+  type = "frame_style",
+  graphical_set = {
+      base = {
+          type = "composition",
+          filename = "__train-limit-linter__/graphics/semitransparent_pixel.png",
+          corner_size = 1,
+          position = {0, 0}
+      }
+  }
+}
+
 local cursor_blueprint = utils.deep_copy(data.raw["blueprint"]["blueprint"])
 cursor_blueprint.name = "tll_cursor_blueprint"
 cursor_blueprint.order = "z_tll"

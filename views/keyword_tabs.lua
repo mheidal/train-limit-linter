@@ -12,6 +12,7 @@ Exports = {}
 ---@param toggle_keyword_action string
 ---@param delete_keyword_action string
 ---@param keyword_list TLLKeywordList
+---@param keyword_list_name string
 local function build_keyword_tab(
     parent,
     label_caption,
@@ -20,7 +21,8 @@ local function build_keyword_tab(
     delete_all_keywords_action,
     toggle_keyword_action,
     delete_keyword_action,
-    keyword_list
+    keyword_list,
+    keyword_list_name
 )
     parent.clear()
 
@@ -29,6 +31,31 @@ local function build_keyword_tab(
     control_flow.add{type="label", caption=label_caption, tooltip=label_tooltip}
     local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
     icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {"tll.apply_change"}, apply_button_action)
+
+    textfield_flow.add{
+        type="sprite-button",
+        tags={
+            action=constants.actions.open_modal,
+            modal_function=constants.modal_functions.import_keyword_list,
+            args={keywords=keyword_list_name}
+        },
+        style="tool_button",
+        sprite="utility/import",
+        tooltip={"tll.import_keywords"}
+    }
+
+    textfield_flow.add{
+        type="sprite-button",
+        tags={
+            action=constants.actions.open_modal,
+            modal_function=constants.modal_functions.export_keyword_list,
+            args={keywords=keyword_list_name}
+        },
+        style="tool_button",
+        sprite="utility/export",
+        tooltip={"tll.export_keywords"}
+    }
+
     local spacer = textfield_flow.add{type="empty-widget"}
     spacer.style.horizontally_stretchable = true
     textfield_flow.add{type="sprite-button", tags={action=delete_all_keywords_action}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
@@ -41,7 +68,7 @@ local function build_keyword_tab(
         return
     end
 
-    for keyword, string_data in pairs(keyword_list.toggleable_items) do
+    for keyword, string_data in pairs(keyword_list:get_keywords()) do
         local keyword_line_flow = keyword_table_scroll_pane.add{type="flow", direction="horizontal"}
         keyword_line_flow.add{type="checkbox", state=string_data.enabled, tags={action=toggle_keyword_action, keyword=keyword}}
         keyword_line_flow.add{type="label", caption=keyword}
@@ -66,7 +93,8 @@ function Exports.build_exclude_tab(player)
         constants.actions.delete_all_excluded_keywords,
         constants.actions.toggle_excluded_keyword,
         constants.actions.delete_excluded_keyword,
-        player_global.model.excluded_keywords
+        player_global.model.excluded_keywords,
+        constants.keyword_lists.exclude
     )
 end
 
@@ -79,13 +107,14 @@ function Exports.build_hide_tab(player)
 
     build_keyword_tab(
         hide_content_frame,
-        {"tll.add_excluded_keyword"},
-        {"tll.add_excluded_keyword_tooltip"},
+        {"tll.add_hidden_keyword"},
+        {"tll.add_hidden_keyword_tooltip"},
         constants.actions.hide_textfield_apply,
         constants.actions.delete_all_hidden_keywords,
         constants.actions.toggle_hidden_keyword,
         constants.actions.delete_hidden_keyword,
-        player_global.model.hidden_keywords
+        player_global.model.hidden_keywords,
+        constants.keyword_lists.hide
     )
 
 end

@@ -29,6 +29,8 @@ local fuel_configuration = require("models.fuel_configuration")
 ---@field display_content_frame LuaGuiElement?
 ---@field exclude_content_frame LuaGuiElement?
 ---@field settings_content_frame LuaGuiElement?
+---@field modal_main_frame LuaGuiElement?
+---@field main_frame_dimmer LuaGuiElement?
 ---@field fuel_amount_flows table<string, LuaGuiElement> -- string is a fuel category (e.g. 'chemical')
 
 local Exports = {}

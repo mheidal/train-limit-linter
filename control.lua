@@ -12,6 +12,8 @@ local display_tab_view = require("views/display_tab")
 local keyword_tabs_view = require("views/keyword_tabs")
 local settings_tab_view = require("views/settings_tab")
 
+local modal = require("views/modal")
+
 -- scripts
 
 local schedule_report_table_scripts = require("scripts/schedule_report_table")
@@ -27,7 +29,7 @@ local function build_interface(player)
     local screen_element = player.gui.screen
 
     local main_frame = screen_element.add{type="frame", name="tll_main_frame", direction="vertical"}
-    main_frame.style.size = {600, 800}
+    main_frame.style.size = constants.style_data.main_frame_size
 
     if not player_global.model.last_gui_location then
         main_frame.auto_center = true
@@ -90,8 +92,8 @@ local function build_interface(player)
 
 end
 
+---@param player LuaPlayer
 local function toggle_interface(player)
-
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local main_frame = player_global.view.main_frame
@@ -99,9 +101,51 @@ local function toggle_interface(player)
         player.opened = player_global.view.main_frame
         build_interface(player)
     else
-        player_global.model.last_gui_location = main_frame.location
-        main_frame.destroy()
-        player_global.view = globals.get_empty_player_view()
+        local modal_main_frame = player_global.view.modal_main_frame
+        if modal_main_frame then
+            main_frame.ignored_by_interaction = true
+        else
+            player_global.model.last_gui_location = main_frame.location
+            main_frame.destroy()
+            player_global.view = globals.get_empty_player_view()
+        end
+    end
+end
+
+---@param player LuaPlayer
+---@param modal_function string?
+---@param args table?
+function toggle_modal(player, modal_function, args)
+    ---@type TLLPlayerGlobal
+    local player_global = global.players[player.index]
+
+    local main_frame = player_global.view.main_frame
+    local modal_main_frame = player_global.view.modal_main_frame
+
+    if modal_main_frame == nil then
+        if main_frame ~= nil then
+            local dimmer = player.gui.screen.add{
+                type="frame",
+                style="tll_frame_semitransparent",
+                tags={action=constants.actions.focus_modal}
+            }
+            dimmer.style.size = constants.style_data.main_frame_size
+            dimmer.location = main_frame.location
+            player_global.view.main_frame_dimmer = dimmer
+        end
+        if not modal_function then return end
+        modal.build_modal(player, modal_function, args)
+    else
+        modal_main_frame.destroy()
+        if player_global.view.main_frame_dimmer ~= nil then
+            player_global.view.main_frame_dimmer.destroy()
+            player_global.view.main_frame_dimmer = nil
+        end
+        player_global.view.modal_main_frame = nil
+        if main_frame then
+            player.opened = main_frame
+            main_frame.ignored_by_interaction = false
+        end
     end
 end
 
@@ -204,6 +248,44 @@ script.on_event(defines.events.on_gui_click, function (event)
             if type(orientation) ~= "number" then return end
             player_global.model.blueprint_configuration:set_new_blueprint_orientation(orientation)
             settings_tab_view.build_settings_tab(player)
+
+        elseif action == constants.actions.open_modal then
+            local modal_function = event.element.tags.modal_function
+            local args = event.element.tags.args
+            if not modal_function then return end
+            if type(modal_function) ~= "string" or not constants.modal_functions[modal_function] then return end
+            if type(args) ~= "table" and args ~= nil then return end
+            toggle_modal(player, modal_function, args)
+
+        elseif action == constants.actions.close_modal then
+            toggle_modal(player)
+
+        elseif action == constants.actions.import_keywords_button then
+            local textfield_flow = event.element.parent
+            if not textfield_flow then return end
+            local text = textfield_flow["textfield"].text
+            if text == "" then return end -- don't allow user to input the empty string
+            textfield_flow["textfield"].text = ""
+            if not event.element.tags.keywords then return end
+            local keywords_tag = event.element.tags.keywords
+            local keyword_list
+            if keywords_tag == constants.keyword_lists.exclude then keyword_list = player_global.model.excluded_keywords
+            elseif keywords_tag == constants.keyword_lists.hide then keyword_list = player_global.model.hidden_keywords
+            end
+
+            keyword_list:add_from_serialized(text)
+
+
+            if keywords_tag == constants.keyword_lists.exclude then keyword_tabs_view.build_exclude_tab(player)
+            elseif keywords_tag == constants.keyword_lists.hide then keyword_tabs_view.build_hide_tab(player)
+            end
+
+        elseif action == constants.actions.focus_modal then
+            local modal_main_frame = player_global.view.modal_main_frame
+            if modal_main_frame then
+                player.opened = modal_main_frame
+                modal_main_frame.bring_to_front()
+            end
         end
     end
 end)
@@ -343,11 +425,27 @@ script.on_event(defines.events.on_gui_switch_state_changed, function(event)
     end
 end)
 
+script.on_event(defines.events.on_gui_opened, function(event)
+    if event.element then
+        local player = game.get_player(event.player_index)
+        if not player then return end
+        ---@type TLLPlayerGlobal
+        local player_global = global.players[player.index]
+        if player_global.view.modal_main_frame then
+            player.opened = player_global.view.modal_main_frame
+        end
+    end
+end)
+
 script.on_event(defines.events.on_gui_closed, function(event)
     if event.element then
         local player = game.get_player(event.player_index)
-        if event.element.name == "tll_main_frame" then
+        if not player then return end
+        local name = event.element.name
+        if name == "tll_main_frame" then
             toggle_interface(player)
+        elseif name == "tll_modal_main_frame" then
+            toggle_modal(player)
         end
     end
 end)

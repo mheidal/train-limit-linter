@@ -8,7 +8,10 @@ local utils = require("utils")
 ---@field toggle_enabled fun(self: TLLKeywordList, keyword: string)
 ---@field remove_item fun(self: TLLKeywordList, keyword: string)
 ---@field remove_all fun(self: TLLKeywordList)
----@field get_number_of_keywords fun(): number
+---@field get_number_of_keywords fun(self: TLLKeywordList): number
+---@field get_keywords fun(self: TLLKeywordList): table<string, TLLToggleableItem>
+---@field serialize fun(self: TLLKeywordList): string
+---@field add_from_serialized fun(self: TLLKeywordList, serialized: string)
 
 ---@class TLLToggleableItem
 ---@field enabled boolean
@@ -33,6 +36,7 @@ end
 
 TLLKeywordList = {}
 
+---@return TLLKeywordList
 function TLLKeywordList:new()
     local new_object = {
         toggleable_items={}
@@ -81,6 +85,34 @@ end
 ---@return number
 function TLLKeywordList:get_number_of_keywords()
     return utils.get_table_size(self.toggleable_items)
+end
+
+---@return table<string, TLLToggleableItem>
+function TLLKeywordList:get_keywords()
+    return self.toggleable_items
+end
+
+---@return string
+function TLLKeywordList:serialize()
+    local keywords = {}
+    for keyword, _ in pairs(self.toggleable_items) do
+        table.insert(keywords, keyword)
+    end
+    local dump = serpent.dump(keywords)
+    local encoded = game.encode_string(dump)
+    if not encoded then return "" end
+    return encoded
+end
+
+---@param serialized string
+function TLLKeywordList:add_from_serialized(serialized)
+    local decoded = game.decode_string(serialized)
+    if not decoded then return end
+    local successful, keywords = serpent.load(decoded)
+    if not successful then return end
+    for _, keyword in pairs(keywords) do
+        self:set_enabled(keyword, true)
+    end
 end
 
 Exports.TLLKeywordList = TLLKeywordList
