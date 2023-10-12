@@ -29,7 +29,7 @@ local function build_interface(player)
     local screen_element = player.gui.screen
 
     local main_frame = screen_element.add{type="frame", name="tll_main_frame", direction="vertical"}
-    main_frame.style.size = {600, 800}
+    main_frame.style.size = constants.style_data.main_frame_size
 
     if not player_global.model.last_gui_location then
         main_frame.auto_center = true
@@ -118,14 +118,30 @@ end
 function toggle_modal(player, modal_function, args)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+
+    local main_frame = player_global.view.main_frame
     local modal_main_frame = player_global.view.modal_main_frame
+
     if modal_main_frame == nil then
+        if main_frame ~= nil then
+            local dimmer = player.gui.screen.add{
+                type="frame",
+                style="tll_frame_semitransparent",
+                tags={action=constants.actions.focus_modal}
+            }
+            dimmer.style.size = constants.style_data.main_frame_size
+            dimmer.location = main_frame.location
+            player_global.view.main_frame_dimmer = dimmer
+        end
         if not modal_function then return end
         modal.build_modal(player, modal_function, args)
     else
         modal_main_frame.destroy()
+        if player_global.view.main_frame_dimmer ~= nil then
+            player_global.view.main_frame_dimmer.destroy()
+            player_global.view.main_frame_dimmer = nil
+        end
         player_global.view.modal_main_frame = nil
-        local main_frame = player_global.view.main_frame
         if main_frame then
             player.opened = main_frame
             main_frame.ignored_by_interaction = false
@@ -240,7 +256,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             if type(modal_function) ~= "string" or not constants.modal_functions[modal_function] then return end
             if type(args) ~= "table" and args ~= nil then return end
             toggle_modal(player, modal_function, args)
-        
+
         elseif action == constants.actions.close_modal then
             toggle_modal(player)
 
@@ -262,6 +278,13 @@ script.on_event(defines.events.on_gui_click, function (event)
 
             if keywords_tag == constants.keyword_lists.exclude then keyword_tabs_view.build_exclude_tab(player)
             elseif keywords_tag == constants.keyword_lists.hide then keyword_tabs_view.build_hide_tab(player)
+            end
+
+        elseif action == constants.actions.focus_modal then
+            local modal_main_frame = player_global.view.modal_main_frame
+            if modal_main_frame then
+                player.opened = modal_main_frame
+                modal_main_frame.bring_to_front()
             end
         end
     end
@@ -422,7 +445,7 @@ script.on_event(defines.events.on_gui_closed, function(event)
         if event.element.name == "tll_main_frame" then
             toggle_interface(player)
         elseif name == "tll_modal_main_frame" then
-            modal.toggle_modal(player)
+            toggle_modal(player)
         end
     end
 end)

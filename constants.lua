@@ -29,6 +29,7 @@ constants.actions = {
 
     open_modal="open_modal",
     close_modal="close_modal",
+    focus_modal="focus_modal",
     import_keywords_button="import_keywords_button",
     import_keywords_textfield="import_keywords_textfield",
 }
@@ -61,6 +62,10 @@ constants.modal_functions = {
 constants.keyword_lists = {
     exclude="exclude",
     hide="hide",
+}
+
+constants.style_data = {
+    main_frame_size={600, 800}
 }
 
 return constants
