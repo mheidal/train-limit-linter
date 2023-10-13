@@ -2,7 +2,7 @@
   "name": "train-limit-linter",
   "version": "0.2.23",
   "title": "Train Limit Linter",
-  "author": "notnotnaught",
+  "author": "notnotnaught, ronoman",
   "factorio_version": "1.1",
   "dependencies": ["base >= 1.1", "flib >= 0.12.9"],
   "description": "Creates blueprints with trains to fill train stations fitting the Fundamental Theorem of Train Limits."
