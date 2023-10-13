@@ -1,5 +1,5 @@
 local constants = require("constants")
-local globals = require("scripts.globals")
+local globals = require("scripts/globals")
 
 -- Models
 local fuel_category_data = require("models.fuel_category_data")
@@ -7,6 +7,8 @@ local fuel_category_data = require("models.fuel_category_data")
 -- view
 local slider_textfield = require("views/slider_textfield")
 local icon_selector_textfield = require("views/icon_selector_textfield")
+
+local main_interface = require("views/main_interface")
 
 local display_tab_view = require("views/display_tab")
 local keyword_tabs_view = require("views/keyword_tabs")
@@ -18,79 +20,7 @@ local modal = require("views/modal")
 
 local schedule_report_table_scripts = require("scripts/schedule_report_table")
 
-
--- interface 
-
----@param player LuaPlayer
-local function build_interface(player)
-    ---@TLLPlayerGlobal
-    local player_global = global.players[player.index]
-
-    local screen_element = player.gui.screen
-
-    local main_frame = screen_element.add{type="frame", name="tll_main_frame", direction="vertical"}
-    main_frame.style.size = constants.style_data.main_frame_size
-
-    if not player_global.model.last_gui_location then
-        main_frame.auto_center = true
-    else
-        main_frame.location = player_global.model.last_gui_location
-    end
-
-    player.opened = main_frame
-    player_global.view.main_frame = main_frame
-
-    -- titlebar
-    local titlebar_flow = main_frame.add{
-        type="flow",
-        direction="horizontal",
-        name="tll_titlebar_flow",
-        style="flib_titlebar_flow"
-    }
-    titlebar_flow.drag_target = main_frame
-    titlebar_flow.add{type="label", style="frame_title", caption={"tll.main_frame_header"}}
-    titlebar_flow.add{type="empty-widget", style="flib_titlebar_drag_handle", ignored_by_interaction=true}
-    titlebar_flow.add{type="sprite-button", tags={action=constants.actions.close_window}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
-
-    -- tabs
-    local tab_pane_frame = main_frame.add{type="frame", style="inside_deep_frame_for_tabs"}
-    local tabbed_pane = tab_pane_frame.add{type="tabbed-pane", style="tabbed_pane_with_no_side_padding"}
-
-    -- display tab
-    local display_tab = tabbed_pane.add{type="tab", caption={"tll.display_tab"}}
-    local display_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="tll_tab_content_frame"}
-    tabbed_pane.add_tab(display_tab, display_content_frame)
-
-    player_global.view.display_content_frame = display_content_frame
-
-    display_tab_view.build_display_tab(player)
-
-    -- exclude tab
-    local exclude_tab = tabbed_pane.add{type="tab", caption={"tll.exclude_tab"}}
-    local exclude_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="tll_tab_content_frame"}
-    tabbed_pane.add_tab(exclude_tab, exclude_content_frame)
-    player_global.view.exclude_content_frame = exclude_content_frame
-
-    keyword_tabs_view.build_exclude_tab(player)
-
-    -- hide tab
-    local hide_tab = tabbed_pane.add{type="tab", caption={"tll.hide_tab"}}
-    local hide_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="tll_tab_content_frame"}
-    tabbed_pane.add_tab(hide_tab, hide_content_frame)
-    player_global.view.hide_content_frame = hide_content_frame
-
-    keyword_tabs_view.build_hide_tab(player)
-
-    -- settings tab
-    local settings_tab = tabbed_pane.add{type="tab", caption={"tll.settings_tab"}}
-    local settings_content_frame = tabbed_pane.add{type="frame", direction="vertical", style="tll_tab_content_frame"}
-    tabbed_pane.add_tab(settings_tab, settings_content_frame)
-
-    player_global.view.settings_content_frame = settings_content_frame
-
-    settings_tab_view.build_settings_tab(player)
-
-end
+-- handlers
 
 ---@param player LuaPlayer
 local function toggle_interface(player)
@@ -98,14 +28,15 @@ local function toggle_interface(player)
     local player_global = global.players[player.index]
     local main_frame = player_global.view.main_frame
     if main_frame == nil then
+        main_interface.build_interface(player)
         player.opened = player_global.view.main_frame
-        build_interface(player)
     else
         local modal_main_frame = player_global.view.modal_main_frame
         if modal_main_frame then
             main_frame.ignored_by_interaction = true
         else
             player_global.model.last_gui_location = main_frame.location
+            player_global.model.main_interface_selected_tab = nil
             main_frame.destroy()
             player_global.view = globals.get_empty_player_view()
         end
@@ -176,7 +107,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             settings_tab_view.build_settings_tab(player)
 
         elseif action == constants.actions.train_report_update then
-            display_tab_view.build_display_tab(player)
+            main_interface.build_interface(player)
 
         elseif action == constants.actions.close_window then
             toggle_interface(player)
@@ -185,42 +116,36 @@ script.on_event(defines.events.on_gui_click, function (event)
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.excluded_keywords:set_enabled(text, true)
-                keyword_tabs_view.build_exclude_tab(player)
-                display_tab_view.build_display_tab(player)
+                main_interface.build_interface(player)
             end
 
         elseif action == constants.actions.delete_excluded_keyword then
             local excluded_keyword = event.element.tags.keyword
             if type(excluded_keyword) ~= "string" then return end
             player_global.model.excluded_keywords:remove_item(excluded_keyword)
-            keyword_tabs_view.build_exclude_tab(player)
-            display_tab_view.build_display_tab(player)
+            main_interface.build_interface(player)
 
         elseif action == constants.actions.delete_all_excluded_keywords then
 
             player_global.model.excluded_keywords:remove_all()
-            keyword_tabs_view.build_exclude_tab(player)
-            display_tab_view.build_display_tab(player)
+            main_interface.build_interface(player)
 
         elseif action == constants.actions.hide_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.hidden_keywords:set_enabled(text, true)
-                keyword_tabs_view.build_hide_tab(player)
-                display_tab_view.build_display_tab(player)
+                main_interface.build_interface(player)
             end
 
         elseif action == constants.actions.delete_hidden_keyword then
             local hidden_keyword = event.element.tags.keyword
             if type(hidden_keyword) ~= "string" then return end
             player_global.model.hidden_keywords:remove_item(hidden_keyword)
-            keyword_tabs_view.build_hide_tab(player)
-            display_tab_view.build_display_tab(player)
+            main_interface.build_interface(player)
 
         elseif action == constants.actions.delete_all_hidden_keywords then
             player_global.model.hidden_keywords:remove_all()
-            keyword_tabs_view.build_hide_tab(player)
-            display_tab_view.build_display_tab(player)
+            main_interface.build_interface(player)
 
         elseif action == constants.actions.train_schedule_create_blueprint then
             local template_train
@@ -245,7 +170,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             local orientation = event.element.tags.orientation
             if type(orientation) ~= "number" then return end
             player_global.model.blueprint_configuration:set_new_blueprint_orientation(orientation)
-            settings_tab_view.build_settings_tab(player)
+            main_interface.build_interface(player)
 
         elseif action == constants.actions.open_modal then
             local modal_function = event.element.tags.modal_function
@@ -276,8 +201,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_tag)
             keyword_list:add_from_serialized(text)
 
-            keyword_tabs_view.build_exclude_tab(player) -- no real need to check which we need to build
-            keyword_tabs_view.build_hide_tab(player)
+            main_interface.build_interface(player)
             toggle_modal(player)
 
         elseif action == constants.actions.focus_modal then
@@ -295,6 +219,13 @@ script.on_event(defines.events.on_gui_click, function (event)
             keyword_textfield.text = keyword_textfield.text .. event.element.tags.train_stop_name
             keyword_textfield.focus()
             toggle_modal(player)
+
+        elseif action == constants.actions.main_interface_switch_tab then
+            local tab_index = event.element.tags.tab_index
+            if not tab_index then return end
+            if type(tab_index) ~= "number" then return end
+            player_global.model.main_interface_selected_tab = tab_index
+            main_interface.build_interface(player)
         end
     end
 end)
@@ -312,35 +243,30 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             local keyword = event.element.tags.keyword
             if type(keyword) ~= "string" then return end
             player_global.model.excluded_keywords:toggle_enabled(keyword)
-            keyword_tabs_view.build_exclude_tab(player)
-            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.toggle_hidden_keyword then
             local keyword = event.element.tags.keyword
             if type(keyword) ~= "string" then return end
             player_global.model.hidden_keywords:toggle_enabled(keyword)
-            keyword_tabs_view.build_hide_tab(player)
-            display_tab_view.build_display_tab(player)
 
         elseif action == constants.actions.toggle_current_surface then
             player_global.model.schedule_table_configuration:toggle_current_surface()
-            display_tab_view.build_display_tab(player)
+            main_interface.build_interface(player)
 
         elseif action == constants.actions.toggle_show_satisfied then
             player_global.model.schedule_table_configuration:toggle_show_satisfied()
-            display_tab_view.build_display_tab(player)
+            main_interface.build_interface(player)
 
         elseif action == constants.actions.toggle_show_invalid then
             player_global.model.schedule_table_configuration:toggle_show_invalid()
-            display_tab_view.build_display_tab(player)
+            main_interface.build_interface(player)
 
         elseif action == constants.actions.toggle_blueprint_snap then
             player_global.model.blueprint_configuration:toggle_blueprint_snap()
-            settings_tab_view.build_settings_tab(player)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
             player_global.model.fuel_configuration:toggle_add_fuel()
-            settings_tab_view.build_settings_tab(player)
+            main_interface.build_interface(player)
         end
     end
 end)
@@ -471,15 +397,13 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.excluded_keywords:set_enabled(text, true)
-                keyword_tabs_view.build_exclude_tab(player)
-                display_tab_view.build_display_tab(player)
+                main_interface.build_interface(player)
             end
         elseif action == constants.actions.hide_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.hidden_keywords:set_enabled(text, true)
-                keyword_tabs_view.build_hide_tab(player)
-                display_tab_view.build_display_tab(player)
+                main_interface.build_interface(player)
             end
         elseif action == constants.actions.import_keywords_textfield then
             local text = event.element.text
@@ -491,8 +415,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
             local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_tag)
             keyword_list:add_from_serialized(text)
 
-            keyword_tabs_view.build_exclude_tab(player) -- no real need to check which we need to build
-            keyword_tabs_view.build_hide_tab(player)
+            main_interface.build_interface(player)
 
             toggle_modal(player)
         end
