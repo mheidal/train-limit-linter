@@ -177,6 +177,7 @@ local function build_train_schedule_group_report(player)
     end
 
 function Exports.build_display_tab(player)
+    player.print("Building display tab")
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local display_content_frame = player_global.view.display_content_frame

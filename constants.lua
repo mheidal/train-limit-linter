@@ -1,6 +1,7 @@
 local constants = {}
 
 constants.actions = {
+    main_interface_switch_tab="main_interface_switch_tab",
     train_schedule_create_blueprint="train_schedule_create_blueprint",
     toggle_excluded_keyword="toggle_excluded_keyword",
     delete_excluded_keyword="delete_excluded_keyword",

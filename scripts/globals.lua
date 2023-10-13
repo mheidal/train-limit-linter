@@ -24,6 +24,7 @@ local modal_function_configuration = require("models/modal_function_configuratio
 ---@field hidden_keywords TLLKeywordList
 ---@field last_gui_location GuiLocation?
 ---@field modal_function_configuration TLLModalFunctionConfiguration
+---@field main_interface_selected_tab number?
 
 ---@class TLLPlayerView
 ---@field main_frame LuaGuiElement?

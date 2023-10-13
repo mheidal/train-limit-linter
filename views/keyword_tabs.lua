@@ -114,6 +114,7 @@ local function build_keyword_tab(
 end
 
 function Exports.build_exclude_tab(player)
+    player.print("Building exclude tab")
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local exclude_content_frame = player_global.view.exclude_content_frame
@@ -135,6 +136,7 @@ end
 
 
 function Exports.build_hide_tab(player)
+    player.print("Building hide tab")
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local hide_content_frame = player_global.view.hide_content_frame

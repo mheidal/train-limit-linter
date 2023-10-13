@@ -8,6 +8,7 @@ local slider_textfield = require("views/slider_textfield")
 Exports = {}
 
 function Exports.build_settings_tab(player)
+    player.print("Building settings tab")
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local settings_content_frame = player_global.view.settings_content_frame
