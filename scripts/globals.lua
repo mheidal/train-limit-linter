@@ -1,3 +1,4 @@
+local constants = require("constants")
 local blueprint_configuration = require("models/blueprint_configuration")
 local schedule_table_configuration = require("models/schedule_table_configuration")
 local keyword_list = require("models/keyword_list")
@@ -77,6 +78,26 @@ end
 
 function Exports.migrate_global(player)
     global.players[player.index] = Exports.get_default_global()
+end
+
+---@param player_global TLLPlayerGlobal
+---@param keyword_list_name string -- in constants.keyword_lists
+---@return TLLKeywordList
+function Exports.get_keyword_list_from_name(player_global, keyword_list_name)
+    if keyword_list_name == constants.keyword_lists.exclude then return player_global.model.excluded_keywords
+    elseif keyword_list_name == constants.keyword_lists.hide then return player_global.model.hidden_keywords
+    else error("No such keyword list")
+    end
+end
+
+---@param player_global TLLPlayerGlobal
+---@param keyword_list_name string -- in constants.keyword_lists
+---@return LuaGuiElement
+function Exports.get_keyword_textfield_from_name(player_global, keyword_list_name)
+    if keyword_list_name == constants.keyword_lists.exclude then return player_global.view.exclude_textfield
+    elseif keyword_list_name == constants.keyword_lists.hide then return player_global.view.hide_textfield
+    else error("No such keyword list")
+    end
 end
 
 return Exports

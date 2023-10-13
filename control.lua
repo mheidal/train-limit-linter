@@ -268,19 +268,16 @@ script.on_event(defines.events.on_gui_click, function (event)
             local text = textfield_flow["textfield"].text
             if text == "" then return end -- don't allow user to input the empty string
             textfield_flow["textfield"].text = ""
+
             if not event.element.tags.keywords then return end
             local keywords_tag = event.element.tags.keywords
-            local keyword_list
-            if keywords_tag == constants.keyword_lists.exclude then keyword_list = player_global.model.excluded_keywords
-            elseif keywords_tag == constants.keyword_lists.hide then keyword_list = player_global.model.hidden_keywords
-            end
-
+            if type(keywords_tag) ~= "string" then return end
+            local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_tag)
             keyword_list:add_from_serialized(text)
 
-
-            if keywords_tag == constants.keyword_lists.exclude then keyword_tabs_view.build_exclude_tab(player)
-            elseif keywords_tag == constants.keyword_lists.hide then keyword_tabs_view.build_hide_tab(player)
-            end
+            keyword_tabs_view.build_exclude_tab(player) -- no real need to check which we need to build
+            keyword_tabs_view.build_hide_tab(player)
+            toggle_modal(player)
 
         elseif action == constants.actions.focus_modal then
             local modal_main_frame = player_global.view.modal_main_frame
@@ -292,11 +289,8 @@ script.on_event(defines.events.on_gui_click, function (event)
             if not event.element.tags.train_stop_name then return end
             if not event.element.tags.keywords then return end
             local keywords_tag = event.element.tags.keywords
-            local keyword_textfield
-            if keywords_tag == constants.keyword_lists.exclude then keyword_textfield = player_global.view.exclude_textfield
-            elseif keywords_tag == constants.keyword_lists.hide then keyword_textfield = player_global.view.hide_textfield
-            end
-            if not keyword_textfield then return end
+            if type(keywords_tag) ~= "string" then return end
+            local keyword_textfield = globals.get_keyword_textfield_from_name(player_global, keywords_tag)
             keyword_textfield.text = keyword_textfield.text .. event.element.tags.train_stop_name
             keyword_textfield.focus()
             toggle_modal(player)
@@ -486,6 +480,21 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
                 keyword_tabs_view.build_hide_tab(player)
                 display_tab_view.build_display_tab(player)
             end
+        elseif action == constants.actions.import_keywords_textfield then
+            local text = event.element.text
+            if text == "" then return end -- don't allow user to input the empty string
+            event.element.text = ""
+            if not event.element.tags.keywords then return end
+            local keywords_tag = event.element.tags.keywords
+            if type(keywords_tag) ~= "string" then return end
+            local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_tag)
+            keyword_list:add_from_serialized(text)
+
+            keyword_tabs_view.build_exclude_tab(player) -- no real need to check which we need to build
+            keyword_tabs_view.build_hide_tab(player)
+            end
+
+            toggle_modal(player)
         end
     end
 end)

@@ -1,4 +1,5 @@
 local constants = require("constants")
+local globals = require("globals")
 local modal_content_data = require("models/modal_content_data")
 
 -- This Exports works differently from the rest!
@@ -25,12 +26,7 @@ Exports[constants.modal_functions.export_keyword_list] = function (player, paren
     local textfield = content_flow.add{type="textfield"}
     textfield.style.width = 300
 
-    local keyword_list
-    if args.keywords == constants.keyword_lists.exclude then
-        keyword_list = player_global.model.excluded_keywords
-    elseif args.keywords == constants.keyword_lists.hide then
-        keyword_list = player_global.model.hidden_keywords
-    end
+    local keyword_list = globals.get_keyword_list_from_name(player_global, args.keywords)
 
     textfield.text = keyword_list:serialize()
     textfield.focus()
