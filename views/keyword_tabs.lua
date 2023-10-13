@@ -53,6 +53,8 @@ local function build_keyword_tab(
         tooltip={"tll.train_stop_name_selector_button_tooltip"}
     }
 
+    textfield_flow.add{type="empty-widget", style="tll_spacer"}
+
     textfield_flow.add{
         type="sprite-button",
         tags={
@@ -77,10 +79,19 @@ local function build_keyword_tab(
         tooltip={"tll.export_keywords"}
     }
 
-    local spacer = textfield_flow.add{type="empty-widget"}
-    spacer.style.horizontally_stretchable = true
-    textfield_flow.add{type="sprite-button", tags={action=delete_all_keywords_action}, style="tool_button_red", sprite="utility/trash", tooltip={"tll.delete_all_keywords"}}
-
+    if keyword_list:get_number_of_keywords() > 1 then
+        textfield_flow.add{
+            type="sprite-button",
+            tags={action=delete_all_keywords_action},
+            style="tool_button_red",
+            sprite="utility/trash",
+            tooltip={"tll.delete_all_keywords"}
+        }
+    else
+        local spacer = textfield_flow.add{type="empty-widget"}
+        spacer.style.width = 28
+    end
+    
     local keyword_table_scroll_pane = parent.add{type="scroll-pane", direction="vertical"}
     keyword_table_scroll_pane.style.vertically_stretchable = true
 
