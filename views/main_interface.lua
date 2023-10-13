@@ -32,7 +32,6 @@ function Exports.build_interface(player)
         player_global.model.main_interface_selected_tab = 1
     end
 
-    player.opened = main_frame
     player_global.view.main_frame = main_frame
 
     -- titlebar
