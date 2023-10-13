@@ -18,7 +18,8 @@ Train Limit Linter allows some customization of which schedules are displayed. I
 Train Limit Linter allows customization of the blueprints containing new trains that it creates, including the orientation of new trains, adding blueprint snapping, and adding fuel to locomotives. One can customize what fuels are added to locomotives, both fuel type and fuel amount. This can handle other mods, allowing one to select different fuels for each fuel category that any kind of locomotive consumes.
 
 ### Contact
-For bug reports or feature suggestions, please make an issue on [the Github page](https://github.com/mheidal/train-limit-linter/). If you would like to contribute, please make a pull request. I would recommend that you contact me first to see if I already have anything in the works matching your idea. 
+For bug reports or feature suggestions, please make an issue on [the Github page](https://github.com/mheidal/train-limit-linter/). If you would like to contribute, please make a pull request. I would recommend that you contact me first to see if I already have anything in the works matching your idea.
+I would welcome help with localization.
 You can contact me on Discord `@notnot`. To message me you need to share a server with me. I expect that I will be in [the Factorio discord server](https://discord.com/invite/factorio) for the foreseeable future.
 
 ### License
