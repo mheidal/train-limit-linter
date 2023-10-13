@@ -492,7 +492,6 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
 
             keyword_tabs_view.build_exclude_tab(player) -- no real need to check which we need to build
             keyword_tabs_view.build_hide_tab(player)
-            end
 
             toggle_modal(player)
         end

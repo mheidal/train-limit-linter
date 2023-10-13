@@ -1,5 +1,5 @@
 local constants = require("constants")
-local globals = require("globals")
+local globals = require("scripts/globals")
 local modal_content_data = require("models/modal_content_data")
 
 -- This Exports works differently from the rest!
