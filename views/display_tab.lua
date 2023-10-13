@@ -177,7 +177,6 @@ local function build_train_schedule_group_report(player)
     end
 
 function Exports.build_display_tab(player)
-    player.print("Building display tab")
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local display_content_frame = player_global.view.display_content_frame
@@ -194,9 +193,16 @@ function Exports.build_display_tab(player)
     local train_report_button = controls_flow.add{type="button", tags={action=constants.actions.train_report_update}, caption={"tll.train_report_button_update"}}
     train_report_button.style.bottom_margin = 10
 
-    local report_frame = display_content_frame.add{type="scroll-pane", name="report_table", direction="vertical"}
-    player_global.view.report_frame = report_frame
+    local report_frame_name = "report_frame_name"
 
+    local report_frame = display_content_frame[report_frame_name] or display_content_frame.add{
+        type="scroll-pane",
+        name="report_frame_name",
+        direction="vertical",
+        style="tll_content_scroll_pane"
+    }
+    report_frame.clear()
+    player_global.view.report_frame = report_frame
     build_train_schedule_group_report(player)
 end
 

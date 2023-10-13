@@ -91,9 +91,16 @@ local function build_keyword_tab(
         local spacer = textfield_flow.add{type="empty-widget"}
         spacer.style.width = 28
     end
-    
-    local keyword_table_scroll_pane = parent.add{type="scroll-pane", direction="vertical"}
-    keyword_table_scroll_pane.style.vertically_stretchable = true
+
+    local scroll_pane_name = "scroll_pane_name"
+
+    local keyword_table_scroll_pane = parent[scroll_pane_name] or parent.add{
+            type="scroll-pane",
+            direction="vertical",
+            name=scroll_pane_name,
+            style="tll_content_scroll_pane"
+        }
+    keyword_table_scroll_pane.clear()
 
     if keyword_list:get_number_of_keywords() == 0 then
         keyword_table_scroll_pane.add{type="label", caption={"tll.no_keywords"}}
@@ -114,7 +121,6 @@ local function build_keyword_tab(
 end
 
 function Exports.build_exclude_tab(player)
-    player.print("Building exclude tab")
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local exclude_content_frame = player_global.view.exclude_content_frame
@@ -136,7 +142,6 @@ end
 
 
 function Exports.build_hide_tab(player)
-    player.print("Building hide tab")
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local hide_content_frame = player_global.view.hide_content_frame

@@ -8,18 +8,22 @@ local slider_textfield = require("views/slider_textfield")
 Exports = {}
 
 function Exports.build_settings_tab(player)
-    player.print("Building settings tab")
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local settings_content_frame = player_global.view.settings_content_frame
     if not settings_content_frame then return end
 
-    settings_content_frame.clear()
+    local scroll_pane_name = "scroll_pane_name"
 
     local blueprint_config = player_global.model.blueprint_configuration
 
-    local scroll_pane = settings_content_frame.add{type="scroll-pane", direction="vertical"}
-    scroll_pane.style.vertically_stretchable = true
+    local scroll_pane = settings_content_frame[scroll_pane_name] or settings_content_frame.add{
+        type="scroll-pane",
+        direction="vertical",
+        name=scroll_pane_name,
+        style="tll_content_scroll_pane"
+    }
+    scroll_pane.clear()
 
     -- blueprint settings
     local blueprint_settings_frame = scroll_pane.add{type="frame", style="bordered_frame", direction="vertical"}

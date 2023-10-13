@@ -26,6 +26,11 @@ styles["tll_frame_semitransparent"] = {
   }
 }
 
+styles["tll_content_scroll_pane"] = {
+  type="scroll_pane_style",
+  vertically_stretchable="on"
+}
+
 styles["tll_spacer"] = {
   type="empty_widget_style",
   horizontally_stretchable="on"
