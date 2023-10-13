@@ -150,6 +150,7 @@ end
 
 script.on_event("tll_toggle_interface", function(event)
     local player = game.get_player(event.player_index)
+    if not player then return end
     toggle_interface(player)
 end)
 

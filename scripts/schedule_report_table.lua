@@ -118,14 +118,15 @@ local function combine_blueprint_entities(entity_list_1, entity_list_2)
 end
 
 ---@param player LuaPlayer
+---@param train_length number
 ---@return table?
-local function get_snap_to_grid(player)
+local function get_snap_to_grid(player, train_length)
     local config = global.players[player.index].model.blueprint_configuration
     if config.snap_enabled then
         if config.snap_direction == constants.snap_directions.vertical then
-            return {x = 100, y = config.snap_width}
+            return {x = train_length, y = config.snap_width}
         else
-            return {x = config.snap_width, y = 100}
+            return {x = config.snap_width, y = train_length}
         end
     else
         return nil
@@ -149,6 +150,17 @@ local function rotate_around_origin(x, y, angle)
     return {x = rotatedX, y = rotatedY}
 end
 
+---@param entities BlueprintEntity[]
+---@param x number
+---@param y number
+---@return BlueprintEntity[]
+local function translate_blueprint_entities(entities, x, y)
+    for i, entity in pairs(entities) do
+        entity.position.x = entity.position.x + x
+        entity.position.y = entity.position.y + y
+    end
+    return entities
+end
 
 ---Take a train's entities. Find a locomotive. Rotate all the entities so that the locomotive should point towards the player's currently set orientation. 
 ---@param entities BlueprintEntity[]
@@ -208,6 +220,7 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
     local prev_vert_offset = 0
     local prev_orientation = nil
     local prev_was_counteraligned = false
+    local first_vert_offset_diff = nil
 
     for _, carriage in pairs(train.carriages) do
         single_carriage_slot.create_blueprint{surface=surface, area=carriage.bounding_box, force=player.force, include_trains=true, include_entities=false}
@@ -216,6 +229,8 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
 
         -- vertical offset only works for vanilla rolling stock! should use joint distance and connection distance but these are not visible outside data stage
         local vert_offset = prev_vert_offset + 7
+        if not first_vert_offset_diff then first_vert_offset_diff = 7 end
+
         new_blueprint_entities[1].position = {x=0, y= -1 * vert_offset}
 
         if prev_orientation == nil then
@@ -263,10 +278,11 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
         end
         entity.items = items_to_add
     end
+    aggregated_entities = translate_blueprint_entities(aggregated_entities, 1, prev_vert_offset + math.ceil(first_vert_offset_diff / 2)) -- align with blueprint snap
     aggregated_entities = orient_train_entities(aggregated_entities, player_global.model.blueprint_configuration.new_blueprint_orientation)
 
     aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
-    aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player)
+    aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player, prev_vert_offset)
     player.add_to_clipboard(aggregated_blueprint_slot)
     player.activate_paste()
     script_inventory.destroy()
