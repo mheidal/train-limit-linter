@@ -5,7 +5,6 @@ constants.actions = {
     toggle_excluded_keyword="toggle_excluded_keyword",
     delete_excluded_keyword="delete_excluded_keyword",
     train_report_update="train_report_update",
-    select_fuel="select_fuel",
     close_window="close_window",
     exclude_textfield_apply="exclude_textfield_apply",
     delete_all_excluded_keywords="delete_all_excluded_keywords",
@@ -16,10 +15,26 @@ constants.actions = {
     toggle_current_surface="toggle_current_surface",
     toggle_show_satisfied="toggle_show_satisfied",
     toggle_show_invalid="toggle_show_invalid",
-    update_fuel_amount_textfield="update_fuel_amount_textfield",
-    update_fuel_amount_slider="update_fuel_amount_slider",
     icon_selector_textfield_apply="icon_selector_textfield_apply",
-    icon_selector_icon_selected="icon_selector_icon_selected"
+    icon_selector_icon_selected="icon_selector_icon_selected",
+
+    set_blueprint_orientation="set_blueprint_orientation",
+    toggle_blueprint_snap="toggle_blueprint_snap",
+    set_blueprint_snap_width="set_blueprint_snap_width",
+    toggle_blueprint_snap_direction="toggle_blueprint_snap_direction",
+
+    toggle_place_trains_with_fuel="toggle_place_trains_with_fuel",
+    update_fuel_amount="update_fuel_amount",
+    select_fuel="select_fuel",
+
+    open_modal="open_modal",
+    close_modal="close_modal",
+    focus_modal="focus_modal",
+    import_keywords_button="import_keywords_button",
+    import_keywords_textfield="import_keywords_textfield",
+
+    train_stop_name_selector_search="train_stop_name_selector_search",
+    train_stop_name_selector_select_name="train_stop_name_selector_select_name",
 }
 
 constants.train_stop_limit_enums = {
@@ -35,6 +50,26 @@ constants.orientations = {
     dl=0.625,
     l=0.75,
     ul=0.875
+}
+
+constants.snap_directions = {
+    vertical="vertical",
+    horizontal="horizontal"
+}
+
+constants.modal_functions = {
+    export_keyword_list="export_keyword_list",
+    import_keyword_list="import_keyword_list",
+    train_stop_name_selector="train_stop_name_selector"
+}
+
+constants.keyword_lists = {
+    exclude="exclude",
+    hide="hide",
+}
+
+constants.style_data = {
+    main_frame_size={600, 800}
 }
 
 return constants
