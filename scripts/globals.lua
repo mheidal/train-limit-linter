@@ -1,6 +1,6 @@
 local constants = require("constants")
 local TLLBlueprintConfiguration = require("models/blueprint_configuration")
-local schedule_table_configuration = require("models/schedule_table_configuration")
+local TLLScheduleTableConfiguration = require("models/schedule_table_configuration")
 local TLLKeywordList = require("models/keyword_list")
 local TLLFuelConfiguration = require("models.fuel_configuration")
 local TLLModalFunctionConfiguration = require("models/modal_function_configuration")
@@ -62,7 +62,7 @@ function Exports.get_default_global()
     return {
         model = {
             blueprint_configuration = TLLBlueprintConfiguration.new(),
-            schedule_table_configuration = schedule_table_configuration.TLLScheduleTableConfiguration:new(),
+            schedule_table_configuration = TLLScheduleTableConfiguration.new(),
             fuel_configuration = fuel_config,
             excluded_keywords = TLLKeywordList.new(),
             hidden_keywords = TLLKeywordList.new(),
