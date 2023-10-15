@@ -10,17 +10,17 @@ local constants = require("constants")
 ---@field get_modal_content_args fun(self: TLLModalFunctionConfiguration): table?
 ---@field clear_modal_content_args fun(self: TLLModalFunctionConfiguration)
 
-Exports = {}
+---@class TLLModalFunctionConfiguration
+local TLLModalFunctionConfiguration = {}
+local mt = { __index = TLLModalFunctionConfiguration }
+script.register_metatable("TLLModalFunctionConfiguration", mt)
 
-TLLModalFunctionConfiguration = {}
-
-function TLLModalFunctionConfiguration:new()
-    local new_object = {
+function TLLModalFunctionConfiguration.new()
+    local self = {
         modal_content_function = nil
     }
-    setmetatable(new_object, self)
-    self.__index = self
-    return new_object
+    setmetatable(self, mt)
+    return self
 end
 
 
@@ -49,6 +49,4 @@ function TLLModalFunctionConfiguration:clear_modal_content_args()
     self.args = nil
 end
 
-Exports.TLLModalFunctionConfiguration = TLLModalFunctionConfiguration
-
-return Exports
+return TLLModalFunctionConfiguration

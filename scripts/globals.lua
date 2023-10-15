@@ -3,7 +3,7 @@ local TLLBlueprintConfiguration = require("models/blueprint_configuration")
 local schedule_table_configuration = require("models/schedule_table_configuration")
 local TLLKeywordList = require("models/keyword_list")
 local TLLFuelConfiguration = require("models.fuel_configuration")
-local modal_function_configuration = require("models/modal_function_configuration")
+local TLLModalFunctionConfiguration = require("models/modal_function_configuration")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
@@ -67,7 +67,7 @@ function Exports.get_default_global()
             excluded_keywords = TLLKeywordList.new(),
             hidden_keywords = TLLKeywordList.new(),
             last_gui_location = nil, -- migration not actually necessary, since it starts as nil?,
-            modal_function_configuration = modal_function_configuration.TLLModalFunctionConfiguration:new(),
+            modal_function_configuration = TLLModalFunctionConfiguration.new(),
         },
         view = Exports.get_empty_player_view()
     }
