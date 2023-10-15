@@ -11,20 +11,19 @@ local constants = require("constants")
 ---@field toggle_snap_direction fun(self: TLLBlueprintConfiguration)
 ---@field toggle_blueprint_snap fun(self: TLLBlueprintConfiguration)
 
-Exports = {}
+local TLLBlueprintConfiguration = {}
+local mt = { __index = TLLBlueprintConfiguration }
+script.register_metatable("TLLBlueprintConfiguration", mt)
 
-TLLBlueprintConfiguration = {}
-
-function TLLBlueprintConfiguration:new()
-    local new_object = {
+function TLLBlueprintConfiguration.new()
+    local self = {
         new_blueprint_orientation = constants.orientations.d,
         snap_enabled = true,
         snap_direction = constants.snap_directions.horizontal,
         snap_width = 2
     }
-    setmetatable(new_object, self)
-    self.__index = self
-    return new_object
+    setmetatable(self, mt)
+    return self
 end
 
 ---@param new_orientation number
@@ -45,6 +44,4 @@ function TLLBlueprintConfiguration:toggle_blueprint_snap()
     self.snap_enabled = not self.snap_enabled
 end
 
-Exports.TLLBlueprintConfiguration = TLLBlueprintConfiguration
-
-return Exports
+return TLLBlueprintConfiguration
