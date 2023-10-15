@@ -3,23 +3,35 @@
 ---@field close_button_visible boolean
 ---@field titlebar_visible boolean
 ---@field titlebar_caption string?
+---@field set_close_button_visible fun(self: TLLModalContentData, value: boolean)
+---@field set_titlebar_visible fun(self: TLLModalContentData, value: boolean)
+---@field set_titlebar_caption fun(self: TLLModalContentData, caption: string)
 
-local Exports = {}
+---@class TLLModalContentData
+local TLLModalContentData = {}
+local mt = { __index = TLLModalContentData }
+script.register_metatable("TLLModalContentData", mt)
 
-TLLModalContentData = {}
-
----@param o table?
-function TLLModalContentData:new(o)
-    local new_object = o or {
+function TLLModalContentData.new()
+    local self = {
         close_button_visible = false,
         titlebar_visible=true,
         titlebar_caption="",
     }
-    setmetatable(new_object, self)
-    self.__index = self
-    return new_object
+    setmetatable(self, mt)
+    return self
 end
 
-Exports.TLLModalContentData = TLLModalContentData
+function TLLModalContentData:set_close_button_visible(value)
+    self.close_button_visible = value
+end
 
-return Exports
+function TLLModalContentData:set_titlebar_visible(value)
+    self.titlebar_visible = value
+end
+
+function TLLModalContentData:set_titlebar_caption(caption)
+    self.titlebar_caption = caption
+end
+
+return TLLModalContentData
