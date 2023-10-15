@@ -2,7 +2,7 @@ local constants = require("constants")
 local TLLBlueprintConfiguration = require("models/blueprint_configuration")
 local schedule_table_configuration = require("models/schedule_table_configuration")
 local TLLKeywordList = require("models/keyword_list")
-local fuel_configuration = require("models.fuel_configuration")
+local TLLFuelConfiguration = require("models.fuel_configuration")
 local modal_function_configuration = require("models/modal_function_configuration")
 
 ---@class TLLGlobal
@@ -51,7 +51,7 @@ end
 ---@return TLLPlayerGlobal
 function Exports.get_default_global()
 
-    local fuel_config = fuel_configuration.TLLFuelConfiguration:new()
+    local fuel_config = TLLFuelConfiguration.new()
 
     local fuel_categories = global.model.fuel_category_data.fuel_categories_and_fuels
 
