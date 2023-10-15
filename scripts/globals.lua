@@ -1,7 +1,7 @@
 local constants = require("constants")
 local blueprint_configuration = require("models/blueprint_configuration")
 local schedule_table_configuration = require("models/schedule_table_configuration")
-local keyword_list = require("models/keyword_list")
+local TLLKeywordList = require("models/keyword_list")
 local fuel_configuration = require("models.fuel_configuration")
 local modal_function_configuration = require("models/modal_function_configuration")
 
@@ -64,8 +64,8 @@ function Exports.get_default_global()
             blueprint_configuration = blueprint_configuration.TLLBlueprintConfiguration:new(),
             schedule_table_configuration = schedule_table_configuration.TLLScheduleTableConfiguration:new(),
             fuel_configuration = fuel_config,
-            excluded_keywords = keyword_list.TLLKeywordList:new(),
-            hidden_keywords = keyword_list.TLLKeywordList:new(),
+            excluded_keywords = TLLKeywordList.new(),
+            hidden_keywords = TLLKeywordList.new(),
             last_gui_location = nil, -- migration not actually necessary, since it starts as nil?,
             modal_function_configuration = modal_function_configuration.TLLModalFunctionConfiguration:new(),
         },

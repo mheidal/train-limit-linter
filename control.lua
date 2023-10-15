@@ -431,6 +431,8 @@ script.on_event(defines.events.on_player_removed, function(event)
     global.players[event.player_index] = nil
 end)
 
+script.on_event(defines.events.on_player_joined_game)
+
 script.on_init(function ()
 
     global.model = {
