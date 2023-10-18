@@ -7,6 +7,7 @@ local utils = require("utils")
 
 
 local Exports = {}
+local station_name_sep = " → "
 
 ---@param id string
 ---@return LuaTrain?
@@ -19,23 +20,40 @@ function Exports.get_train_by_id(id)
     return nil
 end
 
+local function train_schedule_to_key(schedule)
+    local key
+    for _, record in pairs(schedule.records) do
+        if not record.temporary and record.station then
+            if not key then
+                 key = record.station
+            else
+                key = key .. station_name_sep .. record.station
+            end
+        end
+    end
+    return key
+end
+
+--- Compares train schedule groups against a new key to see if any of the existing keys are the new key but rotated.
+--- For example, this would match "A → B" to "B → A"
+---@param key string A train schedule's key
+---@param train_schedule_groups table<string, LuaTrain[]> 
+---@return string? an equivalent key, if one exists
+local function get_equivalent_key(key, train_schedule_groups)
+    for existing_key, _ in pairs(train_schedule_groups) do
+        if #key == #existing_key then
+            superkey = key .. station_name_sep .. key
+            if string.find(superkey, existing_key, nil, true) then
+                return existing_key
+            end
+        end
+    end
+    return nil
+end
+
 -- Returns an array of arrays of trains which share a schedule.
 ---@return SurfaceTrainScheduleGroups
 function Exports.get_train_schedule_groups_by_surface()
-    local function train_schedule_to_key(schedule)
-        local key
-        for _, record in pairs(schedule.records) do
-            if not record.temporary and record.station then
-                if not key then
-                     key = record .station
-                else
-                    key = key .. " → " .. record.station
-                end
-            end
-        end
-        return key
-    end
-
     local surface_train_schedule_groups = {}
 
     for _, surface in pairs(game.surfaces) do
@@ -46,8 +64,12 @@ function Exports.get_train_schedule_groups_by_surface()
             if schedule then
                 added_schedule = true
                 local key = train_schedule_to_key(schedule)
-                train_schedule_groups[key] = train_schedule_groups[key] or {}
-                table.insert(train_schedule_groups[key], train)
+                local equivalent_key = get_equivalent_key(key, train_schedule_groups)
+                if equivalent_key then
+                    table.insert(train_schedule_groups[equivalent_key], train)
+                else
+                    train_schedule_groups[key] = {train}
+                end
             end
         end
         if added_schedule then
