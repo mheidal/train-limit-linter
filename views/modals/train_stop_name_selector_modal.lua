@@ -1,6 +1,5 @@
 local constants = require("constants")
-local modal_content_data = require("models/modal_content_data")
-local icon_selector_textfield = require("views/icon_selector_textfield")
+local TLLModalContentData = require("models/modal_content_data")
 
 -- This Exports works differently from the rest!
 local Exports = {}
@@ -10,9 +9,9 @@ local Exports = {}
 ---@param args table?
 ---@return TLLModalContentData
 Exports[constants.modal_functions.train_stop_name_selector] = function (player, parent, args)
-    local return_data =  modal_content_data.TLLModalContentData:new()
-    return_data.titlebar_caption = {"tll.train_stop_name_selector_titlebar_caption"}
-    return_data.close_button_visible = true
+    local return_data =  TLLModalContentData.new()
+    return_data:set_titlebar_caption{"tll.train_stop_name_selector_titlebar_caption"}
+    return_data:set_close_button_visible(true)
 
     if not args then return return_data end
     if not args.keywords then return return_data end
