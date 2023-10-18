@@ -84,7 +84,7 @@ function Exports.build_settings_tab(player)
 
         local fuel_amount_frame_enabled = fuel_config.add_fuel and fuel_category_config.selected_fuel ~= nil
 
-        local maximum_fuel_amount = fuel_category_config:get_fuel_stack_size() * 3
+        local maximum_fuel_amount = fuel_category_config:get_fuel_stack_size() * global.model.fuel_category_data.maximum_fuel_slot_count
 
         local slider_value_step = maximum_fuel_amount % 10 == 0 and maximum_fuel_amount / 10 or 1
 
