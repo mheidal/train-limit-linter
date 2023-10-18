@@ -2,11 +2,11 @@
 ---@class TLLModalContentData
 ---@field close_button_visible boolean
 ---@field titlebar_visible boolean
----@field titlebar_caption string?
+---@field titlebar_caption LocalisedString
 ---@field new fun(): TLLModalContentData
 ---@field set_close_button_visible fun(self: TLLModalContentData, value: boolean)
 ---@field set_titlebar_visible fun(self: TLLModalContentData, value: boolean)
----@field set_titlebar_caption fun(self: TLLModalContentData, caption: string)
+---@field set_titlebar_caption fun(self: TLLModalContentData, caption: LocalisedString)
 
 ---@class TLLModalContentData
 local TLLModalContentData = {}

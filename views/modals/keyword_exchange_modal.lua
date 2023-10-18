@@ -10,8 +10,12 @@ local Exports = {}
 ---@param args table?
 ---@return TLLModalContentData
 Exports[constants.modal_functions.export_keyword_list] = function (player, parent, args)
-    if not args then return TLLModalContentData.new() end
-    if not args.keywords then return TLLModalContentData.new() end
+    local return_data = TLLModalContentData.new()
+    return_data.close_button_visible = true
+    return_data.titlebar_visible = true
+    return_data.titlebar_caption = {"tll.export_keywords"}
+    if not args then return return_data end
+    if not args.keywords then return return_data end
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -32,11 +36,6 @@ Exports[constants.modal_functions.export_keyword_list] = function (player, paren
     textfield.focus()
     textfield.select(1, #textfield.text)
 
-    local return_data = TLLModalContentData.new()
-    return_data.close_button_visible = true
-    return_data.titlebar_visible = true
-    return_data.titlebar_caption = {"tll.export_keywords"}
-
     return return_data
 end
 
@@ -45,8 +44,12 @@ end
 ---@param args table?
 ---@return TLLModalContentData
 Exports[constants.modal_functions.import_keyword_list] = function (player, parent, args)
-    if not args then return TLLModalContentData.new() end
-    if not args.keywords then return TLLModalContentData.new() end
+    local return_data = TLLModalContentData.new()
+    return_data:set_close_button_visible(true)
+    return_data:set_titlebar_visible(true)
+    return_data:set_titlebar_caption{"tll.import_keywords"}
+    if not args then return return_data end
+    if not args.keywords then return return_data end
 
     local content_frame = parent.add{type="frame", direction="vertical", name="modal_content_frame", style="inside_shallow_frame"}
 
@@ -78,12 +81,6 @@ Exports[constants.modal_functions.import_keyword_list] = function (player, paren
         sprite="utility/import",
         tooltip={"tll.import_keywords"},
     }
-
-    local return_data = TLLModalContentData.new()
-    return_data:set_close_button_visible(true)
-    return_data:set_titlebar_visible(true)
-    return_data:set_titlebar_caption{"tll.import_keywords"}
-
     return return_data
 end
 
