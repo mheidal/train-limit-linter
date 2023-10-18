@@ -2,6 +2,7 @@
 ---@class TLLFuelCategoryData
 ---@field locomotives_fuel_categories table<string, string[]>
 ---@field fuel_categories_and_fuels table<string, string[]>
+---@field maximum_fuel_slot_count number
 
 local Exports = {}
 
@@ -53,11 +54,25 @@ function get_locomotives_and_fuel_categories()
     return locomotives_fuel_categories
 end
 
+local function get_maximum_fuel_slot_count()
+    local max = 0
+    for _, proto in pairs(game.entity_prototypes) do
+        if proto.type == "locomotive" then
+            if proto.burner_prototype then
+                local fuel_slot_count = proto.burner_prototype.fuel_inventory_size
+                max = max > fuel_slot_count and max or fuel_slot_count
+            end
+        end
+    end
+    return max
+end
+
 ---@return TLLFuelCategoryData
 function Exports.get_fuel_category_data()
     return {
         locomotives_fuel_categories = get_locomotives_and_fuel_categories(),
         fuel_categories_and_fuels = get_fuel_categories_and_fuels(),
+        maximum_fuel_slot_count = get_maximum_fuel_slot_count(),
     }
 end
 

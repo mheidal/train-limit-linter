@@ -10,7 +10,7 @@
 ---@field fuel_amount number
 ---@field new fun(): TLLFuelCategoryConfiguration
 ---@field change_selected_fuel_and_check_overcap fun(self: TLLFuelCategoryConfiguration, string): boolean
----@field get_max_fuel_amount fun(self: TLLFuelCategoryConfiguration)
+---@field get_fuel_stack_size fun(self: TLLFuelCategoryConfiguration): number
 ---@field set_fuel_amount fun(self: TLLFuelCategoryConfiguration, number)
 
 -- Fuel category configuration
@@ -41,7 +41,7 @@ function TLLFuelCategoryConfiguration:change_selected_fuel_and_check_overcap(sel
         return false
     else
         self.selected_fuel = selected_item
-        local new_max_value = self:get_max_fuel_amount()
+        local new_max_value = self:get_fuel_stack_size() * global.model.fuel_category_data.maximum_fuel_slot_count
         if new_max_value < self.fuel_amount then
             self:set_fuel_amount(new_max_value)
             return true
@@ -51,9 +51,9 @@ function TLLFuelCategoryConfiguration:change_selected_fuel_and_check_overcap(sel
     end
 end
 
-function TLLFuelCategoryConfiguration:get_max_fuel_amount()
+function TLLFuelCategoryConfiguration:get_fuel_stack_size()
     if self.selected_fuel then
-        return game.item_prototypes[self.selected_fuel].stack_size * 3
+        return game.item_prototypes[self.selected_fuel].stack_size
     else
         return 1
     end
