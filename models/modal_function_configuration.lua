@@ -3,6 +3,7 @@ local constants = require("constants")
 ---@class TLLModalFunctionConfiguration
 ---@field func string?
 ---@field args table?
+---@field new fun(): TLLModalFunctionConfiguration
 ---@field set_modal_content_function fun(self: TLLModalFunctionConfiguration, func: string)
 ---@field get_modal_content_function fun(self: TLLModalFunctionConfiguration): string?
 ---@field clear_modal_content_function fun(self: TLLModalFunctionConfiguration)

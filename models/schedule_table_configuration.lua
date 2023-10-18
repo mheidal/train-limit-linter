@@ -2,7 +2,7 @@
 ---@field only_current_surface boolean
 ---@field show_satisfied boolean
 ---@field show_invalid boolean
----@field new fun(self: TLLScheduleTableConfiguration): TLLScheduleTableConfiguration
+---@field new fun(): TLLScheduleTableConfiguration
 ---@field toggle_current_surface fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_satisfied fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_invalid fun(self: TLLScheduleTableConfiguration)

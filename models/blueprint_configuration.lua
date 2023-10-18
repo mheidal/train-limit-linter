@@ -5,7 +5,7 @@ local constants = require("constants")
 ---@field snap_enabled boolean
 ---@field snap_direction string,
 ---@field snap_width number
----@field new fun(self: TLLBlueprintConfiguration): TLLBlueprintConfiguration
+---@field new fun(): TLLBlueprintConfiguration
 ---@field set_new_blueprint_orientation fun(self: TLLBlueprintConfiguration, new_orientation: number)
 ---@field set_snap_width fun(self: TLLBlueprintConfiguration, new_snap_width: number)
 ---@field toggle_snap_direction fun(self: TLLBlueprintConfiguration)

@@ -3,6 +3,7 @@
 ---@field close_button_visible boolean
 ---@field titlebar_visible boolean
 ---@field titlebar_caption string?
+---@field new fun(): TLLModalContentData
 ---@field set_close_button_visible fun(self: TLLModalContentData, value: boolean)
 ---@field set_titlebar_visible fun(self: TLLModalContentData, value: boolean)
 ---@field set_titlebar_caption fun(self: TLLModalContentData, caption: string)
