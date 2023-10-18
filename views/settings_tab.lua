@@ -106,7 +106,8 @@ function Exports.build_settings_tab(player)
 
         local valid_fuels = global.model.fuel_category_data.fuel_categories_and_fuels[fuel_category]
 
-        local column_count = #valid_fuels < 10 and #valid_fuels or 10
+        local max_column_count = 8
+        local column_count = #valid_fuels < max_column_count and #valid_fuels or max_column_count
 
         local table_frame = category_settings_flow.add{type="frame", style="slot_button_deep_frame"}
         local fuel_button_table = table_frame.add{type="table", column_count=column_count, style="filter_slot_table"}
