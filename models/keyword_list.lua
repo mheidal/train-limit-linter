@@ -59,7 +59,7 @@ end
 ---@param enabled boolean
 function TLLKeywordList:set_enabled(keyword, enabled)
     if self.toggleable_items[keyword] == nil then
-        self.toggleable_items[keyword] = TLLToggleableItem:new()
+        self.toggleable_items[keyword] = TLLToggleableItem.new()
     end
     self.toggleable_items[keyword].enabled = enabled
 end
