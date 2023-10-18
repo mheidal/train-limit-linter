@@ -264,6 +264,7 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
     local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
     if not aggregated_entities then return end
     for _, entity in pairs(aggregated_entities) do
+        local entity_prototype = game.entity_prototypes[entity.name]
         local items_to_add = {}
         if player_global.model.fuel_configuration.add_fuel then
             local accepted_fuel_categories = global.model.fuel_category_data.locomotives_fuel_categories[entity.name]
@@ -271,7 +272,10 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
                 for _, accepted_fuel_category in pairs(accepted_fuel_categories) do
                     local fuel_category_config = player_global.model.fuel_configuration.fuel_category_configurations[accepted_fuel_category]
                     if fuel_category_config.selected_fuel then
-                        items_to_add[fuel_category_config.selected_fuel] = fuel_category_config.fuel_amount
+                        local number_of_fuel_slots = entity_prototype.burner_prototype.fuel_inventory_size
+                        local maximum_fuel = number_of_fuel_slots * fuel_category_config:get_fuel_stack_size()
+                        local fuel_amount_to_add = maximum_fuel > fuel_category_config.fuel_amount and fuel_category_config.fuel_amount or maximum_fuel
+                        items_to_add[fuel_category_config.selected_fuel] = fuel_amount_to_add
                         break
                     end
                 end
