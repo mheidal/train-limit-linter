@@ -3,7 +3,7 @@ local utils = require("utils")
 
 local schedule_report_table_scripts = require("scripts/schedule_report_table")
 
-Exports = {}
+local Exports = {}
 
 ---@param player LuaPlayer
 local function build_train_schedule_group_report(player)
@@ -20,7 +20,9 @@ local function build_train_schedule_group_report(player)
 
     local table_config = player_global.model.schedule_table_configuration
 
-    local column_count = 4 + (table_config.only_current_surface and 0 or 1)
+    local column_count = 4
+    column_count = column_count + (table_config.only_current_surface and 0 or 1) -- i wish this were show_all_surfaces
+    column_count = column_count + (table_config.show_manual and 1 or 0)
 
     local schedule_report_table = report_frame.add{type="table", style="bordered_table", column_count=column_count}
     schedule_report_table.style.maximal_width = 552
@@ -39,6 +41,10 @@ local function build_train_schedule_group_report(player)
     schedule_report_table.add{type="label", caption={"tll.train_count_header"}}
     schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
     schedule_report_table.add{type="empty-widget"}
+
+    if table_config.show_manual then
+        schedule_report_table.add{type="label", caption={"tll.manual_header"}}
+    end
 
     for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
         local surface = surface_train_schedule_groups_pair.surface
@@ -110,7 +116,7 @@ local function build_train_schedule_group_report(player)
                         local abs_diff = train_count_difference > 0 and train_count_difference or -1 * train_count_difference
                         recommended_action_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip", abs_diff} or {"tll.remove_n_trains_tooltip", abs_diff}
                     end
-                    
+
                     -- color
                     local train_count_label_color
                     if train_count_difference then
@@ -128,12 +134,19 @@ local function build_train_schedule_group_report(player)
                         table.insert(template_train_ids, train.id)
                     end
 
+                    local manual_train_ids = {}
+                    for _, train in pairs(train_schedule_group) do
+                        if train.manual_mode then
+                            table.insert(manual_train_ids, train.id)
+                        end
+                    end
+
                     -- cell 1
                     if not table_config.only_current_surface then
                         schedule_report_table.add{type="label", caption=surface.name}
                     end
 
-                    
+
                     -- cell 2
                     local schedule_cell = schedule_report_table.add{type="flow", direction="horizontal"}
                     local schedule_cell_label = schedule_cell.add{
@@ -170,11 +183,36 @@ local function build_train_schedule_group_report(player)
                         tags={action=constants.actions.train_schedule_create_blueprint, template_train_ids=template_train_ids, surface=surface.name},
                         tooltip={"tll.copy_train_blueprint_tooltip"}
                     }
+
+                    -- cell 6
+                    if table_config.show_manual then
+                        if #manual_train_ids > 0 then
+                            schedule_report_table.add{
+                                type="sprite-button",
+                                caption=tostring(#manual_train_ids),
+                                style="tool_button_red",
+                                tags={
+                                    action=constants.actions.train_schedule_ping_manual_trains,
+                                    manual_train_ids=manual_train_ids,
+                                    surface=surface.name,
+                                    schedule_name=schedule_name,
+                                },
+                                tooltip={"tll.list_manual_trains"}
+                            }
+                        else
+                            schedule_report_table.add{
+                                type="label",
+                                caption=tostring(#manual_train_ids),
+                                tooltip={"tll.no_manual_trains"}
+                            }
+                        end
+
+                    end
                 end
             end
         end
     end
-    end
+end
 
 function Exports.build_display_tab(player)
     ---@type TLLPlayerGlobal
@@ -190,6 +228,7 @@ function Exports.build_display_tab(player)
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_current_surface}, caption={"tll.only_player_surface"}, state=table_config.only_current_surface}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=table_config.show_satisfied}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_invalid}, caption={"tll.show_invalid"}, state=table_config.show_invalid}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_manual}, caption={"tll.show_manual"}, state=table_config.show_manual}
     local train_report_button = controls_flow.add{type="button", tags={action=constants.actions.train_report_update}, caption={"tll.train_report_button_update"}}
     train_report_button.style.bottom_margin = 10
 

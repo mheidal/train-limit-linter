@@ -167,6 +167,28 @@ script.on_event(defines.events.on_gui_click, function (event)
             if type(surface_name) ~= "string" then return end
             schedule_report_table_scripts.create_blueprint_from_train(player, template_train, surface_name)
 
+        elseif action == constants.actions.train_schedule_ping_manual_trains then
+            local surface = event.element.tags.surface
+            local manual_train_ids = event.element.tags.manual_train_ids
+            if type(manual_train_ids) ~= "table" then return end
+            local schedule_name = event.element.tags.schedule_name
+
+            local chat_string = {"tll.manual_train_list", #manual_train_ids, schedule_name}
+            for _, id in pairs(manual_train_ids) do
+                local train = game.get_train_by_id(id)
+                if train then
+                    local train_pos = train.carriages[1].position
+                    local x = string.format("%.1f", train_pos.x)
+                    local y = string.format("%.1f", train_pos.y)
+                    chat_string = {"", chat_string, "\n[gps=" .. x .. "," .. y}
+                    if surface ~= constants.default_surface_name then
+                        chat_string = {"", chat_string, "," .. surface}
+                    end
+                    chat_string = {"", chat_string, "]"}
+                end
+            end
+            player.print(chat_string)
+
         elseif action == constants.actions.set_blueprint_orientation then
             local orientation = event.element.tags.orientation
             if type(orientation) ~= "number" then return end
@@ -211,6 +233,7 @@ script.on_event(defines.events.on_gui_click, function (event)
                 player.opened = modal_main_frame
                 modal_main_frame.bring_to_front()
             end
+            
         elseif action == constants.actions.train_stop_name_selector_select_name then
             if not event.element.tags.train_stop_name then return end
             if not event.element.tags.keywords then return end
@@ -260,6 +283,10 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
 
         elseif action == constants.actions.toggle_show_invalid then
             player_global.model.schedule_table_configuration:toggle_show_invalid()
+            main_interface.build_interface(player)
+
+        elseif action == constants.actions.toggle_show_manual then
+            player_global.model.schedule_table_configuration:toggle_show_manual()
             main_interface.build_interface(player)
 
         elseif action == constants.actions.toggle_blueprint_snap then
