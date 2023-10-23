@@ -2,7 +2,7 @@ local utils = require("utils")
 
 ---@class TLLKeywordList
 ---@field toggleable_items table<string, TLLToggleableItem>
----@field new fun(self: TLLKeywordList): TLLKeywordList
+---@field new fun(): TLLKeywordList
 ---@field get_enabled_keywords fun(self: TLLKeywordList): string[]
 ---@field set_enabled fun(self: TLLKeywordList, keyword: string, enabled: boolean)
 ---@field toggle_enabled fun(self: TLLKeywordList, keyword: string)
@@ -17,33 +17,32 @@ local utils = require("utils")
 ---@field enabled boolean
 ---@field new fun(): TLLToggleableItem
 
-Exports = {}
-
 -- toggleable item
 
-TLLToggleableItem = {}
+---@class TLLToggleableItem
+local TLLToggleableItem = {}
+local ti_mt = { __index = TLLToggleableItem }
+script.register_metatable("TLLToggleableItem", ti_mt)
 
-function TLLToggleableItem:new()
-    local new_object = {
-        enabled=true
-    }
-    setmetatable(new_object, self)
-    self.__index = self
-    return new_object
+---@return TLLToggleableItem
+function TLLToggleableItem.new()
+    local self = { enabled = true }
+    setmetatable(self, ti_mt)
+    return self
 end
 
 -- keyword list
 
-TLLKeywordList = {}
+---@class TLLKeywordList
+local TLLKeywordList = {}
+local kwl_mt = { __index = TLLKeywordList }
+script.register_metatable("TLLKeywordList", kwl_mt)
 
 ---@return TLLKeywordList
-function TLLKeywordList:new()
-    local new_object = {
-        toggleable_items={}
-    }
-    setmetatable(new_object, self)
-    self.__index = self
-    return new_object
+function TLLKeywordList.new()
+    local self = { toggleable_items = {} }
+    setmetatable(self, kwl_mt)
+    return self
 end
 
 ---@return string[]
@@ -60,7 +59,7 @@ end
 ---@param enabled boolean
 function TLLKeywordList:set_enabled(keyword, enabled)
     if self.toggleable_items[keyword] == nil then
-        self.toggleable_items[keyword] = TLLToggleableItem:new()
+        self.toggleable_items[keyword] = TLLToggleableItem.new()
     end
     self.toggleable_items[keyword].enabled = enabled
 end
@@ -115,6 +114,4 @@ function TLLKeywordList:add_from_serialized(serialized)
     end
 end
 
-Exports.TLLKeywordList = TLLKeywordList
-
-return Exports
+return TLLKeywordList

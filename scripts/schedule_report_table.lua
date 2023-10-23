@@ -7,6 +7,7 @@ local utils = require("utils")
 
 
 local Exports = {}
+local station_name_sep = " → "
 
 ---@param id string
 ---@return LuaTrain?
@@ -19,23 +20,40 @@ function Exports.get_train_by_id(id)
     return nil
 end
 
+local function train_schedule_to_key(schedule)
+    local key
+    for _, record in pairs(schedule.records) do
+        if not record.temporary and record.station then
+            if not key then
+                 key = record.station
+            else
+                key = key .. station_name_sep .. record.station
+            end
+        end
+    end
+    return key
+end
+
+--- Compares train schedule groups against a new key to see if any of the existing keys are the new key but rotated.
+--- For example, this would match "A → B" to "B → A"
+---@param key string A train schedule's key
+---@param train_schedule_groups table<string, LuaTrain[]> 
+---@return string? an equivalent key, if one exists
+local function get_equivalent_key(key, train_schedule_groups)
+    for existing_key, _ in pairs(train_schedule_groups) do
+        if #key == #existing_key then
+            superkey = key .. station_name_sep .. key
+            if string.find(superkey, existing_key, nil, true) then
+                return existing_key
+            end
+        end
+    end
+    return nil
+end
+
 -- Returns an array of arrays of trains which share a schedule.
 ---@return SurfaceTrainScheduleGroups
 function Exports.get_train_schedule_groups_by_surface()
-    local function train_schedule_to_key(schedule)
-        local key
-        for _, record in pairs(schedule.records) do
-            if not record.temporary and record.station then
-                if not key then
-                     key = record .station
-                else
-                    key = key .. " → " .. record.station
-                end
-            end
-        end
-        return key
-    end
-
     local surface_train_schedule_groups = {}
 
     for _, surface in pairs(game.surfaces) do
@@ -46,8 +64,12 @@ function Exports.get_train_schedule_groups_by_surface()
             if schedule then
                 added_schedule = true
                 local key = train_schedule_to_key(schedule)
-                train_schedule_groups[key] = train_schedule_groups[key] or {}
-                table.insert(train_schedule_groups[key], train)
+                local equivalent_key = get_equivalent_key(key, train_schedule_groups)
+                if equivalent_key then
+                    table.insert(train_schedule_groups[equivalent_key], train)
+                else
+                    train_schedule_groups[key] = {train}
+                end
             end
         end
         if added_schedule then
@@ -227,9 +249,10 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
         local new_blueprint_entities = single_carriage_slot.get_blueprint_entities()
         if new_blueprint_entities == nil then return end
 
-        -- vertical offset only works for vanilla rolling stock! should use joint distance and connection distance but these are not visible outside data stage
-        local vert_offset = prev_vert_offset + 7
-        if not first_vert_offset_diff then first_vert_offset_diff = 7 end
+        local carriage_prototype = game.entity_prototypes[carriage.name]
+        local diff = carriage_prototype.joint_distance + carriage_prototype.connection_distance
+        local vert_offset = prev_vert_offset + diff
+        if not first_vert_offset_diff then first_vert_offset_diff = diff end
 
         new_blueprint_entities[1].position = {x=0, y= -1 * vert_offset}
 
@@ -263,6 +286,7 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
     local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
     if not aggregated_entities then return end
     for _, entity in pairs(aggregated_entities) do
+        local entity_prototype = game.entity_prototypes[entity.name]
         local items_to_add = {}
         if player_global.model.fuel_configuration.add_fuel then
             local accepted_fuel_categories = global.model.fuel_category_data.locomotives_fuel_categories[entity.name]
@@ -270,7 +294,10 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
                 for _, accepted_fuel_category in pairs(accepted_fuel_categories) do
                     local fuel_category_config = player_global.model.fuel_configuration.fuel_category_configurations[accepted_fuel_category]
                     if fuel_category_config.selected_fuel then
-                        items_to_add[fuel_category_config.selected_fuel] = fuel_category_config.fuel_amount
+                        local number_of_fuel_slots = entity_prototype.burner_prototype.fuel_inventory_size
+                        local maximum_fuel = number_of_fuel_slots * fuel_category_config:get_fuel_stack_size()
+                        local fuel_amount_to_add = maximum_fuel > fuel_category_config.fuel_amount and fuel_category_config.fuel_amount or maximum_fuel
+                        items_to_add[fuel_category_config.selected_fuel] = fuel_amount_to_add
                         break
                     end
                 end
