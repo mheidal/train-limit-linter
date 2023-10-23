@@ -273,8 +273,8 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             if type(keyword) ~= "string" then return end
             player_global.model.hidden_keywords:toggle_enabled(keyword)
 
-        elseif action == constants.actions.toggle_current_surface then
-            player_global.model.schedule_table_configuration:toggle_current_surface()
+        elseif action == constants.actions.toggle_show_all_surfaces then
+            player_global.model.schedule_table_configuration:toggle_show_all_surfaces()
             main_interface.build_interface(player)
 
         elseif action == constants.actions.toggle_show_satisfied then
