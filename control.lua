@@ -101,7 +101,8 @@ script.on_event(defines.events.on_gui_click, function (event)
             local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[fuel_category]
             if fuel_config:change_selected_fuel_and_check_overcap(item_name) then
                 local fuel_category_slider_textfield_flow = player_global.view.fuel_amount_flows[fuel_category]
-                slider_textfield.update_slider_value(fuel_category_slider_textfield_flow, fuel_config:get_max_fuel_amount())
+                local maximum_fuel_amount = fuel_config:get_fuel_stack_size() * global.model.fuel_category_data.maximum_fuel_slot_count
+                slider_textfield.update_slider_value(fuel_category_slider_textfield_flow, maximum_fuel_amount)
             end
 
             settings_tab_view.build_settings_tab(player)
