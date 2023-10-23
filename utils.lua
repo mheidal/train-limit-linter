@@ -1,4 +1,4 @@
-Exports = {}
+local Exports = {}
 
 -- this stuff is all copied from Factory Planner
 function deep_copy(orig)
@@ -86,6 +86,23 @@ function Exports.localize_to_percentage(value, round)
     local formatted_string = string.format(format_string, value * 100)
     formatted_string = string.match(formatted_string, "^(.-)%.0*$") or formatted_string
     return formatted_string .. "%"
+end
+
+---@param schedule TrainSchedule 
+---@return string
+function Exports.train_schedule_to_key(schedule)
+    local key
+    for _, record in pairs(schedule.records) do
+        if not record.temporary and record.station then
+            if not key then
+                 key = record.station
+            else
+                key = key .. " → " .. record.station
+            end
+        end
+    end
+    if not key then return "" end
+    return key
 end
 
 Exports.deep_copy = deep_copy

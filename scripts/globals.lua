@@ -4,6 +4,8 @@ local TLLScheduleTableConfiguration = require("models/schedule_table_configurati
 local TLLKeywordList = require("models/keyword_list")
 local TLLFuelConfiguration = require("models.fuel_configuration")
 local TLLModalFunctionConfiguration = require("models/modal_function_configuration")
+local fuel_category_data = require("models.fuel_category_data")
+local train_data = require("models.train_data")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
@@ -11,6 +13,7 @@ local TLLModalFunctionConfiguration = require("models/modal_function_configurati
 
 ---@class TLLGlobalModel
 ---@field fuel_category_data TLLFuelCategoryData
+---@field train_data TLLTrainData
 
 ---@class TLLPlayerGlobal
 ---@field model TLLPlayerModel
@@ -49,7 +52,7 @@ function Exports.get_empty_player_view()
 end
 
 ---@return TLLPlayerGlobal
-function Exports.get_default_global()
+function Exports.get_default_player_global()
 
     local fuel_config = TLLFuelConfiguration.new()
 
@@ -73,12 +76,27 @@ function Exports.get_default_global()
     }
 end
 
+function Exports.build_global_model()
+    if not global.model then global.model = {} end
+    global.model = {
+        fuel_category_data = fuel_category_data.get_fuel_category_data(),
+        train_data = train_data.build_train_data(),
+        tracked_rolling_stock = {}
+    }
+    for _, rolling_stock_list in pairs(global.model.train_data) do
+        for _, tracked_rolling_stock_unit_number in pairs(rolling_stock_list) do
+            global.model.tracked_rolling_stock[tracked_rolling_stock_unit_number] = true
+        end
+    end
+
+end
+
 function Exports.initialize_global(player)
-    global.players[player.index] = Exports.get_default_global()
+    global.players[player.index] = Exports.get_default_player_global()
 end
 
 function Exports.migrate_global(player)
-    global.players[player.index] = Exports.get_default_global()
+    global.players[player.index] = Exports.get_default_player_global()
 end
 
 ---@param player_global TLLPlayerGlobal

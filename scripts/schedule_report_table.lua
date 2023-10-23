@@ -9,17 +9,6 @@ local utils = require("utils")
 local Exports = {}
 local station_name_sep = " → "
 
----@param id string
----@return LuaTrain?
-function Exports.get_train_by_id(id)
-    for _, surface in pairs(game.surfaces) do
-        for _, train in pairs(surface.get_trains()) do
-            if train.id == id then return train end
-        end
-    end
-    return nil
-end
-
 local function train_schedule_to_key(schedule)
     local key
     for _, record in pairs(schedule.records) do

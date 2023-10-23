@@ -2,7 +2,6 @@ local constants = require("constants")
 local globals = require("scripts/globals")
 
 -- Models
-local fuel_category_data = require("models.fuel_category_data")
 
 -- view
 local slider_textfield = require("views/slider_textfield")
@@ -153,7 +152,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             local template_train_ids = event.element.tags.template_train_ids
             if type(template_train_ids) ~= "table" then return end
             for _, id in pairs(template_train_ids) do
-                local template_option = schedule_report_table_scripts.get_train_by_id(id)
+                local template_option = game.get_train_by_id(id)
                 if template_option then
                     template_train = template_option
                     break
@@ -450,6 +449,76 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
     end
 end)
 
+script.on_event(defines.events.on_built_entity, function(event)
+    local prototype_type = event.created_entity.prototype.type
+    if (prototype_type == "locomotive"
+    or prototype_type == "cargo-wagon"
+    or prototype_type == "fluid-wagon"
+    or prototype_type == "artillery-wagon")
+    then
+        script.register_on_entity_destroyed(event.created_entity)
+        global.model.tracked_rolling_stock[event.created_entity.unit_number] = true
+    end
+end)
+
+script.on_event(defines.events.on_robot_built_entity, function(event)
+    local prototype_type = event.created_entity.prototype.type
+    if (prototype_type == "locomotive"
+    or prototype_type == "cargo-wagon"
+    or prototype_type == "fluid-wagon"
+    or prototype_type == "artillery-wagon")
+    then
+        script.register_on_entity_destroyed(event.created_entity)
+        global.model.tracked_rolling_stock[event.created_entity.unit_number] = true
+    end
+end)
+
+script.on_event(defines.events.on_entity_destroyed, function(event)
+    if global.model.tracked_rolling_stock[event.unit_number] then
+        global.model.tracked_rolling_stock[event.unit_number] = nil
+        for train_id, _ in pairs(global.model.train_data) do
+            if not game.get_train_by_id(train_id) then
+                global.model.train_data[train_id] = nil
+                for _, player in pairs(game.players) do
+                    main_interface.build_interface(player)
+                end
+            end
+        end
+    end
+end)
+
+script.on_event(defines.events.on_train_created, function (event)
+    local train_data = global.model.train_data
+    if event.old_train_id_1 then
+        train_data[event.old_train_id_1] = nil
+    end
+    if event.old_train_id_2 then
+        train_data[event.old_train_id_2] = nil
+    end
+    local rolling_stock_unit_numbers = {}
+    for _, carriage in pairs(event.train.carriages) do
+        if carriage.unit_number then
+            table.insert(rolling_stock_unit_numbers, carriage.unit_number)
+        end
+    end
+    train_data[event.train.id] = rolling_stock_unit_numbers
+    for _, player in pairs(game.players) do
+        main_interface.build_interface(player)
+    end
+end)
+
+script.on_event(defines.events.on_train_changed_state, function (event)
+    for _, player in pairs(game.players) do
+        main_interface.build_interface(player)
+    end
+end)
+
+script.on_event(defines.events.on_train_schedule_changed, function (event)
+    for _, player in pairs(game.players) do
+        main_interface.build_interface(player)
+    end
+end)
+
 script.on_event(defines.events.on_player_created, function(event)
     local player = game.get_player(event.player_index)
     globals.initialize_global(player)
@@ -461,9 +530,7 @@ end)
 
 script.on_init(function ()
 
-    global.model = {
-        fuel_category_data = fuel_category_data.get_fuel_category_data()
-    }
+    globals.build_global_model()
 
     local freeplay = remote.interfaces["freeplay"]
     if freeplay then -- TODO: remove this when done with testing
@@ -477,8 +544,7 @@ script.on_init(function ()
 end)
 
 script.on_configuration_changed(function (config_changed_data)
-    if not global.model then global.model = {} end
-    global.model.fuel_category_data = fuel_category_data.get_fuel_category_data()
+    globals.build_global_model()
 
     if config_changed_data.mod_changes["train-limit-linter"] then
         for _, player in pairs(game.players) do
