@@ -1,13 +1,17 @@
 #!/bin/bash
 
 # Get the parent folder's path
-parentFolder=$(dirname "$0")
+parentFolder="train-limit-linter"
 
 # Define the subfolder to exclude
 excludeSubfolder="releases"
 
+mkdir $parentFolder
+cp -r ./* ./$parentFolder
+rm -r ./$parentFolder/$excludeSubfolder
+
 # Load version from info.json
-jsonPath="$parentFolder/info.json"
+jsonPath="./info.json"
 if [ -f "$jsonPath" ]; then
     version=$(jq -r .version "$jsonPath")
 else
@@ -19,13 +23,15 @@ fi
 zipFileName="train-limit-linter_$version.zip"
 
 # Define the path to the output zip file
-zipFilePath="$parentFolder/releases/$zipFileName"
+zipFilePath="./releases/$zipFileName"
 
 # Check if the zip file already exists
 if [ ! -f "$zipFilePath" ]; then
     # Create the zip file
-    zip -r "$zipFilePath" "$parentFolder" -x "$parentFolder/$excludeSubfolder/*" -x "$parentFolder/$zipFileName"
+    zip -r "$zipFilePath" "./$parentFolder"
     echo "Successfully created $zipFileName in the 'releases' subfolder."
 else
     echo "Error: $zipFileName already exists in the 'releases' subfolder."
 fi
+
+rm -r "./$parentFolder"
