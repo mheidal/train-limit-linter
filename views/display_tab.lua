@@ -116,7 +116,7 @@ local function build_train_schedule_group_report(player)
                         local abs_diff = train_count_difference > 0 and train_count_difference or -1 * train_count_difference
                         recommended_action_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip", abs_diff} or {"tll.remove_n_trains_tooltip", abs_diff}
                     end
-                    
+
                     -- color
                     local train_count_label_color
                     if train_count_difference then
@@ -146,7 +146,7 @@ local function build_train_schedule_group_report(player)
                         schedule_report_table.add{type="label", caption=surface.name}
                     end
 
-                    
+
                     -- cell 2
                     local schedule_cell = schedule_report_table.add{type="flow", direction="horizontal"}
                     local schedule_cell_label = schedule_cell.add{
@@ -186,18 +186,27 @@ local function build_train_schedule_group_report(player)
 
                     -- cell 6
                     if table_config.show_manual then
-                        schedule_report_table.add{
-                            type="sprite-button",
-                            caption=tostring(#manual_train_ids),
-                            style="tool_button_red",
-                            tags={
-                                action=constants.actions.train_schedule_ping_manual_trains,
-                                manual_train_ids=manual_train_ids,
-                                surface=surface.name,
-                                schedule_name=schedule_name,
-                            },
-                            tooltip={"tll.list_manual_trains"}
-                        }
+                        if #manual_train_ids > 0 then
+                            schedule_report_table.add{
+                                type="sprite-button",
+                                caption=tostring(#manual_train_ids),
+                                style="tool_button_red",
+                                tags={
+                                    action=constants.actions.train_schedule_ping_manual_trains,
+                                    manual_train_ids=manual_train_ids,
+                                    surface=surface.name,
+                                    schedule_name=schedule_name,
+                                },
+                                tooltip={"tll.list_manual_trains"}
+                            }
+                        else
+                            schedule_report_table.add{
+                                type="label",
+                                caption=tostring(#manual_train_ids),
+                                tooltip={"tll.no_manual_trains"}
+                            }
+                        end
+
                     end
                 end
             end
