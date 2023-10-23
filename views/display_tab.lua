@@ -21,13 +21,13 @@ local function build_train_schedule_group_report(player)
     local table_config = player_global.model.schedule_table_configuration
 
     local column_count = 4
-    column_count = column_count + (table_config.only_current_surface and 0 or 1) -- i wish this were show_all_surfaces
+    column_count = column_count + (table_config.show_all_surfaces and 1 or 0) -- i wish this were show_all_surfaces
     column_count = column_count + (table_config.show_manual and 1 or 0)
 
     local schedule_report_table = report_frame.add{type="table", style="bordered_table", column_count=column_count}
     schedule_report_table.style.maximal_width = 552
 
-    if not table_config.only_current_surface then
+    if table_config.show_all_surfaces then
         schedule_report_table.add{type="label", caption={"tll.surface_header"}}
     end
 
@@ -50,7 +50,7 @@ local function build_train_schedule_group_report(player)
         local surface = surface_train_schedule_groups_pair.surface
 
         -- barrier for all train schedules for a surface
-        if not (table_config.only_current_surface and surface.name ~= player.surface.name) then
+        if table_config.show_all_surfaces or surface.name == player.surface.name then
             local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
 
             local sorted_schedule_names = {}
@@ -142,7 +142,7 @@ local function build_train_schedule_group_report(player)
                     end
 
                     -- cell 1
-                    if not table_config.only_current_surface then
+                    if table_config.show_all_surfaces then
                         schedule_report_table.add{type="label", caption=surface.name}
                     end
 
@@ -225,7 +225,7 @@ function Exports.build_display_tab(player)
 
     local table_config = player_global.model.schedule_table_configuration
 
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_current_surface}, caption={"tll.only_player_surface"}, state=table_config.only_current_surface}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_all_surfaces}, caption={"tll.show_all_surfaces"}, state=table_config.show_all_surfaces}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=table_config.show_satisfied}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_invalid}, caption={"tll.show_invalid"}, state=table_config.show_invalid}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_manual}, caption={"tll.show_manual"}, state=table_config.show_manual}
