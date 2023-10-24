@@ -13,10 +13,7 @@ Exports = {}
 function Exports.build_interface(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
-    if not player_global.model.main_interface_open then
-        game.print("Can't update now")
-        return
-    end
+    if not player_global.model.main_interface_open then return end
 
     local tabbed_pane_name = "main_frame_tabbed_pane"
     local tabbed_pane_frame_name = "tabbed_pane_frame_name"
