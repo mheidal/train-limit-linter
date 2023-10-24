@@ -86,8 +86,8 @@ function Exports.build_global_model()
         train_data = train_data.build_train_data(),
         tracked_rolling_stock = {}
     }
-    for train_id, rolling_stock_list in pairs(global.model.train_data) do
-        for _, tracked_rolling_stock_unit_number in pairs(rolling_stock_list) do
+    for train_id, train_datum in pairs(global.model.train_data) do
+        for _, tracked_rolling_stock_unit_number in pairs(train_datum.rolling_stock) do
             global.model.tracked_rolling_stock[tracked_rolling_stock_unit_number] = train_id
         end
     end
