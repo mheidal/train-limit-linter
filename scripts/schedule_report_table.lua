@@ -20,8 +20,8 @@ end
 --- Compares train schedule groups against a new key to see if any of the existing keys are the new key but rotated.
 --- For example, this would match "A → B" to "B → A"
 ---@param key string A train schedule's key
----@param train_schedule_groups table<string, LuaTrain[]> 
----@return string? an equivalent key, if one exists
+---@param train_schedule_groups table<string, TLLTrainData> 
+---@return string: an equivalent key, if one exists, or the original key if one doesn't
 local function get_equivalent_key(key, train_schedule_groups)
     for existing_key, _ in pairs(train_schedule_groups) do
         if #key == #existing_key then
@@ -31,7 +31,7 @@ local function get_equivalent_key(key, train_schedule_groups)
             end
         end
     end
-    return nil
+    return key
 end
 
 ---@return table<string, TLLTrainData>: surface names to trains on that surface
@@ -41,8 +41,9 @@ function Exports.get_train_schedule_groups_by_surface()
         local schedule_key = train_data.schedule_key
         if schedule_key ~= "" then
             if not surface_train_schedule_groups[train_data.surface] then surface_train_schedule_groups[train_data.surface] = {} end
-            if not surface_train_schedule_groups[train_data.surface][schedule_key] then surface_train_schedule_groups[train_data.surface][schedule_key] = {} end
-            table.insert(surface_train_schedule_groups[train_data.surface][schedule_key], train_data)
+            local equivalent_key = get_equivalent_key(schedule_key, surface_train_schedule_groups[train_data.surface])
+            if not surface_train_schedule_groups[train_data.surface][equivalent_key] then surface_train_schedule_groups[train_data.surface][equivalent_key] = {} end
+            table.insert(surface_train_schedule_groups[train_data.surface][equivalent_key], train_data)
         end
     end
     return surface_train_schedule_groups
