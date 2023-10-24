@@ -219,9 +219,15 @@ function Exports.build_display_tab(player)
     local player_global = global.players[player.index]
     local display_content_frame = player_global.view.display_content_frame
     if not display_content_frame then return end
-    display_content_frame.clear()
 
-    local controls_flow = display_content_frame.add{type="flow", name="controls_flow", direction="vertical", style="tll_controls_flow"}
+    local controls_flow_name = "controls_flow"
+    local controls_flow = display_content_frame[controls_flow_name] or display_content_frame.add{
+        type="flow",
+        name=controls_flow_name,
+        direction="vertical",
+        style="tll_controls_flow"
+    }
+    controls_flow.clear()
 
     local table_config = player_global.model.schedule_table_configuration
 
@@ -238,7 +244,8 @@ function Exports.build_display_tab(player)
         type="scroll-pane",
         name="report_frame_name",
         direction="vertical",
-        style="tll_content_scroll_pane"
+        style="tll_content_scroll_pane",
+        vertical_scroll_policy="auto-and-reserve-space"
     }
     report_frame.clear()
     player_global.view.report_frame = report_frame
