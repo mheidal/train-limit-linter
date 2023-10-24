@@ -1,21 +1,6 @@
 local constants = require("constants")
 
 local Exports = {}
-local station_name_sep = " → "
-
-local function train_schedule_to_key(schedule)
-    local key
-    for _, record in pairs(schedule.records) do
-        if not record.temporary and record.station then
-            if not key then
-                 key = record.station
-            else
-                key = key .. station_name_sep .. record.station
-            end
-        end
-    end
-    return key
-end
 
 --- Compares train schedule groups against a new key to see if any of the existing keys are the new key but rotated.
 --- For example, this would match "A → B" to "B → A"
@@ -25,7 +10,7 @@ end
 local function get_equivalent_key(key, train_schedule_groups)
     for existing_key, _ in pairs(train_schedule_groups) do
         if #key == #existing_key then
-            superkey = key .. station_name_sep .. key
+            superkey = key .. " → " .. key
             if string.find(superkey, existing_key, nil, true) then
                 return existing_key
             end
