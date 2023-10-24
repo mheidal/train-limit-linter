@@ -1,9 +1,9 @@
 local constants = require("constants")
 local utils = require("utils")
 
-local blueprint_orientation_selector = require("views/settings_views/blueprint_orientation_selector")
-local blueprint_snap_selection = require("views/settings_views/blueprint_snap_selection")
-local slider_textfield = require("views/slider_textfield")
+local blueprint_orientation_selector = require("views.settings_views.blueprint_orientation_selector")
+local blueprint_snap_selection = require("views.settings_views.blueprint_snap_selection")
+local slider_textfield = require("views.slider_textfield")
 
 Exports = {}
 

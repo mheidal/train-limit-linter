@@ -1,9 +1,9 @@
 local constants = require("constants")
-local TLLBlueprintConfiguration = require("models/blueprint_configuration")
-local TLLScheduleTableConfiguration = require("models/schedule_table_configuration")
-local TLLKeywordList = require("models/keyword_list")
+local TLLBlueprintConfiguration = require("models.blueprint_configuration")
+local TLLScheduleTableConfiguration = require("models.schedule_table_configuration")
+local TLLKeywordList = require("models.keyword_list")
 local TLLFuelConfiguration = require("models.fuel_configuration")
-local TLLModalFunctionConfiguration = require("models/modal_function_configuration")
+local TLLModalFunctionConfiguration = require("models.modal_function_configuration")
 local fuel_category_data = require("models.fuel_category_data")
 local train_data = require("models.train_data")
 

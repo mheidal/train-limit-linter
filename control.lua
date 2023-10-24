@@ -1,26 +1,26 @@
 local utils = require("utils")
 local constants = require("constants")
-local globals = require("scripts/globals")
+local globals = require("scripts.globals")
 
 -- Models
 
 local train_data = require("models.train_data")
 
 -- view
-local slider_textfield = require("views/slider_textfield")
-local icon_selector_textfield = require("views/icon_selector_textfield")
+local slider_textfield = require("views.slider_textfield")
+local icon_selector_textfield = require("views.icon_selector_textfield")
 
-local main_interface = require("views/main_interface")
+local main_interface = require("views.main_interface")
 
-local display_tab_view = require("views/display_tab")
-local keyword_tabs_view = require("views/keyword_tabs")
-local settings_tab_view = require("views/settings_tab")
+local display_tab_view = require("views.display_tab")
+local keyword_tabs_view = require("views.keyword_tabs")
+local settings_tab_view = require("views.settings_tab")
 
-local modal = require("views/modal")
+local modal = require("views.modal")
 
 -- scripts
 
-local schedule_report_table_scripts = require("scripts/schedule_report_table")
+local schedule_report_table_scripts = require("scripts.schedule_report_table")
 
 -- handlers
 

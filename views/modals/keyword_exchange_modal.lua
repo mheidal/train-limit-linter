@@ -1,6 +1,6 @@
 local constants = require("constants")
-local globals = require("scripts/globals")
-local TLLModalContentData = require("models/modal_content_data")
+local globals = require("scripts.globals")
+local TLLModalContentData = require("models.modal_content_data")
 
 -- This Exports works differently from the rest!
 local Exports = {}

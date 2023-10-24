@@ -1,7 +1,7 @@
 local constants = require("constants")
 local utils = require("utils")
 
-local schedule_report_table_scripts = require("scripts/schedule_report_table")
+local schedule_report_table_scripts = require("scripts.schedule_report_table")
 
 local Exports = {}
 

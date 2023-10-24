@@ -1,5 +1,5 @@
 local constants = require("constants")
-local TLLModalContentData = require("models/modal_content_data")
+local TLLModalContentData = require("models.modal_content_data")
 
 -- This Exports works differently from the rest!
 local Exports = {}

@@ -1,6 +1,6 @@
 local constants = require("constants")
 
-local icon_selector_textfield = require("views/icon_selector_textfield")
+local icon_selector_textfield = require("views.icon_selector_textfield")
 
 Exports = {}
 
