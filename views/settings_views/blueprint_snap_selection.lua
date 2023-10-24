@@ -1,6 +1,6 @@
 local constants = require("constants")
 
-local slider_textfield = require("views/slider_textfield")
+local slider_textfield = require("views.slider_textfield")
 
 Exports = {}
 

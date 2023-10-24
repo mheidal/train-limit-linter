@@ -1,8 +1,8 @@
 local constants = require("constants")
 
-local display_tab_view = require("views/display_tab")
-local keyword_tabs_view = require("views/keyword_tabs")
-local settings_tab_view = require("views/settings_tab")
+local display_tab_view = require("views.display_tab")
+local keyword_tabs_view = require("views.keyword_tabs")
+local settings_tab_view = require("views.settings_tab")
 
 
 Exports = {}
