@@ -29,8 +29,8 @@ local function toggle_interface(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local main_frame = player_global.view.main_frame
-    player_global.model.main_interface_open = not player_global.model.main_interface_open
     if main_frame == nil then
+        player_global.model.main_interface_open = true
         main_interface.build_interface(player)
         player.opened = player_global.view.main_frame
     else
@@ -38,6 +38,7 @@ local function toggle_interface(player)
         if modal_main_frame then
             main_frame.ignored_by_interaction = true
         else
+            player_global.model.main_interface_open = false
             player_global.model.last_gui_location = main_frame.location
             player_global.model.main_interface_selected_tab = nil
             main_frame.destroy()
@@ -292,6 +293,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
 
         elseif action == constants.actions.toggle_blueprint_snap then
             player_global.model.blueprint_configuration:toggle_blueprint_snap()
+            main_interface.build_interface(player)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
             player_global.model.fuel_configuration:toggle_add_fuel()
@@ -486,7 +488,6 @@ end)
 script.on_event(defines.events.on_entity_cloned, function(event)
     register_rolling_stock(event.destination)
 end)
-
 
 script.on_event(defines.events.on_entity_destroyed, function(event)
     if global.model.tracked_rolling_stock[event.unit_number] then
