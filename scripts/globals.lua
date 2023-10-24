@@ -28,6 +28,7 @@ local train_data = require("models.train_data")
 ---@field last_gui_location GuiLocation?
 ---@field modal_function_configuration TLLModalFunctionConfiguration
 ---@field main_interface_selected_tab number?
+---@field main_interface_open boolean
 
 ---@class TLLPlayerView
 ---@field main_frame LuaGuiElement?
@@ -69,8 +70,9 @@ function Exports.get_default_player_global()
             fuel_configuration = fuel_config,
             excluded_keywords = TLLKeywordList.new(),
             hidden_keywords = TLLKeywordList.new(),
-            last_gui_location = nil, -- migration not actually necessary, since it starts as nil?,
+            last_gui_location = nil,
             modal_function_configuration = TLLModalFunctionConfiguration.new(),
+            main_interface_open=false,
         },
         view = Exports.get_empty_player_view()
     }
@@ -83,9 +85,9 @@ function Exports.build_global_model()
         train_data = train_data.build_train_data(),
         tracked_rolling_stock = {}
     }
-    for _, rolling_stock_list in pairs(global.model.train_data) do
+    for train_id, rolling_stock_list in pairs(global.model.train_data) do
         for _, tracked_rolling_stock_unit_number in pairs(rolling_stock_list) do
-            global.model.tracked_rolling_stock[tracked_rolling_stock_unit_number] = true
+            global.model.tracked_rolling_stock[tracked_rolling_stock_unit_number] = train_id
         end
     end
 

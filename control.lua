@@ -26,6 +26,7 @@ local function toggle_interface(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local main_frame = player_global.view.main_frame
+    player_global.model.main_interface_open = not player_global.model.main_interface_open
     if main_frame == nil then
         main_interface.build_interface(player)
         player.opened = player_global.view.main_frame
@@ -199,6 +200,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             if type(args) ~= "table" and args ~= nil then return end
 
             player_global.model.modal_function_configuration:set_modal_content_function(modal_function)
+            ---@diagnostic disable-next-line vscode is angry about the type of "args"
             player_global.model.modal_function_configuration:set_modal_content_args(args)
             toggle_modal(player)
 
@@ -454,7 +456,6 @@ script.on_event(defines.events.on_built_entity, function(event)
     or prototype_type == "artillery-wagon")
     then
         script.register_on_entity_destroyed(event.created_entity)
-        global.model.tracked_rolling_stock[event.created_entity.unit_number] = true
     end
 end)
 
@@ -466,7 +467,6 @@ script.on_event(defines.events.on_robot_built_entity, function(event)
     or prototype_type == "artillery-wagon")
     then
         script.register_on_entity_destroyed(event.created_entity)
-        global.model.tracked_rolling_stock[event.created_entity.unit_number] = true
     end
 end)
 
@@ -496,6 +496,7 @@ script.on_event(defines.events.on_train_created, function (event)
     for _, carriage in pairs(event.train.carriages) do
         if carriage.unit_number then
             table.insert(rolling_stock_unit_numbers, carriage.unit_number)
+            global.model.tracked_rolling_stock[carriage.unit_number] = event.train.id
         end
     end
     train_data[event.train.id] = rolling_stock_unit_numbers
