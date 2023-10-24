@@ -80,7 +80,6 @@ function Exports.get_default_player_global()
 end
 
 function Exports.build_global_model()
-    if not global.model then global.model = {} end
     global.model = {
         fuel_category_data = fuel_category_data.get_fuel_category_data(),
         train_data = train_data.build_train_data(),
