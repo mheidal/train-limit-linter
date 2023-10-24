@@ -1,8 +1,10 @@
+local utils = require("utils")
 local constants = require("constants")
 local globals = require("scripts/globals")
 
 -- Models
-local fuel_category_data = require("models.fuel_category_data")
+
+local train_data = require("models.train_data")
 
 -- view
 local slider_textfield = require("views/slider_textfield")
@@ -28,6 +30,7 @@ local function toggle_interface(player)
     local player_global = global.players[player.index]
     local main_frame = player_global.view.main_frame
     if main_frame == nil then
+        player_global.model.main_interface_open = true
         main_interface.build_interface(player)
         player.opened = player_global.view.main_frame
     else
@@ -35,6 +38,7 @@ local function toggle_interface(player)
         if modal_main_frame then
             main_frame.ignored_by_interaction = true
         else
+            player_global.model.main_interface_open = false
             player_global.model.last_gui_location = main_frame.location
             player_global.model.main_interface_selected_tab = nil
             main_frame.destroy()
@@ -107,9 +111,6 @@ script.on_event(defines.events.on_gui_click, function (event)
 
             settings_tab_view.build_settings_tab(player)
 
-        elseif action == constants.actions.train_report_update then
-            main_interface.build_interface(player)
-
         elseif action == constants.actions.close_window then
             toggle_interface(player)
 
@@ -153,7 +154,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             local template_train_ids = event.element.tags.template_train_ids
             if type(template_train_ids) ~= "table" then return end
             for _, id in pairs(template_train_ids) do
-                local template_option = schedule_report_table_scripts.get_train_by_id(id)
+                local template_option = game.get_train_by_id(id)
                 if template_option then
                     template_train = template_option
                     break
@@ -203,6 +204,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             if type(args) ~= "table" and args ~= nil then return end
 
             player_global.model.modal_function_configuration:set_modal_content_function(modal_function)
+            ---@diagnostic disable-next-line vscode is angry about the type of "args"
             player_global.model.modal_function_configuration:set_modal_content_args(args)
             toggle_modal(player)
 
@@ -291,6 +293,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
 
         elseif action == constants.actions.toggle_blueprint_snap then
             player_global.model.blueprint_configuration:toggle_blueprint_snap()
+            main_interface.build_interface(player)
 
         elseif action == constants.actions.toggle_place_trains_with_fuel then
             player_global.model.fuel_configuration:toggle_add_fuel()
@@ -450,6 +453,104 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
     end
 end)
 
+---@param entity LuaEntity
+local function register_rolling_stock(entity)
+    local prototype_type = entity.prototype.type
+    if (prototype_type == "locomotive"
+    or prototype_type == "cargo-wagon"
+    or prototype_type == "fluid-wagon"
+    or prototype_type == "artillery-wagon")
+    then
+        script.register_on_entity_destroyed(entity)
+    end
+end
+
+script.on_event(defines.events.on_built_entity, function(event)
+    register_rolling_stock(event.created_entity)
+end)
+
+script.on_event(defines.events.on_robot_built_entity, function(event)
+    register_rolling_stock(event.created_entity)
+end)
+
+script.on_event(defines.events.script_raised_built, function(event)
+    register_rolling_stock(event.entity)
+end)
+
+script.on_event(defines.events.script_raised_revive, function(event)
+    register_rolling_stock(event.entity)
+end)
+
+script.on_event(defines.events.on_trigger_created_entity, function(event)
+    register_rolling_stock(event.entity)
+end)
+
+script.on_event(defines.events.on_entity_cloned, function(event)
+    register_rolling_stock(event.destination)
+end)
+
+script.on_event(defines.events.on_entity_destroyed, function(event)
+    if global.model.tracked_rolling_stock[event.unit_number] then
+        local train_id = global.model.tracked_rolling_stock[event.unit_number]
+        if not game.get_train_by_id(train_id) then
+            global.model.tracked_rolling_stock[event.unit_number] = nil
+            global.model.train_data[train_id] = nil
+            for _, player in pairs(game.players) do
+                main_interface.build_interface(player)
+            end
+        end
+    end
+end)
+
+script.on_event(defines.events.on_train_created, function (event)
+    local global_train_data = global.model.train_data
+
+    if event.old_train_id_1 then
+        global_train_data[event.old_train_id_1] = nil
+    end
+
+    if event.old_train_id_2 then
+        global_train_data[event.old_train_id_2] = nil
+    end
+
+    global_train_data[event.train.id] = train_data.build_single_train_data(event.train)
+
+    for _, carriage in pairs(event.train.carriages) do
+        if carriage.unit_number then
+            global.model.tracked_rolling_stock[carriage.unit_number] = event.train.id
+        end
+    end
+
+    for _, player in pairs(game.players) do
+        main_interface.build_interface(player)
+    end
+end)
+
+script.on_event(defines.events.on_train_changed_state, function (event)
+    global.model.train_data[event.train.id].manual_mode = event.train.manual_mode
+
+    for _, player in pairs(game.players) do
+        main_interface.build_interface(player)
+    end
+end)
+
+script.on_event(defines.events.on_train_schedule_changed, function (event)
+    local schedule = {}
+    if event.train.schedule then
+        global.model.train_data[event.train.id].schedule_key = utils.train_schedule_to_key(event.train.schedule)
+        for _, record in pairs(event.train.schedule.records) do
+            table.insert(schedule, record.station)
+        end
+    else
+        global.model.train_data[event.train.id].schedule_key = ""
+    end
+    global.model.train_data[event.train.id].schedule = schedule
+
+    for _, player in pairs(game.players) do
+        main_interface.build_interface(player)
+    end
+end)
+
 script.on_event(defines.events.on_player_created, function(event)
     local player = game.get_player(event.player_index)
     globals.initialize_global(player)
@@ -461,9 +562,7 @@ end)
 
 script.on_init(function ()
 
-    global.model = {
-        fuel_category_data = fuel_category_data.get_fuel_category_data()
-    }
+    globals.build_global_model()
 
     local freeplay = remote.interfaces["freeplay"]
     if freeplay then -- TODO: remove this when done with testing
@@ -477,8 +576,7 @@ script.on_init(function ()
 end)
 
 script.on_configuration_changed(function (config_changed_data)
-    if not global.model then global.model = {} end
-    global.model.fuel_category_data = fuel_category_data.get_fuel_category_data()
+    globals.build_global_model()
 
     if config_changed_data.mod_changes["train-limit-linter"] then
         for _, player in pairs(game.players) do

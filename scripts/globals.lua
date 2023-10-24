@@ -4,6 +4,8 @@ local TLLScheduleTableConfiguration = require("models/schedule_table_configurati
 local TLLKeywordList = require("models/keyword_list")
 local TLLFuelConfiguration = require("models.fuel_configuration")
 local TLLModalFunctionConfiguration = require("models/modal_function_configuration")
+local fuel_category_data = require("models.fuel_category_data")
+local train_data = require("models.train_data")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
@@ -11,6 +13,8 @@ local TLLModalFunctionConfiguration = require("models/modal_function_configurati
 
 ---@class TLLGlobalModel
 ---@field fuel_category_data TLLFuelCategoryData
+---@field train_data table<number, TLLTrainData>
+---@field tracked_rolling_stock table<number, number>
 
 ---@class TLLPlayerGlobal
 ---@field model TLLPlayerModel
@@ -25,6 +29,7 @@ local TLLModalFunctionConfiguration = require("models/modal_function_configurati
 ---@field last_gui_location GuiLocation?
 ---@field modal_function_configuration TLLModalFunctionConfiguration
 ---@field main_interface_selected_tab number?
+---@field main_interface_open boolean
 
 ---@class TLLPlayerView
 ---@field main_frame LuaGuiElement?
@@ -49,7 +54,7 @@ function Exports.get_empty_player_view()
 end
 
 ---@return TLLPlayerGlobal
-function Exports.get_default_global()
+function Exports.get_default_player_global()
 
     local fuel_config = TLLFuelConfiguration.new()
 
@@ -66,19 +71,34 @@ function Exports.get_default_global()
             fuel_configuration = fuel_config,
             excluded_keywords = TLLKeywordList.new(),
             hidden_keywords = TLLKeywordList.new(),
-            last_gui_location = nil, -- migration not actually necessary, since it starts as nil?,
+            last_gui_location = nil,
             modal_function_configuration = TLLModalFunctionConfiguration.new(),
+            main_interface_open=false,
         },
         view = Exports.get_empty_player_view()
     }
 end
 
+function Exports.build_global_model()
+    global.model = {
+        fuel_category_data = fuel_category_data.get_fuel_category_data(),
+        train_data = train_data.build_train_data(),
+        tracked_rolling_stock = {}
+    }
+    for train_id, train_datum in pairs(global.model.train_data) do
+        for _, tracked_rolling_stock_unit_number in pairs(train_datum.rolling_stock) do
+            global.model.tracked_rolling_stock[tracked_rolling_stock_unit_number] = train_id
+        end
+    end
+
+end
+
 function Exports.initialize_global(player)
-    global.players[player.index] = Exports.get_default_global()
+    global.players[player.index] = Exports.get_default_player_global()
 end
 
 function Exports.migrate_global(player)
-    global.players[player.index] = Exports.get_default_global()
+    global.players[player.index] = Exports.get_default_player_global()
 end
 
 ---@param player_global TLLPlayerGlobal
