@@ -106,9 +106,6 @@ script.on_event(defines.events.on_gui_click, function (event)
 
             settings_tab_view.build_settings_tab(player)
 
-        elseif action == constants.actions.train_report_update then
-            main_interface.build_interface(player)
-
         elseif action == constants.actions.close_window then
             toggle_interface(player)
 

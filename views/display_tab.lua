@@ -235,8 +235,6 @@ function Exports.build_display_tab(player)
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=table_config.show_satisfied}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_invalid}, caption={"tll.show_invalid"}, state=table_config.show_invalid}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_manual}, caption={"tll.show_manual"}, state=table_config.show_manual}
-    local train_report_button = controls_flow.add{type="button", tags={action=constants.actions.train_report_update}, caption={"tll.train_report_button_update"}}
-    train_report_button.style.bottom_margin = 10
 
     local report_frame_name = "report_frame_name"
 
@@ -247,6 +245,7 @@ function Exports.build_display_tab(player)
         style="tll_content_scroll_pane",
         vertical_scroll_policy="auto-and-reserve-space"
     }
+    report_frame.style.top_margin = 12
     report_frame.clear()
     player_global.view.report_frame = report_frame
     build_train_schedule_group_report(player)
