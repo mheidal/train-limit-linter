@@ -118,29 +118,25 @@ local function build_train_schedule_group_report(player)
                         train_limit_sum_caption = tostring(train_limit_sum)
                     end
 
-
-                    local train_count_difference -- nil or number
-                    if train_limit_sum ~= constants.train_stop_limit_enums.not_set then
-                        train_count_difference = train_limit_sum - 1 -  #train_schedule_group
-                    end
+                    local train_count_difference = train_limit_sum - 1 - #train_schedule_group
 
                     -- caption
                     local train_count_caption = tostring(#train_schedule_group)
-                    if train_count_difference and train_count_difference ~= 0 then -- check non-nil
+                    if train_count_difference ~= 0 and not (any_train_stop_has_not_set_limit) then
                         local diff_str = train_count_difference > 0 and "+" or ""
                         train_count_caption = train_count_caption .. " (" .. diff_str .. tostring(train_count_difference) .. ") [img=info]"
                     end
 
                     -- tooltip
                     local recommended_action_tooltip = nil
-                    if train_count_difference and train_count_difference ~= 0 then
-                        local abs_diff = train_count_difference > 0 and train_count_difference or -1 * train_count_difference
+                    if train_count_difference ~= 0 and not (any_train_stop_has_not_set_limit) then
+                        local abs_diff = math.abs( train_count_difference)
                         recommended_action_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip", abs_diff} or {"tll.remove_n_trains_tooltip", abs_diff}
                     end
 
                     -- color
                     local train_count_label_color
-                    if train_count_difference and (not any_train_stop_has_not_set_limit) then
+                    if not any_train_stop_has_not_set_limit then
                         if train_count_difference ~= 0 then
                             train_count_label_color = {1, 0.541176, 0.541176}
                         else
