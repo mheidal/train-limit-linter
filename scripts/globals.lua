@@ -13,7 +13,8 @@ local train_data = require("models.train_data")
 
 ---@class TLLGlobalModel
 ---@field fuel_category_data TLLFuelCategoryData
----@field train_data TLLTrainData
+---@field train_data table<number, TLLTrainData>
+---@field tracked_rolling_stock table<number, number>
 
 ---@class TLLPlayerGlobal
 ---@field model TLLPlayerModel

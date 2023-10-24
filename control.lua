@@ -1,7 +1,10 @@
+local utils = require("utils")
 local constants = require("constants")
 local globals = require("scripts/globals")
 
 -- Models
+
+local train_data = require("models.train_data")
 
 -- view
 local slider_textfield = require("views/slider_textfield")
@@ -448,70 +451,90 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
     end
 end)
 
-script.on_event(defines.events.on_built_entity, function(event)
-    local prototype_type = event.created_entity.prototype.type
+---@param entity LuaEntity
+local function register_rolling_stock(entity)
+    local prototype_type = entity.prototype.type
     if (prototype_type == "locomotive"
     or prototype_type == "cargo-wagon"
     or prototype_type == "fluid-wagon"
     or prototype_type == "artillery-wagon")
     then
-        script.register_on_entity_destroyed(event.created_entity)
+        script.register_on_entity_destroyed(entity)
     end
+end
+
+script.on_event(defines.events.on_built_entity, function(event)
+    register_rolling_stock(event.created_entity)
 end)
 
 script.on_event(defines.events.on_robot_built_entity, function(event)
-    local prototype_type = event.created_entity.prototype.type
-    if (prototype_type == "locomotive"
-    or prototype_type == "cargo-wagon"
-    or prototype_type == "fluid-wagon"
-    or prototype_type == "artillery-wagon")
-    then
-        script.register_on_entity_destroyed(event.created_entity)
-    end
+    register_rolling_stock(event.created_entity)
 end)
+
+script.on_event(defines.events.script_raised_built, function(event)
+    register_rolling_stock(event.entity)
+end)
+
+script.on_event(defines.events.script_raised_revive, function(event)
+    register_rolling_stock(event.entity)
+end)
+
+script.on_event(defines.events.on_trigger_created_entity, function(event)
+    register_rolling_stock(event.entity)
+end)
+
+script.on_event(defines.events.on_entity_cloned, function(event)
+    register_rolling_stock(event.destination)
+end)
+
 
 script.on_event(defines.events.on_entity_destroyed, function(event)
     if global.model.tracked_rolling_stock[event.unit_number] then
-        global.model.tracked_rolling_stock[event.unit_number] = nil
-        for train_id, _ in pairs(global.model.train_data) do
-            if not game.get_train_by_id(train_id) then
-                global.model.train_data[train_id] = nil
-                for _, player in pairs(game.players) do
-                    main_interface.build_interface(player)
-                end
+        local train_id = global.model.tracked_rolling_stock[event.unit_number]
+        if not game.get_train_by_id(train_id) then
+            global.model.tracked_rolling_stock[event.unit_number] = nil
+            global.model.train_data[train_id] = nil
+            for _, player in pairs(game.players) do
+                main_interface.build_interface(player)
             end
         end
     end
 end)
 
 script.on_event(defines.events.on_train_created, function (event)
-    local train_data = global.model.train_data
+    local global_train_data = global.model.train_data
+
     if event.old_train_id_1 then
-        train_data[event.old_train_id_1] = nil
+        global_train_data[event.old_train_id_1] = nil
     end
+
     if event.old_train_id_2 then
-        train_data[event.old_train_id_2] = nil
+        global_train_data[event.old_train_id_2] = nil
     end
-    local rolling_stock_unit_numbers = {}
+
+    global_train_data[event.train.id] = train_data.build_single_train_data(event.train)
+
     for _, carriage in pairs(event.train.carriages) do
         if carriage.unit_number then
-            table.insert(rolling_stock_unit_numbers, carriage.unit_number)
             global.model.tracked_rolling_stock[carriage.unit_number] = event.train.id
         end
     end
-    train_data[event.train.id] = rolling_stock_unit_numbers
+
     for _, player in pairs(game.players) do
         main_interface.build_interface(player)
     end
 end)
 
 script.on_event(defines.events.on_train_changed_state, function (event)
+    global.model.train_data[event.train.id].manual_mode = event.train.manual_mode
+
     for _, player in pairs(game.players) do
         main_interface.build_interface(player)
     end
 end)
 
 script.on_event(defines.events.on_train_schedule_changed, function (event)
+    global.model.train_data[event.train.id].schedule = utils.train_schedule_to_key(event.train.schedule)
     for _, player in pairs(game.players) do
         main_interface.build_interface(player)
     end
