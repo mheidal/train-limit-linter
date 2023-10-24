@@ -4,8 +4,10 @@ local Exports = {}
 ---@class TLLTrainData
 ---@field surface string
 ---@field rolling_stock number[]
----@field schedule string
+---@field schedule string[]
+---@field schedule_key string
 ---@field manual_mode boolean
+---@field id number
 
 ---@param train LuaTrain
 ---@return TLLTrainData
@@ -20,14 +22,25 @@ local function build_single_train_data(train)
     end
 
     local surface = train.carriages[1].surface.name
-    local schedule = train.schedule and utils.train_schedule_to_key(train.schedule) or ""
+
+    local schedule = {}
+    if train.schedule then
+        for _, record in pairs(train.schedule.records) do
+            table.insert(schedule, record.station)
+        end
+    end
+
+    local schedule_key = train.schedule and utils.train_schedule_to_key(train.schedule) or ""
+
     local manual_mode = train.manual_mode
 
     return {
         surface = surface,
         rolling_stock = rolling_stock_unit_numbers,
         schedule = schedule,
+        schedule_key = schedule_key,
         manual_mode = manual_mode,
+        id = train.id,
     }
 end
 

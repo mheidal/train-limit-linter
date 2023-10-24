@@ -534,7 +534,17 @@ script.on_event(defines.events.on_train_changed_state, function (event)
 end)
 
 script.on_event(defines.events.on_train_schedule_changed, function (event)
-    global.model.train_data[event.train.id].schedule = utils.train_schedule_to_key(event.train.schedule)
+    local schedule = {}
+    if event.train.schedule then
+        global.model.train_data[event.train.id].schedule_key = utils.train_schedule_to_key(event.train.schedule)
+        for _, record in pairs(event.train.schedule.records) do
+            table.insert(schedule, record.station)
+        end
+    else
+        global.model.train_data[event.train.id].schedule_key = ""
+    end
+    global.model.train_data[event.train.id].schedule = schedule
+
     for _, player in pairs(game.players) do
         main_interface.build_interface(player)
     end

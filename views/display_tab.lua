@@ -10,7 +10,6 @@ local function build_train_schedule_group_report(player)
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
-    local surface_train_schedule_groups_pairs = schedule_report_table_scripts.get_train_schedule_groups_by_surface()
     local report_frame = player_global.view.report_frame
     if not report_frame then return end
     report_frame.clear()
@@ -21,7 +20,7 @@ local function build_train_schedule_group_report(player)
     local table_config = player_global.model.schedule_table_configuration
 
     local column_count = 4
-    column_count = column_count + (table_config.show_all_surfaces and 1 or 0) -- i wish this were show_all_surfaces
+    column_count = column_count + (table_config.show_all_surfaces and 1 or 0)
     column_count = column_count + (table_config.show_manual and 1 or 0)
 
     local schedule_report_table = report_frame.add{type="table", style="bordered_table", column_count=column_count}
@@ -46,12 +45,12 @@ local function build_train_schedule_group_report(player)
         schedule_report_table.add{type="label", caption={"tll.manual_header"}}
     end
 
-    for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
-        local surface = surface_train_schedule_groups_pair.surface
+    for surface, train_schedule_groups in pairs(schedule_report_table_scripts.get_train_schedule_groups_by_surface()) do
 
         -- barrier for all train schedules for a surface
-        if table_config.show_all_surfaces or surface.name == player.surface.name then
-            local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
+        if table_config.show_all_surfaces or surface == player.surface.name then
+
+            local train_stop_names_to_limits = schedule_report_table_scripts.get_train_station_limits_by_surface(surface)
 
             local sorted_schedule_names = {}
             for schedule_name, _ in pairs(train_schedule_groups) do table.insert(sorted_schedule_names, schedule_name) end
@@ -60,38 +59,60 @@ local function build_train_schedule_group_report(player)
             for _, schedule_name in pairs(sorted_schedule_names) do
 
                 local train_schedule_group = train_schedule_groups[schedule_name]
-                local train_limit_sum = schedule_report_table_scripts.get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
+                local schedule = train_schedule_group[1].schedule
 
+                local train_limit_sum = 0
+                local any_train_stop_has_not_set_limit = false
                 local schedule_contains_hidden_keyword = false
-                for _, keyword in pairs(enabled_hidden_keywords) do
-                    local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(keyword)
-                    local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(keyword)
-                    if (string.find(schedule_name, keyword, nil, true)
-                        or string.find(schedule_name, alt_rich_text_format_img, nil, true)
-                        or string.find(schedule_name, alt_rich_text_format_entity, nil, true)
-                        ) then
-                        schedule_contains_hidden_keyword = true
+
+                for _, station_name in pairs(schedule) do
+                    local station_is_excluded = false
+                    for _, enabled_keyword in pairs(enabled_excluded_keywords) do
+                        local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(enabled_keyword)
+                        local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(enabled_keyword)
+                        if (string.find(station_name, enabled_keyword, nil, true)
+                            or string.find(station_name, alt_rich_text_format_img, nil, true)
+                            or string.find(station_name, alt_rich_text_format_entity, nil, true)
+                            )
+                        then
+                            station_is_excluded = true
+                        end
+                    end
+
+                    if not station_is_excluded then
+                        if train_stop_names_to_limits[station_name] == constants.train_stop_limit_enums.not_set then
+                            any_train_stop_has_not_set_limit = true
+                            break
+                        else
+                            train_limit_sum = train_limit_sum + train_stop_names_to_limits[station_name]
+                        end
+                    end
+
+                    for _, keyword in pairs(enabled_hidden_keywords) do
+                        local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(keyword)
+                        local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(keyword)
+                        if (string.find(station_name, keyword, nil, true)
+                            or string.find(station_name, alt_rich_text_format_img, nil, true)
+                            or string.find(station_name, alt_rich_text_format_entity, nil, true)
+                            )
+                        then
+                            schedule_contains_hidden_keyword = true
+                            break
+                        end
                     end
                 end
 
-                local invalid = (train_limit_sum == constants.train_stop_limit_enums.not_set)
-
-                local satisfied
-                if type(train_limit_sum) ~= "number" then
-                    satisfied = false
-                else
-                    satisfied = (train_limit_sum - #train_schedule_group == 1)
-                end
+                local satisfied = (not any_train_stop_has_not_set_limit) and (train_limit_sum - #train_schedule_group == 1)
 
                 -- barrier for showing a particular schedule
                 if (
                     (not schedule_contains_hidden_keyword)
                     and (table_config.show_satisfied or (not satisfied))
-                    and (table_config.show_invalid or (not invalid))
+                    and (table_config.show_invalid or (not any_train_stop_has_not_set_limit))
                 ) then
 
                     local train_limit_sum_caption
-                    if train_limit_sum == constants.train_stop_limit_enums.not_set then
+                    if any_train_stop_has_not_set_limit then
                         train_limit_sum_caption = {"tll.train_limit_sum_not_set"}
                     else
                         train_limit_sum_caption = tostring(train_limit_sum)
@@ -119,7 +140,7 @@ local function build_train_schedule_group_report(player)
 
                     -- color
                     local train_count_label_color
-                    if train_count_difference then
+                    if train_count_difference and (not any_train_stop_has_not_set_limit) then
                         if train_count_difference ~= 0 then
                             train_count_label_color = {1, 0.541176, 0.541176}
                         else
@@ -130,20 +151,20 @@ local function build_train_schedule_group_report(player)
                     end
 
                     local template_train_ids = {}
-                    for _, train in pairs(train_schedule_group) do
-                        table.insert(template_train_ids, train.id)
+                    for _, train_data in pairs(train_schedule_group) do
+                        table.insert(template_train_ids, train_data.id)
                     end
 
                     local manual_train_ids = {}
-                    for _, train in pairs(train_schedule_group) do
-                        if train.manual_mode then
-                            table.insert(manual_train_ids, train.id)
+                    for _, train_data in pairs(train_schedule_group) do
+                        if train_data.manual_mode then
+                            table.insert(manual_train_ids, train_data.id)
                         end
                     end
 
                     -- cell 1
                     if table_config.show_all_surfaces then
-                        schedule_report_table.add{type="label", caption=surface.name}
+                        schedule_report_table.add{type="label", caption=surface}
                     end
 
 
@@ -180,7 +201,7 @@ local function build_train_schedule_group_report(player)
                         type="sprite-button",
                         sprite="utility/copy",
                         style="tool_button_blue",
-                        tags={action=constants.actions.train_schedule_create_blueprint, template_train_ids=template_train_ids, surface=surface.name},
+                        tags={action=constants.actions.train_schedule_create_blueprint, template_train_ids=template_train_ids, surface=surface},
                         tooltip={"tll.copy_train_blueprint_tooltip"}
                     }
 
@@ -194,7 +215,7 @@ local function build_train_schedule_group_report(player)
                                 tags={
                                     action=constants.actions.train_schedule_ping_manual_trains,
                                     manual_train_ids=manual_train_ids,
-                                    surface=surface.name,
+                                    surface=surface,
                                     schedule_name=schedule_name,
                                 },
                                 tooltip={"tll.list_manual_trains"}
