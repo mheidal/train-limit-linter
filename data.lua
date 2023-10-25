@@ -37,7 +37,7 @@ styles["tll_spacer"] = {
 }
 
 styles["tll_horizontal_stretch_squash_flow"] = {
-  type="flow_style",
+  type="horizontal_flow_style",
   horizontally_stretchable="on",
   horizontally_squashable="on",
 }
