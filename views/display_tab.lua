@@ -79,7 +79,7 @@ local function build_train_schedule_group_report(player)
                         end
                     end
 
-                    if not station_is_excluded then
+                    if not station_is_excluded and train_stop_names_to_limits[station_name] then
                         if train_stop_names_to_limits[station_name] == constants.train_stop_limit_enums.not_set then
                             any_train_stop_has_not_set_limit = true
                             break
