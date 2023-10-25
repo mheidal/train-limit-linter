@@ -36,6 +36,18 @@ styles["tll_spacer"] = {
   horizontally_stretchable="on"
 }
 
+styles["tll_horizontal_stretch_squash_flow"] = {
+  type="flow_style",
+  horizontally_stretchable="on",
+  horizontally_squashable="on",
+}
+
+styles["tll_horizontal_stretch_squash_label"] = {
+  type="label_style",
+  horizontally_stretchable="on",
+  horizontally_squashable="on",
+}
+
 local cursor_blueprint = utils.deep_copy(data.raw["blueprint"]["blueprint"])
 cursor_blueprint.name = "tll_cursor_blueprint"
 cursor_blueprint.order = "z_tll"

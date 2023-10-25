@@ -30,11 +30,9 @@ local function build_train_schedule_group_report(player)
         schedule_report_table.add{type="label", caption={"tll.surface_header"}}
     end
 
-    local schedule_header_flow = schedule_report_table.add{type="flow", direction="horizontal"}
+    local schedule_header_flow = schedule_report_table.add{type="flow", direction="horizontal", style="tll_horizontal_stretch_squash_flow"}
     schedule_header_flow.add{type="label", caption={"tll.schedule_header"}}
     schedule_header_flow.add{type="empty-widget"}
-    schedule_header_flow.style.horizontally_stretchable = true
-    schedule_header_flow.style.horizontally_squashable = true
     schedule_header_flow.style.maximal_width = 300
 
     schedule_report_table.add{type="label", caption={"tll.train_count_header"}}
@@ -165,19 +163,19 @@ local function build_train_schedule_group_report(player)
 
 
                     -- cell 2
-                    local schedule_cell = schedule_report_table.add{type="flow", direction="horizontal"}
+                    local schedule_cell = schedule_report_table.add{
+                        type="flow",
+                        direction="horizontal",
+                        style="tll_horizontal_stretch_squash_flow"
+                    }
                     local schedule_cell_label = schedule_cell.add{
                         type="label",
                         caption=schedule_name,
+                        style="tll_horizontal_stretch_squash_label"
                     }
                     schedule_cell_label.style.font_color=train_count_label_color
-                    schedule_cell_label.style.horizontally_squashable = true
-                    schedule_cell_label.style.horizontally_stretchable = true
-                    -- schedule_cell_label.style.minimal_width = 200
 
                     schedule_cell.add{type="empty-widget"}
-                    schedule_cell.style.horizontally_stretchable = true
-                    schedule_cell.style.horizontally_squashable = true
                     schedule_cell.style.maximal_width = 300
 
 
