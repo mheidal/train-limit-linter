@@ -89,6 +89,14 @@ script.on_event("tll_toggle_interface", function(event)
     toggle_interface(player)
 end)
 
+script.on_event(defines.events.on_lua_shortcut, function(event)
+    if event.prototype_name ==  "tll_toggle_interface" then
+        local player = game.get_player(event.player_index)
+        if not player then return end
+        toggle_interface(player)
+    end
+end)
+
 script.on_event(defines.events.on_gui_click, function (event)
     local player = game.get_player(event.player_index)
     if not player then return end

@@ -1,4 +1,5 @@
 local utils = require("utils")
+local data_util = require("__flib__.data-util")
 
 local styles = data.raw["gui-style"].default
 
@@ -68,5 +69,16 @@ data:extend({
     icon_size=40,
     order="a"
   },
-  cursor_blueprint
+  cursor_blueprint,
+  {
+    type="shortcut",
+    name="tll_toggle_interface",
+    action="lua",
+    icon=data_util.build_sprite(nil, {0, 0}, "__train-limit-linter__/graphics/shortcut.png", 32, 2),
+    small_icon=data_util.build_sprite(nil, {0, 32}, "__train-limit-linter__/graphics/shortcut.png", 24, 2),
+    diabled_icon=data_util.build_sprite(nil, {48, 0}, "__train-limit-linter__/graphics/shortcut.png", 32, 2),
+    disabled_small_icon=data_util.build_sprite(nil, {36, 32}, "__train-limit-linter__/graphics/shortcut.png", 24, 2),
+    toggleable=true,
+    associated_control_input="tll_toggle_interface"
+  }
 })
