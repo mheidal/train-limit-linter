@@ -6,6 +6,7 @@ local TLLFuelConfiguration = require("models.fuel_configuration")
 local TLLModalFunctionConfiguration = require("models.modal_function_configuration")
 local fuel_category_data = require("models.fuel_category_data")
 local train_data = require("models.train_data")
+local TLLOtherModConfiguration = require("models.other_mod_configuration")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
@@ -30,6 +31,7 @@ local train_data = require("models.train_data")
 ---@field modal_function_configuration TLLModalFunctionConfiguration
 ---@field main_interface_selected_tab number?
 ---@field main_interface_open boolean
+---@field other_mod_configuration TLLOtherModConfiguration
 
 ---@class TLLPlayerView
 ---@field main_frame LuaGuiElement?
@@ -74,6 +76,7 @@ function Exports.get_default_player_global()
             last_gui_location = nil,
             modal_function_configuration = TLLModalFunctionConfiguration.new(),
             main_interface_open=false,
+            other_mod_configuration=TLLOtherModConfiguration.new(),
         },
         view = Exports.get_empty_player_view()
     }
