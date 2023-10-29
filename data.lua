@@ -59,7 +59,7 @@ data:extend({
   {
     type="custom-input",
     name="tll_toggle_interface",
-    key_sequence="CONTROL + Q",
+    key_sequence="CONTROL + O",
     order = "a"
   },
   {
