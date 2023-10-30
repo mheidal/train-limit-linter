@@ -432,13 +432,13 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
     local player_global = global.players[player.index]
     if event.element.tags.action then
         local action = event.element.tags.action
-        if action == constants.actions.exclude_textfield_apply then
+        if action == constants.actions.exclude_textfield_enter_text then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.excluded_keywords:set_enabled(text, true)
                 main_interface.build_interface(player)
             end
-        elseif action == constants.actions.hide_textfield_apply then
+        elseif action == constants.actions.hide_textfield_enter_text then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.hidden_keywords:set_enabled(text, true)
