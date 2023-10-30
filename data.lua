@@ -49,6 +49,12 @@ styles["tll_horizontal_stretch_squash_label"] = {
   horizontally_squashable="on",
 }
 
+styles["tll_header_label"] = {
+  type="label_style",
+  parent="bold_label",
+  font_color={1, 0.901961, 0.752941}
+}
+
 local cursor_blueprint = utils.deep_copy(data.raw["blueprint"]["blueprint"])
 cursor_blueprint.name = "tll_cursor_blueprint"
 cursor_blueprint.order = "z_tll"

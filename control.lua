@@ -306,6 +306,10 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
         elseif action == constants.actions.toggle_place_trains_with_fuel then
             player_global.model.fuel_configuration:toggle_add_fuel()
             main_interface.build_interface(player)
+
+        elseif action == constants.actions.space_exploration_toggle_combine_orbit then
+            player_global.model.other_mod_configuration:space_exploration_toggle_combine_orbit()
+            main_interface.build_interface(player)
         end
     end
 end)

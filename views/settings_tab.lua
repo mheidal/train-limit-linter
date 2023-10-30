@@ -28,26 +28,24 @@ function Exports.build_settings_tab(player)
     -- blueprint settings
     local blueprint_settings_frame = scroll_pane.add{type="frame", style="bordered_frame", direction="vertical"}
 
-    local blueprint_header_label = blueprint_settings_frame.add{
+    blueprint_settings_frame.add{
         type="label",
-        style="bold_label",
+        style="tll_header_label",
         caption={"tll.blueprint_settings"},
         tooltip={"tll.blueprint_settings_tooltip"}
     }
-    blueprint_header_label.style.font_color={1, 0.901961, 0.752941}
     blueprint_orientation_selector.build_blueprint_orientation_selector(blueprint_config.new_blueprint_orientation, blueprint_settings_frame)
     blueprint_snap_selection.build_blueprint_snap_selector(player, blueprint_settings_frame)
 
     -- fuel settings
     local fuel_settings_frame = scroll_pane.add{type="frame", style="bordered_frame", direction="vertical"}
 
-    local fuel_header_label = fuel_settings_frame.add{
+    fuel_settings_frame.add{
         type="label",
-        style="bold_label",
+        style="tll_header_label",
         caption={"tll.fuel_settings"},
         tooltip={"tll.fuel_settings_tooltip"}
     }
-    fuel_header_label.style.font_color={1, 0.901961, 0.752941}
 
     local fuel_config = player_global.model.fuel_configuration
 
@@ -150,6 +148,36 @@ function Exports.build_settings_tab(player)
                 style=button_style,
                 enabled=fuel_config.add_fuel,
                 tooltip=tooltip
+            }
+        end
+    end
+
+    -- other mod compatibility settings
+    local any_supported_interfaces_enabled = false
+    for _, interface_name in pairs(constants.supported_interfaces) do
+        if remote.interfaces[interface_name] then
+            any_supported_interfaces_enabled = true
+            break
+        end
+    end
+
+    if any_supported_interfaces_enabled then
+        local other_frame = scroll_pane.add{type="frame", style="bordered_frame", direction="vertical"}
+        other_frame.add{
+            type="label",
+            style="tll_header_label",
+            caption={"tll.other_mod_settings"},
+            tooltip={"tll.other_mod_tooltip"}
+        }
+        other_frame.style.horizontally_stretchable = true
+        if remote.interfaces["space-exploration"] then
+            local space_exploration_frame = other_frame.add{type="frame", style="borderless_frame", direction="vertical"}
+            space_exploration_frame.add{type="label", style="tll_header_label", caption={"tll.space_exploration"}}
+
+            space_exploration_frame.add{
+                type="checkbox",
+                state=player_global.model.other_mod_configuration.space_exploration_combine_orbit,
+                caption={"tll.toggle_combine_orbit"}
             }
         end
     end

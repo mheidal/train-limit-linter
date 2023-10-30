@@ -20,11 +20,39 @@ local function get_equivalent_key(key, train_schedule_groups)
 end
 
 ---@return table<string, TLLTrainData>: surface names to trains on that surface
-function Exports.get_train_schedule_groups_by_surface()
+function Exports.get_train_schedule_groups_by_surface(player)
+    ---@type TLLPlayerGlobal
+    local player_global = global.players[player.index]
+    
     local surface_train_schedule_groups = {}
     for _, train_data in pairs(global.model.train_data) do
         local schedule_key = train_data.schedule_key
         if schedule_key ~= "" then
+            local surface = train_data.surface
+            if remote.interfaces[constants.supported_interfaces.space_exploration] then
+                if player_global.model.other_mod_configuration.space_exploration_combine_orbit then
+                    local surfaces_to_combine = {}
+                    for surface, _ in pairs(surface_train_schedule_groups) do
+                        local orbit_name = utils.space_exploration_get_orbit_from_planet(surface)
+                        if orbit_name then
+                            table.insert(surfaces_to_combine, {
+                                source=orbit_name,
+                                destination=surface
+                            })
+                        end
+                        local planet_name = utils.space_exploration_get_planet_from_orbit(surface)
+                        if planet_name then
+                            table.insert(surfaces_to_combine, {
+                                source=surface,
+                                destination=planet_name
+                            })
+                        end
+                    end
+                    for _, surface_pair in pairs(surfaces_to_combine) do
+                        -- TODO
+                    end
+                end
+            end
             if not surface_train_schedule_groups[train_data.surface] then surface_train_schedule_groups[train_data.surface] = {} end
             local equivalent_key = get_equivalent_key(schedule_key, surface_train_schedule_groups[train_data.surface])
             if not surface_train_schedule_groups[train_data.surface][equivalent_key] then surface_train_schedule_groups[train_data.surface][equivalent_key] = {} end

@@ -105,6 +105,41 @@ function Exports.train_schedule_to_key(schedule)
     return key
 end
 
+--- Returns the name of the surface for a planet or moon's orbit, if it exists.
+---@param planet_name string
+---@return string?
+function Exports.space_exploration_get_planet_from_orbit(planet_name)
+    local orbit_suffix = " Orbit"
+    if string.find(planet_name, orbit_suffix, nil, true) then
+        return nil
+    else
+        orbit_name = planet_name == "nauvis" and "Nauvis" .. orbit_suffix or planet_name .. orbit_suffix
+        if game.surfaces[orbit_name] then
+            return orbit_name
+        else
+            return nil
+        end
+    end
+end
+
+--- Returns the name of the surface for an orbit's planet or moon, if it exists.
+---@param orbit_name string
+---@return string?
+function Exports.space_exploration_get_orbit_from_planet(orbit_name)
+    local orbit_suffix = " Orbit"
+    if string.find(orbit_name, orbit_suffix, nil, true) then
+        local planet_name = string.sub(orbit_name, 1, -1 - #orbit_suffix)
+        planet_name = planet_name == "Nauvis" and "nauvis" or planet_name
+        if game.surfaces[planet_name] then
+            return planet_name
+        else
+            return nil
+        end
+    else
+        return nil
+    end
+end
+
 Exports.deep_copy = deep_copy
 
 return Exports

@@ -33,6 +33,8 @@ constants.actions = {
     update_fuel_amount="update_fuel_amount",
     select_fuel="select_fuel",
 
+    space_exploration_toggle_combine_orbit="space_exploration_toggle_combine_orbit",
+
     open_modal="open_modal",
     close_modal="close_modal",
     focus_modal="focus_modal",
@@ -79,5 +81,9 @@ constants.style_data = {
 }
 
 constants.default_surface_name = "nauvis"
+
+constants.supported_interfaces = {
+    space_exploration="space-exploration",
+}
 
 return constants

@@ -43,7 +43,11 @@ local function build_train_schedule_group_report(player)
         schedule_report_table.add{type="label", caption={"tll.manual_header"}}
     end
 
-    for surface, train_schedule_groups in pairs(schedule_report_table_scripts.get_train_schedule_groups_by_surface()) do
+    local surface_train_schedule_groups = schedule_report_table_scripts.get_train_schedule_groups_by_surface(player)
+
+
+
+    for surface, train_schedule_groups in pairs(surface_train_schedule_groups) do
 
         -- barrier for all train schedules for a surface
         if table_config.show_all_surfaces or surface == player.surface.name then
