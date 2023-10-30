@@ -535,10 +535,12 @@ script.on_event(defines.events.on_train_created, function (event)
 end)
 
 script.on_event(defines.events.on_train_changed_state, function (event)
-    global.model.train_data[event.train.id].manual_mode = event.train.manual_mode
-
-    for _, player in pairs(game.players) do
-        main_interface.build_interface(player)
+    local this_train_data = global.model.train_data[event.train.id]
+    if not this_train_data.manual_mode == event.train.manual_mode then
+        this_train_data.manual_mode = event.train.manual_mode
+        for _, player in pairs(game.players) do
+            main_interface.build_interface(player)
+        end
     end
 end)
 
