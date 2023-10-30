@@ -15,6 +15,12 @@ styles["tll_controls_flow"] = {
     horizontal_spacing = 16
 }
 
+styles["tll_horizontal_controls_flow"] = {
+  type = "horizontal_flow_style",
+  vertical_align = "center",
+  horizontal_spacing = 16
+}
+
 styles["tll_frame_semitransparent"] = {
   type = "frame_style",
   graphical_set = {
