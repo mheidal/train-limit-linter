@@ -2,7 +2,7 @@ local constants = require("constants")
 
 local icon_selector_textfield = require("views.icon_selector_textfield")
 
-Exports = {}
+local Exports = {}
 
 ---@param parent LuaGuiElement
 ---@param label_caption LocalisedString
@@ -18,6 +18,7 @@ local function build_keyword_tab(
     parent,
     label_caption,
     label_tooltip,
+    enter_text_action,
     apply_button_action,
     delete_all_keywords_action,
     toggle_keyword_action,
@@ -25,23 +26,47 @@ local function build_keyword_tab(
     keyword_list,
     keyword_list_name
 )
-    parent.clear()
+    local control_label_name = "keyword_tab_control_label"
+    if not parent[control_label_name] then parent.add{type="label", name=control_label_name, caption=label_caption, tooltip=label_tooltip} end
 
-    local control_flow = parent.add{type="flow", direction="vertical", style="tll_controls_flow"}
-    control_flow.style.bottom_margin = 5
-    control_flow.add{type="label", caption=label_caption, tooltip=label_tooltip}
-    local textfield_flow = control_flow.add{type="flow", direction="horizontal"}
-    icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {action=apply_button_action})
-    textfield_flow.add{
-        type="sprite-button",
-        tags={action=apply_button_action},
-        style="item_and_count_select_confirm",
-        sprite="utility/enter",
-        tooltip={"tll.apply_change"},
-        name = Exports.enter_button_name
+    local control_flow_name = "keyword_tab_control_flow"
+    local control_flow = parent[control_flow_name] or parent.add{
+        type="flow",
+        name=control_flow_name,
+        direction="horizontal",
+        style="tll_horizontal_controls_flow"
     }
+    control_flow.style.bottom_margin = 5
 
-    textfield_flow.add{
+    local textfield_flow_name = "keyword_tab_textfield_flow"
+    local textfield_flow
+    if control_flow[textfield_flow_name] then
+        textfield_flow = control_flow[textfield_flow_name]
+    else
+        textfield_flow = control_flow.add{
+            type="flow",
+            name=textfield_flow_name,
+            direction="horizontal"
+        }
+        icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {action=enter_text_action})
+        textfield_flow.add{
+            type="sprite-button",
+            tags={action=apply_button_action},
+            style="item_and_count_select_confirm",
+            sprite="utility/enter",
+            tooltip={"tll.apply_change"},
+        }
+    end
+
+    local button_flow_name = "keyword_tab_button_flow"
+    local button_flow = control_flow[button_flow_name] or control_flow.add{
+        type="flow",
+        name=button_flow_name,
+        direction="horizontal"
+    }
+    button_flow.clear()
+
+    button_flow.add{
         type="sprite-button",
         tags={
             action=constants.actions.open_modal,
@@ -53,9 +78,9 @@ local function build_keyword_tab(
         tooltip={"tll.train_stop_name_selector_button_tooltip"}
     }
 
-    textfield_flow.add{type="empty-widget", style="tll_spacer"}
+    button_flow.add{type="empty-widget", style="tll_spacer"}
 
-    textfield_flow.add{
+    button_flow.add{
         type="sprite-button",
         tags={
             action=constants.actions.open_modal,
@@ -67,7 +92,7 @@ local function build_keyword_tab(
         tooltip={"tll.import_keywords"}
     }
 
-    textfield_flow.add{
+    button_flow.add{
         type="sprite-button",
         tags={
             action=constants.actions.open_modal,
@@ -80,7 +105,7 @@ local function build_keyword_tab(
     }
 
     if keyword_list:get_number_of_keywords() > 1 then
-        textfield_flow.add{
+        button_flow.add{
             type="sprite-button",
             tags={action=delete_all_keywords_action},
             style="tool_button_red",
@@ -88,12 +113,11 @@ local function build_keyword_tab(
             tooltip={"tll.delete_all_keywords"}
         }
     else
-        local spacer = textfield_flow.add{type="empty-widget"}
+        local spacer = button_flow.add{type="empty-widget"}
         spacer.style.width = 28
     end
 
     local scroll_pane_name = "scroll_pane_name"
-
     local keyword_table_scroll_pane = parent[scroll_pane_name] or parent.add{
             type="scroll-pane",
             direction="vertical",
@@ -113,7 +137,13 @@ local function build_keyword_tab(
         keyword_line_flow.add{type="label", caption=keyword}
         local spacer = keyword_line_flow.add{type="empty-widget"}
         spacer.style.horizontally_stretchable = true
-        keyword_line_flow.add{type="sprite-button", tags={action=delete_keyword_action, keyword=keyword}, sprite="utility/trash", style="tool_button_red"}
+        keyword_line_flow.add{
+            type="sprite-button",
+            tags={action=delete_keyword_action, keyword=keyword},
+            sprite="utility/trash",
+            style="tool_button_red",
+            tooltip={"tll.delete_keyword"}
+        }
     end
 
     return textfield_flow[icon_selector_textfield.textfield_name]
@@ -130,6 +160,7 @@ function Exports.build_exclude_tab(player)
         exclude_content_frame,
         {"tll.add_excluded_keyword"},
         {"tll.add_excluded_keyword_tooltip"},
+        constants.actions.exclude_textfield_enter_text,
         constants.actions.exclude_textfield_apply,
         constants.actions.delete_all_excluded_keywords,
         constants.actions.toggle_excluded_keyword,
@@ -151,6 +182,7 @@ function Exports.build_hide_tab(player)
         hide_content_frame,
         {"tll.add_hidden_keyword"},
         {"tll.add_hidden_keyword_tooltip"},
+        constants.actions.hide_textfield_enter_text,
         constants.actions.hide_textfield_apply,
         constants.actions.delete_all_hidden_keywords,
         constants.actions.toggle_hidden_keyword,

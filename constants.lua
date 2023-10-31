@@ -6,9 +6,11 @@ constants.actions = {
 
     toggle_excluded_keyword="toggle_excluded_keyword",
     delete_excluded_keyword="delete_excluded_keyword",
+    exclude_textfield_enter_text="exclude_textfield_enter_text",
     exclude_textfield_apply="exclude_textfield_apply",
     delete_all_excluded_keywords="delete_all_excluded_keywords",
 
+    hide_textfield_enter_text="hide_textfield_enter_text",
     hide_textfield_apply="hide_textfield_apply",
     toggle_hidden_keyword="toggle_hidden_keyword",
     delete_hidden_keyword="delete_hidden_keyword",
