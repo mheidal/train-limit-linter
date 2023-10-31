@@ -11,7 +11,6 @@ Exports = {}
 
 ---@param player LuaPlayer
 function Exports.build_interface(player)
-    player.print("Built interface", {skip_if_redundant=false})
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     if not player_global.model.main_interface_open then return end

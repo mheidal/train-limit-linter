@@ -137,7 +137,13 @@ local function build_keyword_tab(
         keyword_line_flow.add{type="label", caption=keyword}
         local spacer = keyword_line_flow.add{type="empty-widget"}
         spacer.style.horizontally_stretchable = true
-        keyword_line_flow.add{type="sprite-button", tags={action=delete_keyword_action, keyword=keyword}, sprite="utility/trash", style="tool_button_red"}
+        keyword_line_flow.add{
+            type="sprite-button",
+            tags={action=delete_keyword_action, keyword=keyword},
+            sprite="utility/trash",
+            style="tool_button_red",
+            tooltip={"tll.delete_keyword"}
+        }
     end
 
     return textfield_flow[icon_selector_textfield.textfield_name]
