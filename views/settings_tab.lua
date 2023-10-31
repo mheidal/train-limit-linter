@@ -58,7 +58,7 @@ function Exports.build_settings_tab(player)
         caption={"tll.place_trains_with_fuel_checkbox"}
     }
 
-    fuel_category_table = fuel_settings_frame.add{type="table", column_count=3}
+    fuel_category_table = fuel_settings_frame.add{type="table", column_count=2, style="bordered_table"}
 
     for fuel_category, fuel_category_config in pairs(fuel_config.fuel_category_configurations) do
 
@@ -76,9 +76,8 @@ function Exports.build_settings_tab(player)
             table.insert(locomotive_consumer_tooltip, {"", "\n[img=item." .. locomotive_consumer .. "] ", game.item_prototypes[locomotive_consumer].localised_name})
         end
 
-        fuel_category_table.add{type="label", caption=fuel_category_caption, tooltip=locomotive_consumer_tooltip}
-        local spacer = fuel_category_table.add{type="empty-widget"}
-        spacer.style.horizontally_stretchable = true
+        local fuel_category_label = fuel_category_table.add{type="label", caption=fuel_category_caption, tooltip=locomotive_consumer_tooltip}
+        fuel_category_label.style.width = 177 -- 1/3 the table's width
 
         local category_settings_flow = fuel_category_table.add{type="flow", direction="vertical"}
 
