@@ -58,66 +58,53 @@ local function build_train_schedule_group_report(player)
             for _, schedule_name in pairs(sorted_schedule_names) do
 
                 local train_schedule_group = train_schedule_groups[schedule_name]
-                local train_limit_sum = schedule_report_table_scripts.get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
+                local train_limit_data = schedule_report_table_scripts.get_train_station_limits(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords)
 
-                local schedule_contains_hidden_keyword = false
-                for _, keyword in pairs(enabled_hidden_keywords) do
-                    local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(keyword)
-                    local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(keyword)
-                    if (string.find(schedule_name, keyword, nil, true)
-                        or string.find(schedule_name, alt_rich_text_format_img, nil, true)
-                        or string.find(schedule_name, alt_rich_text_format_entity, nil, true)
-                        ) then
-                        schedule_contains_hidden_keyword = true
-                    end
-                end
-
-                local invalid = (train_limit_sum == constants.train_stop_limit_enums.not_set)
-
-                local satisfied
-                if type(train_limit_sum) ~= "number" then
-                    satisfied = false
-                else
-                    satisfied = (train_limit_sum - #train_schedule_group == 1)
-                end
+                local satisfied = (not (train_limit_data.dynamic or train_limit_data.not_set)) and (train_limit_data.limit - #train_schedule_group == 1)
 
                 -- barrier for showing a particular schedule
                 if (
-                    (not schedule_contains_hidden_keyword)
+                    (not train_limit_data.hidden)
                     and (table_config.show_satisfied or (not satisfied))
-                    and (table_config.show_invalid or (not invalid))
+                    and (table_config.show_not_set or (not train_limit_data.not_set))
+                    and (table_config.show_dynamic or (not train_limit_data.dynamic))
                 ) then
 
-                    local train_limit_sum_caption
-                    if train_limit_sum == constants.train_stop_limit_enums.not_set then
-                        train_limit_sum_caption = {"tll.train_limit_sum_not_set"}
-                    else
-                        train_limit_sum_caption = tostring(train_limit_sum)
-                    end
 
+                    local train_limit_sum_caption = {
+                        "",
+                        tostring(train_limit_data.limit),
+                        train_limit_data.not_set and {"tll.train_limit_not_set"} or "",
+                        train_limit_data.dynamic and {"tll.train_limit_dynamic"} or "",
+                    }
+                    local train_limit_sum_tooltip = {
+                        "",
+                        train_limit_data.not_set and {"tll.train_limit_not_set_tooltip"} or "",
+                        train_limit_data.not_set and train_limit_data.dynamic and "\n" or "",
+                        train_limit_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
+                    }
 
-                    local train_count_difference -- nil or number
-                    if train_limit_sum ~= constants.train_stop_limit_enums.not_set then
-                        train_count_difference = train_limit_sum - 1 -  #train_schedule_group
-                    end
+                    local show_opinionation = not train_limit_data.not_set and not train_limit_data.dynamic
+
+                    local train_count_difference = train_limit_data.limit - 1 - #train_schedule_group
 
                     -- caption
                     local train_count_caption = tostring(#train_schedule_group)
-                    if train_count_difference and train_count_difference ~= 0 then -- check non-nil
+                    if show_opinionation and train_count_difference ~= 0 then
                         local diff_str = train_count_difference > 0 and "+" or ""
                         train_count_caption = train_count_caption .. " (" .. diff_str .. tostring(train_count_difference) .. ") [img=info]"
                     end
 
                     -- tooltip
                     local recommended_action_tooltip = nil
-                    if train_count_difference and train_count_difference ~= 0 then
+                    if show_opinionation and train_count_difference ~= 0 then
                         local abs_diff = math.abs( train_count_difference)
                         recommended_action_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip", abs_diff} or {"tll.remove_n_trains_tooltip", abs_diff}
                     end
 
                     -- color
                     local train_count_label_color
-                    if train_count_difference then
+                    if show_opinionation then
                         if train_count_difference ~= 0 then
                             train_count_label_color = {1, 0.541176, 0.541176}
                         else
@@ -171,7 +158,7 @@ style="tll_horizontal_stretch_squash_label"
                     train_count_cell.style.font_color=train_count_label_color
 
                     -- cell 4
-                    schedule_report_table.add{type="label", caption=train_limit_sum_caption}
+                    schedule_report_table.add{type="label", caption=train_limit_sum_caption, tooltip=train_limit_sum_tooltip}
 
                     -- cell 5
                     schedule_report_table.add{
@@ -231,7 +218,8 @@ function Exports.build_display_tab(player)
 
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_all_surfaces}, caption={"tll.show_all_surfaces"}, state=table_config.show_all_surfaces}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=table_config.show_satisfied}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_invalid}, caption={"tll.show_invalid"}, state=table_config.show_invalid}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_not_set}, caption={"tll.show_not_set"}, state=table_config.show_not_set}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_dynamic}, caption={"tll.show_dynamic"}, state=table_config.show_dynamic}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_manual}, caption={"tll.show_manual"}, state=table_config.show_manual}
 
     local report_frame_name = "report_frame_name"

@@ -5,6 +5,11 @@ local utils = require("utils")
 ---@field surface string
 ---@field train_schedule_groups LuaTrain[][]
 
+---@class TrainStationLimits
+---@field limit number
+---@field not_set boolean
+---@field dynamic boolean
+---@field hidden boolean
 
 local Exports = {}
 
@@ -59,16 +64,34 @@ function Exports.get_train_schedule_groups_by_surface()
     return surface_train_schedule_groups
 end
 
----@param player LuaPlayer
 ---@param train_schedule_group table: array[LuaTrain]
 ---@param surface LuaSurface
 ---@param enabled_excluded_keywords table: array[toggleable_item]
----@return string|number: sum of train limits, or enums defined in constants file to indicate special values
-function Exports.get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
-    local sum_of_limits = 0
+---@return TrainStationLimits: info about train stops (sum of limits, hidden, not set, dynamic)
+function Exports.get_train_station_limits(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords)
+    ---@type TrainStationLimits
+    local ret = {
+        limit=0,
+        not_set=false,
+        dynamic=false,
+        hidden=false
+    }
     local shared_schedule = train_schedule_group[1].schedule
 
     for _, record in pairs(shared_schedule.records) do
+
+        for _, keyword in pairs(enabled_hidden_keywords) do
+            local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(keyword)
+            local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(keyword)
+            if (string.find(record.station, keyword, nil, true)
+                or string.find(record.station, alt_rich_text_format_img, nil, true)
+                or string.find(record.station, alt_rich_text_format_entity, nil, true)
+                ) then
+                ret.hidden = true
+                return ret
+            end
+        end
+
         local station_is_excluded = false
         for _, enabled_keyword in pairs(enabled_excluded_keywords) do
             local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(enabled_keyword)
@@ -80,18 +103,23 @@ function Exports.get_train_station_limits(player, train_schedule_group, surface,
                 station_is_excluded = true
             end
         end
+
         if not station_is_excluded then
             for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
+                local control_behavior = train_stop.get_control_behavior()
+                if control_behavior and control_behavior.set_trains_limit then
+                    ret.dynamic = true
+                end
                 -- no train limit is implemented as limit == 2 ^ 32 - 1
                 if train_stop.trains_limit == (2 ^ 32) - 1 then
-                    return constants.train_stop_limit_enums.not_set
+                    ret.not_set = true
                 else
-                    sum_of_limits = sum_of_limits + train_stop.trains_limit
+                    ret.limit = ret.limit + train_stop.trains_limit
                 end
             end
         end
     end
-    return sum_of_limits
+    return ret
 end
 
 -- Takes two blueprints. Both have entities 1 thru N_1 and N_2. 
