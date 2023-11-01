@@ -1,12 +1,18 @@
 local constants = require("constants")
+local utils = require("utils")
+
+---@class SurfaceTrainScheduleGroups
+---@field surface string
+---@field train_schedule_groups LuaTrain[][]
+
 
 local Exports = {}
 
 --- Compares train schedule groups against a new key to see if any of the existing keys are the new key but rotated.
 --- For example, this would match "A → B" to "B → A"
 ---@param key string A train schedule's key
----@param train_schedule_groups table<string, TLLTrainData> 
----@return string: an equivalent key, if one exists, or the original key if one doesn't
+---@param train_schedule_groups table<string, LuaTrain[]> 
+---@return string? an equivalent key, if one exists
 local function get_equivalent_key(key, train_schedule_groups)
     for existing_key, _ in pairs(train_schedule_groups) do
         if #key == #existing_key then
@@ -16,40 +22,76 @@ local function get_equivalent_key(key, train_schedule_groups)
             end
         end
     end
-    return key
+    return nil
 end
 
----@return table<string, TLLTrainData>: surface names to trains on that surface
+-- Returns an array of arrays of trains which share a schedule.
+---@return SurfaceTrainScheduleGroups
 function Exports.get_train_schedule_groups_by_surface()
     local surface_train_schedule_groups = {}
-    for _, train_data in pairs(global.model.train_data) do
-        local schedule_key = train_data.schedule_key
-        if schedule_key ~= "" then
-            if not surface_train_schedule_groups[train_data.surface] then surface_train_schedule_groups[train_data.surface] = {} end
-            local equivalent_key = get_equivalent_key(schedule_key, surface_train_schedule_groups[train_data.surface])
-            if not surface_train_schedule_groups[train_data.surface][equivalent_key] then surface_train_schedule_groups[train_data.surface][equivalent_key] = {} end
-            table.insert(surface_train_schedule_groups[train_data.surface][equivalent_key], train_data)
+
+    for _, surface in pairs(game.surfaces) do
+        local train_schedule_groups = {}
+        local added_schedule = false
+        for _, train in pairs(surface.get_trains()) do
+            local schedule = train.schedule
+            if schedule then
+                added_schedule = true
+                local key = utils.train_schedule_to_key(schedule)
+                local equivalent_key = get_equivalent_key(key, train_schedule_groups)
+                if equivalent_key then
+                    table.insert(train_schedule_groups[equivalent_key], train)
+                else
+                    train_schedule_groups[key] = {train}
+                end
+            end
+        end
+        if added_schedule then
+            table.insert(
+                surface_train_schedule_groups,
+                {
+                    surface = surface,
+                    train_schedule_groups = train_schedule_groups
+                }
+            )
         end
     end
     return surface_train_schedule_groups
 end
 
----@param surface string: name of a LuaSurface
----@return table<string, number|string>: table mapping train station names to their train limits or a train station enum defined in constants
-function Exports.get_train_station_limits_by_surface(surface)
-    local train_stops = game.get_surface(surface).get_train_stops()
-    local train_stop_name_to_limit = {}
-    for _, train_stop in pairs(train_stops) do
-        -- no train limit is implemented as limit == 2 ^ 32 - 1
-        local limit
-        if train_stop.trains_limit == (2 ^ 32) - 1 then
-            limit = constants.train_stop_limit_enums.not_set
-        else
-            limit = train_stop.trains_limit
+---@param player LuaPlayer
+---@param train_schedule_group table: array[LuaTrain]
+---@param surface LuaSurface
+---@param enabled_excluded_keywords table: array[toggleable_item]
+---@return string|number: sum of train limits, or enums defined in constants file to indicate special values
+function Exports.get_train_station_limits(player, train_schedule_group, surface, enabled_excluded_keywords)
+    local sum_of_limits = 0
+    local shared_schedule = train_schedule_group[1].schedule
+
+    for _, record in pairs(shared_schedule.records) do
+        local station_is_excluded = false
+        for _, enabled_keyword in pairs(enabled_excluded_keywords) do
+            local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(enabled_keyword)
+            local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(enabled_keyword)
+            if (string.find(record.station, enabled_keyword, nil, true)
+                or string.find(record.station, alt_rich_text_format_img, nil, true)
+                or string.find(record.station, alt_rich_text_format_entity, nil, true)
+                ) then
+                station_is_excluded = true
+            end
         end
-        train_stop_name_to_limit[train_stop.backer_name] = limit
+        if not station_is_excluded then
+            for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
+                -- no train limit is implemented as limit == 2 ^ 32 - 1
+                if train_stop.trains_limit == (2 ^ 32) - 1 then
+                    return constants.train_stop_limit_enums.not_set
+                else
+                    sum_of_limits = sum_of_limits + train_stop.trains_limit
+                end
+            end
+        end
     end
-    return train_stop_name_to_limit
+    return sum_of_limits
 end
 
 -- Takes two blueprints. Both have entities 1 thru N_1 and N_2. 
