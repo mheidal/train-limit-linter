@@ -77,7 +77,7 @@ function Exports.build_settings_tab(player)
         end
 
         local fuel_category_label = fuel_category_table.add{type="label", caption=fuel_category_caption, tooltip=locomotive_consumer_tooltip}
-        fuel_category_label.style.width = 177 -- 1/3 the table's width
+        fuel_category_label.style.width = 160 -- 1/3 the table's width, ish
 
         local category_settings_flow = fuel_category_table.add{type="flow", direction="vertical"}
 
