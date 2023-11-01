@@ -292,6 +292,10 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             player_global.model.schedule_table_configuration:toggle_show_manual()
             main_interface.build_interface(player)
 
+        elseif action == constants.actions.toggle_show_dynamic then
+            player_global.model.schedule_table_configuration:toggle_show_dynamic()
+            main_interface.build_interface(player)
+
         elseif action == constants.actions.toggle_blueprint_snap then
             player_global.model.blueprint_configuration:toggle_blueprint_snap()
             main_interface.build_interface(player)
