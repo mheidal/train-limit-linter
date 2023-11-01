@@ -5,7 +5,6 @@ local TLLKeywordList = require("models.keyword_list")
 local TLLFuelConfiguration = require("models.fuel_configuration")
 local TLLModalFunctionConfiguration = require("models.modal_function_configuration")
 local fuel_category_data = require("models.fuel_category_data")
-local train_data = require("models.train_data")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
@@ -13,8 +12,6 @@ local train_data = require("models.train_data")
 
 ---@class TLLGlobalModel
 ---@field fuel_category_data TLLFuelCategoryData
----@field train_data table<number, TLLTrainData>
----@field tracked_rolling_stock table<number, number>
 
 ---@class TLLPlayerGlobal
 ---@field model TLLPlayerModel
@@ -82,15 +79,7 @@ end
 function Exports.build_global_model()
     global.model = {
         fuel_category_data = fuel_category_data.get_fuel_category_data(),
-        train_data = train_data.build_train_data(),
-        tracked_rolling_stock = {}
     }
-    for train_id, train_datum in pairs(global.model.train_data) do
-        for _, tracked_rolling_stock_unit_number in pairs(train_datum.rolling_stock) do
-            global.model.tracked_rolling_stock[tracked_rolling_stock_unit_number] = train_id
-        end
-    end
-
 end
 
 function Exports.initialize_global(player)
