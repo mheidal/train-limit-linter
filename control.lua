@@ -195,6 +195,11 @@ script.on_event(defines.events.on_gui_click, function (event)
             local orientation = event.element.tags.orientation
             if type(orientation) ~= "number" then return end
             player_global.model.blueprint_configuration:set_new_blueprint_orientation(orientation)
+            if orientation == constants.orientations.d or orientation == constants.orientations.u then
+                player_global.model.blueprint_configuration:set_snap_direction(constants.snap_directions.horizontal)
+            elseif orientation == constants.orientations.l or orientation == constants.orientations.r then
+                player_global.model.blueprint_configuration:set_snap_direction(constants.snap_directions.vertical)
+            end
             main_interface.build_interface(player)
 
         elseif action == constants.actions.open_modal then
@@ -236,7 +241,7 @@ script.on_event(defines.events.on_gui_click, function (event)
                 player.opened = modal_main_frame
                 modal_main_frame.bring_to_front()
             end
-            
+
         elseif action == constants.actions.train_stop_name_selector_select_name then
             if not event.element.tags.train_stop_name then return end
             if not event.element.tags.keywords then return end
