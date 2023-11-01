@@ -1,13 +1,13 @@
 ---@class TLLScheduleTableConfiguration
 ---@field show_all_surfaces boolean
 ---@field show_satisfied boolean
----@field show_invalid boolean
+---@field show_not_set boolean
 ---@field show_manual boolean
 ---@field show_dynamic boolean
 ---@field new fun(): TLLScheduleTableConfiguration
 ---@field toggle_show_all_surfaces fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_satisfied fun(self: TLLScheduleTableConfiguration)
----@field toggle_show_invalid fun(self: TLLScheduleTableConfiguration)
+---@field toggle_show_not_set fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_manual fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_dynamic fun(self: TLLScheduleTableConfiguration)
 
@@ -20,7 +20,7 @@ function TLLScheduleTableConfiguration.new()
     local self = {
         show_all_surfaces = false,
         show_satisfied = false, -- satisfied when sum of train limits is 1 greater than sum of trains
-        show_invalid = false, -- invalid when train limits are not set for all stations in name group
+        show_not_set = false,
         show_manual = false,
         show_dynamic = false,
     }
@@ -36,8 +36,8 @@ function TLLScheduleTableConfiguration:toggle_show_satisfied()
     self.show_satisfied = not self.show_satisfied
 end
 
-function TLLScheduleTableConfiguration:toggle_show_invalid()
-    self.show_invalid = not self.show_invalid
+function TLLScheduleTableConfiguration:toggle_show_not_set()
+    self.show_not_set = not self.show_not_set
 end
 
 function TLLScheduleTableConfiguration:toggle_show_manual()

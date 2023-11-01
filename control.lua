@@ -284,8 +284,8 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             player_global.model.schedule_table_configuration:toggle_show_satisfied()
             main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_show_invalid then
-            player_global.model.schedule_table_configuration:toggle_show_invalid()
+        elseif action == constants.actions.toggle_show_not_set then
+            player_global.model.schedule_table_configuration:toggle_show_not_set()
             main_interface.build_interface(player)
 
         elseif action == constants.actions.toggle_show_manual then

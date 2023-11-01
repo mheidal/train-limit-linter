@@ -20,7 +20,7 @@ constants.actions = {
     train_schedule_ping_manual_trains="train_schedule_ping_manual_trains",
     toggle_show_all_surfaces="toggle_show_all_surfaces",
     toggle_show_satisfied="toggle_show_satisfied",
-    toggle_show_invalid="toggle_show_invalid",
+    toggle_show_not_set="toggle_show_not_set",
     toggle_show_manual="toggle_show_manual",
     toggle_show_dynamic="toggle_show_dynamic",
 
@@ -44,10 +44,6 @@ constants.actions = {
 
     train_stop_name_selector_search="train_stop_name_selector_search",
     train_stop_name_selector_select_name="train_stop_name_selector_select_name",
-}
-
-constants.train_stop_limit_enums = {
-    not_set = "not_set",
 }
 
 constants.orientations = {
