@@ -24,6 +24,8 @@ local function build_train_schedule_group_report(player)
     column_count = column_count + (table_config.show_all_surfaces and 1 or 0)
     column_count = column_count + (table_config.show_manual and 1 or 0)
 
+    local any_schedule_shown = false
+
     local schedule_report_table = report_frame.add{type="table", style="bordered_table", column_count=column_count}
     schedule_report_table.style.maximal_width = 552
 
@@ -69,7 +71,7 @@ local function build_train_schedule_group_report(player)
                     and (table_config.show_not_set or (not train_limit_data.not_set))
                     and (table_config.show_dynamic or (not train_limit_data.dynamic))
                 ) then
-
+                    any_schedule_shown = true
 
                     local train_limit_sum_caption = {
                         "",
@@ -196,6 +198,13 @@ style="tll_horizontal_stretch_squash_label"
                 end
             end
         end
+    end
+
+    if not any_schedule_shown then
+        schedule_report_table.visible = false
+        local no_schedules_label = report_frame.add{type="label", caption={"tll.no_schedules"}}
+        no_schedules_label.style.horizontally_stretchable = true
+        no_schedules_label.style.margin = 12
     end
 end
 
