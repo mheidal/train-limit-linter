@@ -70,19 +70,33 @@ local function build_train_schedule_group_report(player)
                     and (table_config.show_dynamic or (not train_limit_data.dynamic))
                 ) then
 
+                    local manual_train_ids = {}
+                    for _, train in pairs(train_schedule_group) do
+                        if train.manual_mode then
+                            table.insert(manual_train_ids, train.id)
+                        end
+                    end
 
                     local train_limit_sum_caption = {
                         "",
                         tostring(train_limit_data.limit),
                         train_limit_data.not_set and {"tll.train_limit_not_set"} or "",
                         train_limit_data.dynamic and {"tll.train_limit_dynamic"} or "",
+                        #manual_train_ids ~= 0 and table_config.show_manual and {"tll.train_manual"} or "",
                     }
-                    local train_limit_sum_tooltip = {
-                        "",
-                        train_limit_data.not_set and {"tll.train_limit_not_set_tooltip"} or "",
-                        train_limit_data.not_set and train_limit_data.dynamic and "\n" or "",
-                        train_limit_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
-                    }
+
+                    local train_limit_sum_tooltip = {""}
+                    if train_limit_data.not_set then
+                        table.insert(train_limit_sum_tooltip, {"tll.train_limit_not_set_tooltip"})
+                    end
+                    if train_limit_data.dynamic then
+                        if #train_limit_sum_tooltip > 1 then table.insert(train_limit_sum_tooltip, "\n") end
+                        table.insert(train_limit_sum_tooltip, {"tll.train_limit_dynamic_tooltip"})
+                    end
+                    if #manual_train_ids ~= 0 and table_config.show_manual then
+                        if #train_limit_sum_tooltip > 1 then table.insert(train_limit_sum_tooltip, "\n") end
+                        table.insert(train_limit_sum_tooltip, {"tll.train_manual_tooltip"})
+                    end
 
                     local show_opinionation = not train_limit_data.not_set and not train_limit_data.dynamic
 
@@ -117,13 +131,6 @@ local function build_train_schedule_group_report(player)
                     local template_train_ids = {}
                     for _, train in pairs(train_schedule_group) do
                         table.insert(template_train_ids, train.id)
-                    end
-
-                    local manual_train_ids = {}
-                    for _, train in pairs(train_schedule_group) do
-                        if train.manual_mode then
-                            table.insert(manual_train_ids, train.id)
-                        end
                     end
 
                     -- cell 1

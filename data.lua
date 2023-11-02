@@ -75,6 +75,27 @@ data:extend({
     icon_size=40,
     order="a"
   },
+  {
+    type="virtual-signal",
+    name="tll-circuit-connection-warning-icon",
+    icon="__train-limit-linter__/graphics/circuit-warning-icon.png",
+    icon_size=64,
+    order="a"
+  },
+  {
+    type="virtual-signal",
+    name="tll-manual-warning-icon",
+    icon="__train-limit-linter__/graphics/manual-warning-icon.png",
+    icon_size=64,
+    order="a"
+  },
+  {
+    type="virtual-signal",
+    name="tll-not-set-warning-icon",
+    icon="__train-limit-linter__/graphics/not-set-warning-icon.png",
+    icon_size=64,
+    order="a"
+  },
   cursor_blueprint,
   {
     type="shortcut",
