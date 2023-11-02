@@ -1,6 +1,6 @@
 ## Train Limit Linter
 
-This is a mod for the game [Factorio](https://factorio.com/). It is published on the Factorio mod portal in .zip format. The mod provides an interface which allows a player to easily assess whether they have the proper number of trains with each schedule and deploy new trains quickly. This uses the concept of the [Fundamental Theorem of Train Limits](https://old.reddit.com/r/factorio/comments/skqzc5/a_fundamental_theorem_of_train_limits/), as posted on Reddit by /u/GBUS_TO_MTV. According to that theorem, in a many-to-many train network, where each station on that network has a train limit set, the number of trains should be equal to the sum of the train limits on all the stations, minus one. 
+This is a mod for the game [Factorio](https://factorio.com/). It is published on the Factorio mod portal in .zip format. The mod provides an interface which allows a player to easily assess whether they have the proper number of trains with each schedule and deploy new trains quickly. This uses the concept of the [Fundamental Theorem of Train Limits](https://old.reddit.com/r/factorio/comments/skqzc5/a_fundamental_theorem_of_train_limits/), as posted on Reddit by /u/GBUS_TO_MTV. According to that theorem, in a many-to-many train network, where each station on that network has a train limit set, the number of trains should be equal to the sum of the train limits on all the stations, minus one.
 
 ### Display
 Train Limit Linter provides a GUI which displays all train schedules, how many trains have each schedule, and the sum of the train limits for all the stations on each schedule. 
@@ -39,7 +39,7 @@ You can contact me on Discord `@notnot`. To message me you need to share a serve
 ### License
 Train Limit Linter is licensed under MIT.
 
-Train Limit Linter has some elements which are taken from or based on the [Factory Planner](https://github.com/ClaudeMetz/FactoryPlanner) mod by Therenas and the [Recipe Book](https://mods.factorio.com/mod/RecipeBook) mod by raiguard.
+Train Limit Linter has some elements which are taken from or based on the [Factory Planner](https://github.com/ClaudeMetz/FactoryPlanner) mod by Therenas and the [Recipe Book](https://mods.factorio.com/mod/RecipeBook) and [flib](https://mods.factorio.com/mod/flib) mods by raiguard.
 
 Train Limit Linter uses "Duster Icon #5827" from https://icon-library.com.
 The icon can be found at https://icon-library.com/icon/duster-icon-8.html >Duster Icon # 5827
