@@ -76,8 +76,7 @@ local function build_train_schedule_group_report(player)
                     local train_limit_sum_caption = {
                         "",
                         tostring(train_limit_data.limit),
-                        train_limit_data.not_set and {"tll.train_limit_not_set"} or "",
-                        train_limit_data.dynamic and {"tll.train_limit_dynamic"} or "",
+                        (train_limit_data.not_set or train_limit_data.dynamic) and {"tll.warning_icon"} or "",
                     }
                     local train_limit_sum_tooltip = {
                         "",
