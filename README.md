@@ -1,6 +1,6 @@
 ## Train Limit Linter
 
-This is a mod for the game [Factorio](https://factorio.com/). It is published on the Factorio mod portal in .zip format.
+This is a mod for the game [Factorio](https://factorio.com/). It is published on [the Factorio mod portal](https://mods.factorio.com/mod/train-limit-linter) in .zip format.
 
 The mod provides an interface which allows a player to easily assess whether they have the proper number of trains with each schedule and deploy new trains quickly.
 
