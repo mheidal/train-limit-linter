@@ -498,11 +498,6 @@ script.on_init(function ()
 
     globals.build_global_model()
 
-    local freeplay = remote.interfaces["freeplay"]
-    if freeplay then -- TODO: remove this when done with testing
-        if freeplay["set_skip_intro"] then remote.call("freeplay", "set_skip_intro", true) end
-        if freeplay["set_disable_crashsite"] then remote.call("freeplay", "set_disable_crashsite", true) end
-    end
     global.players = {}
     for _, player in pairs(game.players) do
         globals.initialize_global(player)
