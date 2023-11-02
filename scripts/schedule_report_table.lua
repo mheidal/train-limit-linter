@@ -107,6 +107,7 @@ function Exports.get_train_station_limits(train_schedule_group, surface, enabled
         if not station_is_excluded then
             for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
                 local control_behavior = train_stop.get_control_behavior()
+                ---@diagnostic disable-next-line not sure how to indicate to VS Code that this is LuaTrainStopControlBehavior
                 if control_behavior and control_behavior.set_trains_limit then
                     ret.dynamic = true
                 end

@@ -87,7 +87,23 @@ function Exports.initialize_global(player)
 end
 
 function Exports.migrate_global(player)
-    global.players[player.index] = Exports.get_default_player_global()
+    local old_global = global.players[player.index]
+    local new_global = Exports.get_default_player_global()
+
+    for model_key, model_value in pairs(old_global.model) do
+        if type(model_value) == "table" then
+            for key, value in pairs(model_value) do
+                if new_global.model[model_key] and new_global.model[model_key][key] ~= nil then
+                    new_global.model[model_key][key] = value
+                end
+            end
+        else
+            if new_global.model[model_key] then
+                new_global.model[model_key] = model_value
+            end
+        end
+    end
+    global.players[player.index] = new_global
 end
 
 ---@param player_global TLLPlayerGlobal
