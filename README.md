@@ -1,24 +1,30 @@
 ## Train Limit Linter
 
-This is a mod for the game [Factorio](https://factorio.com/). It is published on the Factorio mod portal in .zip format. The mod provides an interface which allows a player to easily assess whether they have the proper number of trains with each schedule and deploy new trains quickly. This uses the concept of the [Fundamental Theorem of Train Limits](https://old.reddit.com/r/factorio/comments/skqzc5/a_fundamental_theorem_of_train_limits/), as posted on Reddit by /u/GBUS_TO_MTV. According to that theorem, in a many-to-many train network, where each station on that network has a train limit set, the number of trains should be equal to the sum of the train limits on all the stations, minus one.
+This is a mod for the game [Factorio](https://factorio.com/). It is published on the Factorio mod portal in .zip format.
+
+The mod provides an interface which allows a player to easily assess whether they have the proper number of trains with each schedule and deploy new trains quickly.
+
+This uses the concept of the [Fundamental Theorem of Train Limits](https://old.reddit.com/r/factorio/comments/skqzc5/a_fundamental_theorem_of_train_limits/), as posted on Reddit by /u/GBUS_TO_MTV. According to that theorem, in a many-to-many train network, where each station on that network has a train limit set, the number of trains should be equal to the sum of the train limits on all the stations, minus one, i.e. P + R - 1.
 
 ### Display
-Train Limit Linter provides a GUI which displays all train schedules, how many trains have each schedule, and the sum of the train limits for all the stations on each schedule. 
+Train Limit Linter provides a GUI, which is opened by default using `CONTROL + O` (the letter oh). That GUI provides the following functionalities:
 
-In games with trains on multiple surfaces (for example, with the Space Exploration mod), train schedule groups are divided according to what surface their trains are on. The player can either display trains on all surfaces or on the player's current surface.
+- It displays all train schedules, how many trains have each schedule, and the sum of the train limits for all the stations on each schedule.
 
-It color-codes train schedules according to whether their train count conforms to the sum of the schedule's train limits.
+- In games with trains on multiple surfaces (for example, with the Space Exploration mod), train schedule groups are divided according to what surface their trains are on. The player can either display trains on all surfaces or on the player's current surface.
 
-It warns the player when train stations have no train limit set or when train stations have limits set dynamically. Schedules with either of these conditions can be hidden.
+- Train schedules are color-coded according to whether their train count conforms to P + R - 1.
 
-It displays what action would be necessary for a schedule to conform to the sum of its train limits.
+- If any train stop has no limit set or has a limit set dynamically using the circuit network, schedules which include that train stop will display a warning. Schedules with either of these conditions can be hidden.
 
-It provides a button which places a blueprint containing a copy of a train in each schedule into your cursor to allow you to quickly stamp down new trains.
+- It displays what action would be necessary for each schedule to conform to P + R - 1. For example, it will say "Add 1 train" or "Remove 2 trains".
 
-It can show whether any train schedule groups have trains that are set to manual mode, and ping all trains in manual mode.
+- Each schedule has a button which places a blueprint containing a copy of a train in the schedule into your cursor. This allows the user to quickly stamp down new trains. Certain aspects of the blueprints this generates can be modified in the Settings tab.
+
+- It can show whether any train schedule groups have trains that are set to manual mode, and provides a button which pings all trains with that schedule in manual mode on the map.
 
 ### Keywords
-Train Limit Linter allows the creation of lists of keywords which can be excluded or hidden in the Display tab. Keyword lists can be converted into exchange strings which can be shared between players or save files.
+Train Limit Linter allows the creation of lists of keywords which can be excluded or hidden. These keywords affect certain elements of the schedule display table in the Display tab, specifically how train limits are calculated and whether schedules are displayed. Keyword lists can be converted into exchange strings which can be shared between players or save files.
 
 #### Keyword exclusion
 Train Limit Linter allows some customization of how train limit sums are calculated. It is possible through the `Exclude` tab to add excluded keywords. Train stations with excluded keywords in their name will not be counted when calculating train limit sums. For example, if a train schedule has the stops `Iron Ore Load`, `Iron Ore Byproduct Load`, and `Iron Ore Unload`, only one of each of those stops exists, and all stops have a train limit of 2, and the keyword `Byproduct` has been added, then the train limit sum displayed will be 4. If the keyword `Byproduct` has not been added or has been added and is disabled, the train limit sum displayed will be 6.
