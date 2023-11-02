@@ -133,8 +133,7 @@ local function build_keyword_tab(
 
     for keyword, string_data in pairs(keyword_list:get_keywords()) do
         local keyword_line_flow = keyword_table_scroll_pane.add{type="flow", direction="horizontal"}
-        keyword_line_flow.add{type="checkbox", state=string_data.enabled, tags={action=toggle_keyword_action, keyword=keyword}}
-        keyword_line_flow.add{type="label", caption=keyword}
+        keyword_line_flow.add{type="checkbox", state=string_data.enabled, tags={action=toggle_keyword_action, keyword=keyword}, caption=keyword}
         local spacer = keyword_line_flow.add{type="empty-widget"}
         spacer.style.horizontally_stretchable = true
         keyword_line_flow.add{
