@@ -4,12 +4,14 @@
 ---@field show_not_set boolean
 ---@field show_manual boolean
 ---@field show_dynamic boolean
+---@field show_settings boolean
 ---@field new fun(): TLLScheduleTableConfiguration
 ---@field toggle_show_all_surfaces fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_satisfied fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_not_set fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_manual fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_dynamic fun(self: TLLScheduleTableConfiguration)
+---@field toggle_show_settings fun(self: TLLScheduleTableConfiguration)
 
 ---@class TLLScheduleTableConfiguration
 local TLLScheduleTableConfiguration = {}
@@ -23,6 +25,7 @@ function TLLScheduleTableConfiguration.new()
         show_not_set = false,
         show_manual = false,
         show_dynamic = false,
+        show_settings = true,
     }
     setmetatable(self, mt)
     return self
@@ -46,6 +49,10 @@ end
 
 function TLLScheduleTableConfiguration:toggle_show_dynamic()
     self.show_dynamic = not self.show_dynamic
+end
+
+function TLLScheduleTableConfiguration:toggle_show_settings()
+    self.show_settings = not self.show_settings
 end
 
 return TLLScheduleTableConfiguration

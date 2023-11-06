@@ -213,16 +213,44 @@ function Exports.build_display_tab(player)
     local display_content_frame = player_global.view.display_content_frame
     if not display_content_frame then return end
 
-    local controls_flow_name = "controls_flow"
-    local controls_flow = display_content_frame[controls_flow_name] or display_content_frame.add{
-        type="flow",
-        name=controls_flow_name,
-        direction="vertical",
-        style="tll_controls_flow"
-    }
-    controls_flow.clear()
-
     local table_config = player_global.model.schedule_table_configuration
+
+    local controls_frame_name = "controls_frame"
+    local controls_frame = display_content_frame[controls_frame_name] or display_content_frame.add{
+        type="frame",
+        name=controls_frame_name,
+        direction="vertical",
+        style="subpanel_frame"
+    }
+    controls_frame.style.horizontally_stretchable = true
+
+    controls_frame.clear()
+
+    local show_hide_flow = controls_frame.add{
+        type="flow",
+        direction="horizontal",
+        style="player_input_horizontal_flow",
+    }
+
+    local show_hide_button_sprite = table_config.show_settings and "utility/collapse" or "utility/expand"
+    local show_hide_button_hovered_sprite = table_config.show_settings and "utility/collapse_dark" or "utility/expand_dark"
+
+    show_hide_flow.add{
+        type="sprite-button",
+        style="control_settings_section_button",
+        tags={action=constants.actions.toggle_show_settings},
+        sprite=show_hide_button_sprite,
+        hovered_sprite=show_hide_button_hovered_sprite,
+    }
+
+    show_hide_flow.add{type="label", style="caption_label", caption={"tll.tooltip_title", {"tll.display_settings"}}}
+
+    local controls_flow = controls_frame.add{
+        type="flow",
+        direction="vertical",
+        style="tll_controls_flow",
+        visible=table_config.show_settings,
+    }
 
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_all_surfaces}, caption={"tll.show_all_surfaces"}, state=table_config.show_all_surfaces}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=table_config.show_satisfied}

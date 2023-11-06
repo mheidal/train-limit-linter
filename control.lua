@@ -258,6 +258,10 @@ script.on_event(defines.events.on_gui_click, function (event)
             if type(tab_index) ~= "number" then return end
             player_global.model.main_interface_selected_tab = tab_index
             main_interface.build_interface(player)
+
+        elseif action == constants.actions.toggle_show_settings then
+            player_global.model.schedule_table_configuration:toggle_show_settings()
+            main_interface.build_interface(player)
         end
     end
 end)
