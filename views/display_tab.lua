@@ -64,12 +64,15 @@ local function build_train_schedule_group_report(player)
 
                 local satisfied = (not (train_limit_data.dynamic or train_limit_data.not_set)) and (train_limit_data.limit - #train_schedule_group == 1)
 
+                local single_station_schedule = #train_schedule_group[1].schedule.records == 1
+
                 -- barrier for showing a particular schedule
                 if (
                     (not train_limit_data.hidden)
                     and (table_config.show_satisfied or (not satisfied))
                     and (table_config.show_not_set or (not train_limit_data.not_set))
                     and (table_config.show_dynamic or (not train_limit_data.dynamic))
+                    and (table_config.show_single_station_schedules or (not single_station_schedule))
                 ) then
                     any_schedule_shown = true
 
@@ -85,7 +88,7 @@ local function build_train_schedule_group_report(player)
                         train_limit_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
                     }
 
-                    local show_opinionation = not train_limit_data.not_set and not train_limit_data.dynamic
+                    local show_opinionation = not train_limit_data.not_set and not train_limit_data.dynamic and not single_station_schedule
 
                     local train_count_difference = train_limit_data.limit - 1 - #train_schedule_group
 
