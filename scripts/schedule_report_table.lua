@@ -79,43 +79,44 @@ function Exports.get_train_station_limits(train_schedule_group, surface, enabled
     local shared_schedule = train_schedule_group[1].schedule
 
     for _, record in pairs(shared_schedule.records) do
-
-        for _, keyword in pairs(enabled_hidden_keywords) do
-            local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(keyword)
-            local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(keyword)
-            if (string.find(record.station, keyword, nil, true)
-                or string.find(record.station, alt_rich_text_format_img, nil, true)
-                or string.find(record.station, alt_rich_text_format_entity, nil, true)
-                ) then
-                ret.hidden = true
-                return ret
-            end
-        end
-
-        local station_is_excluded = false
-        for _, enabled_keyword in pairs(enabled_excluded_keywords) do
-            local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(enabled_keyword)
-            local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(enabled_keyword)
-            if (string.find(record.station, enabled_keyword, nil, true)
-                or string.find(record.station, alt_rich_text_format_img, nil, true)
-                or string.find(record.station, alt_rich_text_format_entity, nil, true)
-                ) then
-                station_is_excluded = true
-            end
-        end
-
-        if not station_is_excluded then
-            for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
-                local control_behavior = train_stop.get_control_behavior()
-                ---@diagnostic disable-next-line not sure how to indicate to VS Code that this is LuaTrainStopControlBehavior
-                if control_behavior and control_behavior.set_trains_limit then
-                    ret.dynamic = true
+        if not record.temporary then
+            for _, keyword in pairs(enabled_hidden_keywords) do
+                local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(keyword)
+                local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(keyword)
+                if (string.find(record.station, keyword, nil, true)
+                    or string.find(record.station, alt_rich_text_format_img, nil, true)
+                    or string.find(record.station, alt_rich_text_format_entity, nil, true)
+                    ) then
+                    ret.hidden = true
+                    return ret
                 end
-                -- no train limit is implemented as limit == 2 ^ 32 - 1
-                if train_stop.trains_limit == (2 ^ 32) - 1 then
-                    ret.not_set = true
-                else
-                    ret.limit = ret.limit + train_stop.trains_limit
+            end
+
+            local station_is_excluded = false
+            for _, enabled_keyword in pairs(enabled_excluded_keywords) do
+                local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(enabled_keyword)
+                local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(enabled_keyword)
+                if (string.find(record.station, enabled_keyword, nil, true)
+                    or string.find(record.station, alt_rich_text_format_img, nil, true)
+                    or string.find(record.station, alt_rich_text_format_entity, nil, true)
+                    ) then
+                    station_is_excluded = true
+                end
+            end
+
+            if not station_is_excluded then
+                for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
+                    local control_behavior = train_stop.get_control_behavior()
+                    ---@diagnostic disable-next-line not sure how to indicate to VS Code that this is LuaTrainStopControlBehavior
+                    if control_behavior and control_behavior.set_trains_limit then
+                        ret.dynamic = true
+                    end
+                    -- no train limit is implemented as limit == 2 ^ 32 - 1
+                    if train_stop.trains_limit == (2 ^ 32) - 1 then
+                        ret.not_set = true
+                    else
+                        ret.limit = ret.limit + train_stop.trains_limit
+                    end
                 end
             end
         end
