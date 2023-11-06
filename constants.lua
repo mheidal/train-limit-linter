@@ -24,6 +24,7 @@ constants.actions = {
     toggle_show_manual="toggle_show_manual",
     toggle_show_dynamic="toggle_show_dynamic",
     toggle_show_settings="toggle_show_settings",
+    toggle_show_single_station_schedules="toggle_show_single_station_schedules",
 
     icon_selector_textfield_apply="icon_selector_textfield_apply",
     icon_selector_icon_selected="icon_selector_icon_selected",
