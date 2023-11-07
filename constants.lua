@@ -17,6 +17,7 @@ constants.actions = {
     delete_all_hidden_keywords="delete_all_hidden_keywords",
 
     train_schedule_create_blueprint="train_schedule_create_blueprint",
+    train_schedule_create_blueprint_and_ping_trains="train_schedule_create_blueprint_and_ping_trains",
     train_schedule_ping_manual_trains="train_schedule_ping_manual_trains",
     toggle_show_all_surfaces="toggle_show_all_surfaces",
     toggle_show_satisfied="toggle_show_satisfied",

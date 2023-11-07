@@ -18,6 +18,8 @@ local function build_train_schedule_group_report(player)
     local enabled_excluded_keywords = player_global.model.excluded_keywords:get_enabled_keywords()
     local enabled_hidden_keywords = player_global.model.hidden_keywords:get_enabled_keywords()
 
+    local rails_under_trains_without_schedules = schedule_report_table_scripts.get_rails_to_trains_without_schedule()
+
     local table_config = player_global.model.schedule_table_configuration
 
     local column_count = 4
@@ -60,7 +62,7 @@ local function build_train_schedule_group_report(player)
             for _, schedule_name in pairs(sorted_schedule_names) do
 
                 local train_schedule_group = train_schedule_groups[schedule_name]
-                local train_limit_data = schedule_report_table_scripts.get_train_station_limits(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords)
+                local train_limit_data = schedule_report_table_scripts.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
 
                 local satisfied = (not (train_limit_data.dynamic or train_limit_data.not_set)) and (train_limit_data.limit - #train_schedule_group == 1)
 
@@ -164,13 +166,38 @@ style="tll_horizontal_stretch_squash_label"
                     -- cell 4
                     schedule_report_table.add{type="label", caption=train_limit_sum_caption, tooltip=train_limit_sum_tooltip}
 
+                    local any_trains_with_no_schedule_parked = utils.get_table_size(train_limit_data.trains_with_no_schedule_parked) > 0
+                    local parked_train_positions_and_train_stops = {}
+                    for _, parked_train_and_train_stop in pairs(train_limit_data.trains_with_no_schedule_parked) do
+                        table.insert(parked_train_positions_and_train_stops, {
+                            position=parked_train_and_train_stop.train.front_stock.position,
+                            train_stop=parked_train_and_train_stop.train_stop
+                        })
+                    end
+
                     -- cell 5
+
+                    local copy_sprite = any_trains_with_no_schedule_parked and "utility/warning_icon" or "utility/copy"
+                    local copy_tooltip = {
+                        "",
+                        {"tll.copy_train_blueprint_tooltip"},
+                        any_trains_with_no_schedule_parked and {"tll.copy_train_blueprint_tooltip_parked_train", #parked_train_positions_and_train_stops} or ""
+                    }
+
+                    local copy_tags = {
+                        action=any_trains_with_no_schedule_parked and constants.actions.train_schedule_create_blueprint_and_ping_trains or constants.actions.train_schedule_create_blueprint,
+                        template_train_ids=template_train_ids,
+                        surface=surface.name,
+                        parked_train_positions=any_trains_with_no_schedule_parked and parked_train_positions_and_train_stops or nil
+                    }
+
+
                     schedule_report_table.add{
                         type="sprite-button",
-                        sprite="utility/copy",
+                        sprite=copy_sprite,
                         style="tool_button_blue",
-                        tags={action=constants.actions.train_schedule_create_blueprint, template_train_ids=template_train_ids, surface=surface.name},
-                        tooltip={"tll.copy_train_blueprint_tooltip"}
+                        tags=copy_tags,
+                        tooltip=copy_tooltip,
                     }
 
                     -- cell 6
