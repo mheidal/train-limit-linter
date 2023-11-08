@@ -90,6 +90,29 @@ script.on_event(defines.events.on_lua_shortcut, function(event)
     end
 end)
 
+---@param event EventData.on_gui_click
+---@param player LuaPlayer
+---@param player_global TLLPlayerGlobal
+local function schedule_report_table_create_blueprint(event, player, player_global)
+    local template_train
+    local template_train_ids = event.element.tags.template_train_ids
+    if type(template_train_ids) ~= "table" then return end
+    for _, id in pairs(template_train_ids) do
+        local template_option = game.get_train_by_id(id)
+        if template_option then
+            template_train = template_option
+            break
+        end
+    end
+    if template_train == nil then
+        player.create_local_flying_text{text={"tll.no_valid_template_trains"}, create_at_cursor=true}
+        return
+    end
+    local surface_name = event.element.tags.surface
+    if type(surface_name) ~= "string" then return end
+    schedule_report_table_scripts.create_blueprint_from_train(player, template_train, surface_name)
+end
+
 script.on_event(defines.events.on_gui_click, function (event)
     local player = game.get_player(event.player_index)
     if not player then return end
@@ -151,23 +174,15 @@ script.on_event(defines.events.on_gui_click, function (event)
             main_interface.build_interface(player)
 
         elseif action == constants.actions.train_schedule_create_blueprint then
-            local template_train
-            local template_train_ids = event.element.tags.template_train_ids
-            if type(template_train_ids) ~= "table" then return end
-            for _, id in pairs(template_train_ids) do
-                local template_option = game.get_train_by_id(id)
-                if template_option then
-                    template_train = template_option
-                    break
-                end
+            schedule_report_table_create_blueprint(event, player, player_global)
+
+        elseif action == constants.actions.train_schedule_create_blueprint_and_ping_trains then
+            schedule_report_table_create_blueprint(event, player, player_global)
+            local parked_trains = event.element.tags.parked_train_positions
+            if not parked_trains or not type(parked_trains) == "table" then return end
+            for _, parked_train in pairs(parked_trains) do
+                player.print{"tll.train_parked_at_stop", parked_train.train_stop, parked_train.position.x, parked_train.position.y, event.element.tags.surface}
             end
-            if template_train == nil then
-                player.create_local_flying_text{text={"tll.no_valid_template_trains"}, create_at_cursor=true}
-                return
-            end
-            local surface_name = event.element.tags.surface
-            if type(surface_name) ~= "string" then return end
-            schedule_report_table_scripts.create_blueprint_from_train(player, template_train, surface_name)
 
         elseif action == constants.actions.train_schedule_ping_manual_trains then
             local surface = event.element.tags.surface
