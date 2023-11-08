@@ -62,37 +62,37 @@ local function build_train_schedule_group_report(player)
             for _, schedule_name in pairs(sorted_schedule_names) do
 
                 local train_schedule_group = train_schedule_groups[schedule_name]
-                local train_limit_data = schedule_report_table_scripts.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
+                local train_stop_data = schedule_report_table_scripts.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
 
-                local satisfied = (not (train_limit_data.dynamic or train_limit_data.not_set)) and (train_limit_data.limit - #train_schedule_group == 1)
+                local satisfied = (not (train_stop_data.dynamic or train_stop_data.not_set)) and (train_stop_data.limit - #train_schedule_group == 1)
 
                 local single_station_schedule = #train_schedule_group[1].schedule.records == 1
 
                 -- barrier for showing a particular schedule
                 if (
-                    (not train_limit_data.hidden)
+                    (not train_stop_data.hidden)
                     and (table_config.show_satisfied or (not satisfied))
-                    and (table_config.show_not_set or (not train_limit_data.not_set))
-                    and (table_config.show_dynamic or (not train_limit_data.dynamic))
+                    and (table_config.show_not_set or (not train_stop_data.not_set))
+                    and (table_config.show_dynamic or (not train_stop_data.dynamic))
                     and (table_config.show_single_station_schedules or (not single_station_schedule))
                 ) then
                     any_schedule_shown = true
 
                     local train_limit_sum_caption = {
                         "",
-                        tostring(train_limit_data.limit),
-                        (train_limit_data.not_set or train_limit_data.dynamic) and {"tll.warning_icon"} or "",
+                        tostring(train_stop_data.limit),
+                        (train_stop_data.not_set or train_stop_data.dynamic) and {"tll.warning_icon"} or "",
                     }
                     local train_limit_sum_tooltip = {
                         "",
-                        train_limit_data.not_set and {"tll.train_limit_not_set_tooltip"} or "",
-                        train_limit_data.not_set and train_limit_data.dynamic and "\n" or "",
-                        train_limit_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
+                        train_stop_data.not_set and {"tll.train_limit_not_set_tooltip"} or "",
+                        train_stop_data.not_set and train_stop_data.dynamic and "\n" or "",
+                        train_stop_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
                     }
 
-                    local show_opinionation = not train_limit_data.not_set and not train_limit_data.dynamic and not single_station_schedule
+                    local show_opinionation = not train_stop_data.not_set and not train_stop_data.dynamic and not single_station_schedule
 
-                    local train_count_difference = train_limit_data.limit - 1 - #train_schedule_group
+                    local train_count_difference = train_stop_data.limit - 1 - #train_schedule_group
 
                     -- caption
                     local train_count_caption = tostring(#train_schedule_group)
@@ -166,9 +166,9 @@ style="tll_horizontal_stretch_squash_label"
                     -- cell 4
                     schedule_report_table.add{type="label", caption=train_limit_sum_caption, tooltip=train_limit_sum_tooltip}
 
-                    local any_trains_with_no_schedule_parked = utils.get_table_size(train_limit_data.trains_with_no_schedule_parked) > 0
+                    local any_trains_with_no_schedule_parked = utils.get_table_size(train_stop_data.trains_with_no_schedule_parked) > 0
                     local parked_train_positions_and_train_stops = {}
-                    for _, parked_train_and_train_stop in pairs(train_limit_data.trains_with_no_schedule_parked) do
+                    for _, parked_train_and_train_stop in pairs(train_stop_data.trains_with_no_schedule_parked) do
                         table.insert(parked_train_positions_and_train_stops, {
                             position=parked_train_and_train_stop.train.front_stock.position,
                             train_stop=parked_train_and_train_stop.train_stop

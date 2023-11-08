@@ -5,7 +5,7 @@ local utils = require("utils")
 ---@field surface string
 ---@field train_schedule_groups LuaTrain[][]
 
----@class TrainStationLimitData
+---@class TrainStopData
 ---@field limit number
 ---@field not_set boolean
 ---@field dynamic boolean
@@ -126,9 +126,9 @@ end
 ---@param train_schedule_group table: array[LuaTrain]
 ---@param surface LuaSurface
 ---@param enabled_excluded_keywords table: array[toggleable_item]
----@return TrainStationLimitData: info about train stops
+---@return TrainStopData: info about train stops
 function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
-    ---@type TrainStationLimitData
+    ---@type TrainStopData
     local ret = {
         limit=0,
         not_set=false,
