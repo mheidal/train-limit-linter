@@ -22,7 +22,6 @@ constants.actions = {
     toggle_show_satisfied="toggle_show_satisfied",
     toggle_show_not_set="toggle_show_not_set",
     toggle_show_dynamic="toggle_show_dynamic",
-    toggle_show_settings="toggle_show_settings",
     toggle_show_single_station_schedules="toggle_show_single_station_schedules",
 
     icon_selector_textfield_apply="icon_selector_textfield_apply",
@@ -45,6 +44,10 @@ constants.actions = {
 
     train_stop_name_selector_search="train_stop_name_selector_search",
     train_stop_name_selector_select_name="train_stop_name_selector_select_name",
+
+    toggle_display_settings_visible="toggle_display_settings_visible",
+    toggle_blueprint_settings_visible="toggle_blueprint_settings_visible",
+    toggle_fuel_settings_visible="toggle_fuel_settings_visible",
 }
 
 constants.orientations = {

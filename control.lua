@@ -2,6 +2,7 @@ local constants = require("constants")
 local globals = require("scripts.globals")
 
 -- view
+local collapsible_frame = require("views.collapsible_frame")
 local slider_textfield = require("views.slider_textfield")
 local icon_selector_textfield = require("views.icon_selector_textfield")
 
@@ -252,9 +253,17 @@ script.on_event(defines.events.on_gui_click, function (event)
             player_global.model.main_interface_selected_tab = tab_index
             main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_show_settings then
-            player_global.model.schedule_table_configuration:toggle_show_settings()
-            main_interface.build_interface(player)
+        elseif action == constants.actions.toggle_display_settings_visible then
+            player_global.model.collapsible_frame_configuration:toggle_display_settings_visible()
+            collapsible_frame.toggle_collapsible_frame_visible(event.element)
+
+        elseif action == constants.actions.toggle_blueprint_settings_visible then
+            player_global.model.collapsible_frame_configuration:toggle_blueprint_settings_visible()
+            collapsible_frame.toggle_collapsible_frame_visible(event.element)
+
+        elseif action == constants.actions.toggle_fuel_settings_visible then
+            player_global.model.collapsible_frame_configuration:toggle_fuel_settings_visible()
+            collapsible_frame.toggle_collapsible_frame_visible(event.element)
         end
     end
 end)

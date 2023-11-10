@@ -1,6 +1,7 @@
 local constants = require("constants")
 local utils = require("utils")
 
+local collapsible_frame = require("views.collapsible_frame")
 local blueprint_orientation_selector = require("views.settings_views.blueprint_orientation_selector")
 local blueprint_snap_selection = require("views.settings_views.blueprint_snap_selection")
 local slider_textfield = require("views.slider_textfield")
@@ -26,39 +27,45 @@ function Exports.build_settings_tab(player)
     scroll_pane.clear()
 
     -- blueprint settings
-    local blueprint_settings_frame = scroll_pane.add{type="frame", style="bordered_frame", direction="vertical"}
-
-    local blueprint_header_label = blueprint_settings_frame.add{
-        type="label",
-        style="bold_label",
-        caption={"tll.blueprint_settings"},
-        tooltip={"tll.blueprint_settings_tooltip"}
-    }
-    blueprint_header_label.style.font_color={1, 0.901961, 0.752941}
-    blueprint_orientation_selector.build_blueprint_orientation_selector(blueprint_config.new_blueprint_orientation, blueprint_settings_frame)
-    blueprint_snap_selection.build_blueprint_snap_selector(player, blueprint_settings_frame)
+    local blueprint_collapsible_frame_name = "blueprint_collapsible_frame_name"
+    local blueprint_collapsible_frame = scroll_pane[blueprint_collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+        scroll_pane,
+        blueprint_collapsible_frame_name
+    )
+    local blueprint_content_flow = collapsible_frame.build_collapsible_frame_contents(
+        blueprint_collapsible_frame,
+        constants.actions.toggle_blueprint_settings_visible,
+        {"tll.blueprint_settings"},
+        {"tll.blueprint_settings_tooltip"},
+        player_global.model.collapsible_frame_configuration.blueprint_settings_visible
+    )
+    blueprint_orientation_selector.build_blueprint_orientation_selector(blueprint_config.new_blueprint_orientation, blueprint_content_flow)
+    blueprint_snap_selection.build_blueprint_snap_selector(player, blueprint_content_flow)
 
     -- fuel settings
-    local fuel_settings_frame = scroll_pane.add{type="frame", style="bordered_frame", direction="vertical"}
-
-    local fuel_header_label = fuel_settings_frame.add{
-        type="label",
-        style="bold_label",
-        caption={"tll.fuel_settings"},
-        tooltip={"tll.fuel_settings_tooltip"}
-    }
-    fuel_header_label.style.font_color={1, 0.901961, 0.752941}
+    local fuel_collapsible_frame_name = "fuel_collapsible_frame_name"
+    local fuel_collapsible_frame = scroll_pane[fuel_collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+        scroll_pane,
+        fuel_collapsible_frame_name
+    )
+    local fuel_content_flow = collapsible_frame.build_collapsible_frame_contents(
+        fuel_collapsible_frame,
+        constants.actions.toggle_fuel_settings_visible,
+        {"tll.fuel_settings"},
+        {"tll.fuel_settings_tooltip"},
+        player_global.model.collapsible_frame_configuration.fuel_settings_visible
+    )
 
     local fuel_config = player_global.model.fuel_configuration
 
-    fuel_settings_frame.add{
+    fuel_content_flow.add{
         type="checkbox",
         tags={action=constants.actions.toggle_place_trains_with_fuel},
         state=fuel_config.add_fuel,
         caption={"tll.place_trains_with_fuel_checkbox"}
     }
 
-    fuel_category_table = fuel_settings_frame.add{type="table", column_count=2, style="bordered_table"}
+    fuel_category_table = fuel_content_flow.add{type="table", column_count=2, style="bordered_table"}
 
     for fuel_category, fuel_category_config in pairs(fuel_config.fuel_category_configurations) do
 

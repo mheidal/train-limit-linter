@@ -5,6 +5,7 @@ local TLLKeywordList = require("models.keyword_list")
 local TLLFuelConfiguration = require("models.fuel_configuration")
 local TLLModalFunctionConfiguration = require("models.modal_function_configuration")
 local fuel_category_data = require("models.fuel_category_data")
+local TLLCollapsibleFrameConfiguration = require("models.collapsible_frame_configuration")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
@@ -27,6 +28,7 @@ local fuel_category_data = require("models.fuel_category_data")
 ---@field modal_function_configuration TLLModalFunctionConfiguration
 ---@field main_interface_selected_tab number?
 ---@field main_interface_open boolean
+---@field collapsible_frame_configuration TLLCollapsibleFrameConfiguration
 
 ---@class TLLPlayerView
 ---@field main_frame LuaGuiElement?
@@ -71,6 +73,7 @@ function Exports.get_default_player_global()
             last_gui_location = nil,
             modal_function_configuration = TLLModalFunctionConfiguration.new(),
             main_interface_open=false,
+            collapsible_frame_configuration = TLLCollapsibleFrameConfiguration.new(),
         },
         view = Exports.get_empty_player_view()
     }
