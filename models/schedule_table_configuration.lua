@@ -2,7 +2,6 @@
 ---@field show_all_surfaces boolean
 ---@field show_satisfied boolean
 ---@field show_not_set boolean
----@field show_manual boolean
 ---@field show_dynamic boolean
 ---@field show_settings boolean
 ---@field show_single_station_schedules boolean
@@ -10,7 +9,6 @@
 ---@field toggle_show_all_surfaces fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_satisfied fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_not_set fun(self: TLLScheduleTableConfiguration)
----@field toggle_show_manual fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_dynamic fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_settings fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_single_station_schedules fun(self: TLLScheduleTableConfiguration)
@@ -25,7 +23,6 @@ function TLLScheduleTableConfiguration.new()
         show_all_surfaces = false,
         show_satisfied = false, -- satisfied when sum of train limits is 1 greater than sum of trains
         show_not_set = false,
-        show_manual = false,
         show_dynamic = false,
         show_settings = true,
         show_single_station_schedules = false,
@@ -44,10 +41,6 @@ end
 
 function TLLScheduleTableConfiguration:toggle_show_not_set()
     self.show_not_set = not self.show_not_set
-end
-
-function TLLScheduleTableConfiguration:toggle_show_manual()
-    self.show_manual = not self.show_manual
 end
 
 function TLLScheduleTableConfiguration:toggle_show_dynamic()

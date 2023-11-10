@@ -21,8 +21,6 @@ Train Limit Linter provides a GUI, which is opened by default using `CONTROL + O
 
 - Each schedule has a button which places a blueprint containing a copy of a train in the schedule into your cursor. This allows the user to quickly stamp down new trains. Certain aspects of the blueprints this generates can be modified in the Settings tab.
 
-- It can show whether any train schedule groups have trains that are set to manual mode, and provides a button which pings all trains with that schedule in manual mode on the map.
-
 ### Keywords
 Train Limit Linter allows the creation of lists of keywords which can be excluded or hidden. These keywords affect certain elements of the schedule display table in the Display tab, specifically how train limits are calculated and whether schedules are displayed. Keyword lists can be converted into exchange strings which can be shared between players or save files.
 

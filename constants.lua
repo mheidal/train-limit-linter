@@ -18,11 +18,9 @@ constants.actions = {
 
     train_schedule_create_blueprint="train_schedule_create_blueprint",
     train_schedule_create_blueprint_and_ping_trains="train_schedule_create_blueprint_and_ping_trains",
-    train_schedule_ping_manual_trains="train_schedule_ping_manual_trains",
     toggle_show_all_surfaces="toggle_show_all_surfaces",
     toggle_show_satisfied="toggle_show_satisfied",
     toggle_show_not_set="toggle_show_not_set",
-    toggle_show_manual="toggle_show_manual",
     toggle_show_dynamic="toggle_show_dynamic",
     toggle_show_settings="toggle_show_settings",
     toggle_show_single_station_schedules="toggle_show_single_station_schedules",
