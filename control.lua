@@ -184,28 +184,6 @@ script.on_event(defines.events.on_gui_click, function (event)
                 player.print{"tll.train_parked_at_stop", parked_train.train_stop, parked_train.position.x, parked_train.position.y, event.element.tags.surface}
             end
 
-        elseif action == constants.actions.train_schedule_ping_manual_trains then
-            local surface = event.element.tags.surface
-            local manual_train_ids = event.element.tags.manual_train_ids
-            if type(manual_train_ids) ~= "table" then return end
-            local schedule_name = event.element.tags.schedule_name
-
-            local chat_string = {"tll.manual_train_list", #manual_train_ids, schedule_name}
-            for _, id in pairs(manual_train_ids) do
-                local train = game.get_train_by_id(id)
-                if train then
-                    local train_pos = train.carriages[1].position
-                    local x = string.format("%.1f", train_pos.x)
-                    local y = string.format("%.1f", train_pos.y)
-                    chat_string = {"", chat_string, "\n[gps=" .. x .. "," .. y}
-                    if surface ~= constants.default_surface_name then
-                        chat_string = {"", chat_string, "," .. surface}
-                    end
-                    chat_string = {"", chat_string, "]"}
-                end
-            end
-            player.print(chat_string)
-
         elseif action == constants.actions.set_blueprint_orientation then
             local orientation = event.element.tags.orientation
             if type(orientation) ~= "number" then return end
@@ -310,10 +288,6 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
 
         elseif action == constants.actions.toggle_show_not_set then
             player_global.model.schedule_table_configuration:toggle_show_not_set()
-            main_interface.build_interface(player)
-
-        elseif action == constants.actions.toggle_show_manual then
-            player_global.model.schedule_table_configuration:toggle_show_manual()
             main_interface.build_interface(player)
 
         elseif action == constants.actions.toggle_show_dynamic then
@@ -489,16 +463,6 @@ end)
 script.on_event(defines.events.on_train_created, function (event)
     for _, player in pairs(game.players) do
         main_interface.build_interface(player)
-    end
-end)
-
-script.on_event(defines.events.on_train_changed_state, function (event)
-    local train_is_manual = event.train.manual_mode
-    local train_was_manual = event.old_state == defines.train_state.manual_control or event.old_state == defines.train_state.manual_control_stop
-    if train_is_manual ~= train_was_manual then
-        for _, player in pairs(game.players) do
-            main_interface.build_interface(player)
-        end
     end
 end)
 
