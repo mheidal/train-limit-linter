@@ -260,6 +260,10 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.toggle_blueprint_settings_visible then
             player_global.model.collapsible_frame_configuration:toggle_blueprint_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
+
+        elseif action == constants.actions.toggle_fuel_settings_visible then
+            player_global.model.collapsible_frame_configuration:toggle_fuel_settings_visible()
+            collapsible_frame.toggle_collapsible_frame_visible(event.element)
         end
     end
 end)

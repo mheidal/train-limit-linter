@@ -47,6 +47,7 @@ constants.actions = {
 
     toggle_display_settings_visible="toggle_display_settings_visible",
     toggle_blueprint_settings_visible="toggle_blueprint_settings_visible",
+    toggle_fuel_settings_visible="toggle_fuel_settings_visible",
 }
 
 constants.orientations = {
