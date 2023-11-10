@@ -45,7 +45,8 @@ constants.actions = {
     train_stop_name_selector_search="train_stop_name_selector_search",
     train_stop_name_selector_select_name="train_stop_name_selector_select_name",
 
-    toggle_collapsible_frame_content_visible="toggle_collapsible_frame_content_visible"
+    toggle_display_settings_visible="toggle_display_settings_visible",
+    toggle_blueprint_settings_visible="toggle_blueprint_settings_visible",
 }
 
 constants.orientations = {

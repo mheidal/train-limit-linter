@@ -218,9 +218,10 @@ function Exports.build_display_tab(player)
     )
     local collapsible_frame_content_flow = collapsible_frame.build_collapsible_frame_contents(
         display_settings_collapsible_frame,
+        constants.actions.toggle_display_settings_visible,
         {"tll.display_settings"},
         nil,
-        true
+        player_global.model.collapsible_frame_configuration.display_settings_visible
     )
 
     local controls_flow = collapsible_frame_content_flow.add{

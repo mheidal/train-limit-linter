@@ -253,7 +253,12 @@ script.on_event(defines.events.on_gui_click, function (event)
             player_global.model.main_interface_selected_tab = tab_index
             main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_collapsible_frame_content_visible then
+        elseif action == constants.actions.toggle_display_settings_visible then
+            player_global.model.collapsible_frame_configuration:toggle_display_settings_visible()
+            collapsible_frame.toggle_collapsible_frame_visible(event.element)
+
+        elseif action == constants.actions.toggle_blueprint_settings_visible then
+            player_global.model.collapsible_frame_configuration:toggle_blueprint_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
         end
     end

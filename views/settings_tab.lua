@@ -34,9 +34,10 @@ function Exports.build_settings_tab(player)
     )
     local blueprint_content_flow = collapsible_frame.build_collapsible_frame_contents(
         blueprint_collapsible_frame,
+        constants.actions.toggle_blueprint_settings_visible,
         {"tll.blueprint_settings"},
         {"tll.blueprint_settings_tooltip"},
-        true
+        player_global.model.collapsible_frame_configuration.blueprint_settings_visible
     )
     blueprint_orientation_selector.build_blueprint_orientation_selector(blueprint_config.new_blueprint_orientation, blueprint_content_flow)
     blueprint_snap_selection.build_blueprint_snap_selector(player, blueprint_content_flow)

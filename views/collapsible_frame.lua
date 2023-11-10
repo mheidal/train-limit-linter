@@ -19,11 +19,12 @@ function Exports.build_collapsible_frame(parent, collapsible_frame_name)
 end
 
 ---@param collapsible_frame LuaGuiElement
+---@param toggle_button_action string
 ---@param caption LocalisedString
 ---@param caption_tooltip LocalisedString
 ---@param content_visible boolean
 ---@return LuaGuiElement
-function Exports.build_collapsible_frame_contents(collapsible_frame, caption, caption_tooltip, content_visible)
+function Exports.build_collapsible_frame_contents(collapsible_frame, toggle_button_action, caption, caption_tooltip, content_visible)
     collapsible_frame.clear()
     local show_hide_flow = collapsible_frame.add{
         type="flow",
@@ -37,7 +38,7 @@ function Exports.build_collapsible_frame_contents(collapsible_frame, caption, ca
     show_hide_flow.add{
         type="sprite-button",
         style="control_settings_section_button",
-        tags={action=constants.actions.toggle_collapsible_frame_content_visible},
+        tags={action=toggle_button_action},
         sprite=show_hide_button_sprite,
         hovered_sprite=show_hide_button_hovered_sprite,
     }
