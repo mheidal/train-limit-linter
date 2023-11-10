@@ -1,4 +1,4 @@
-+#!/bin/bash
+#!/bin/bash
 
 # Get the parent folder's path
 parentFolder="train-limit-linter"
