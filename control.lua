@@ -314,6 +314,14 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
         elseif action == constants.actions.toggle_place_trains_with_fuel then
             player_global.model.fuel_configuration:toggle_add_fuel()
             main_interface.build_interface(player)
+
+        elseif action == constants.actions.toggle_include_train_stops then
+            player_global.model.blueprint_configuration:toggle_include_train_stops()
+            main_interface.build_interface(player)
+
+        elseif action == constants.actions.toggle_limit_train_stops then
+            player_global.model.blueprint_configuration:toggle_limit_train_stops()
+            main_interface.build_interface(player)
         end
     end
 end)
@@ -340,9 +348,14 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
             local fuel_category = event.element.tags.fuel_category
             local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[fuel_category]
             fuel_config:set_fuel_amount(new_fuel_amount)
+
         elseif action == constants.actions.set_blueprint_snap_width then
             local new_snap_width = event.element.slider_value
             player_global.model.blueprint_configuration:set_snap_width(new_snap_width)
+
+        elseif action == constants.actions.set_default_train_limit then
+            local new_default_limit = event.element.slider_value
+            player_global.model.blueprint_configuration:set_default_train_limit(new_default_limit)
         end
     end
 end)
@@ -368,10 +381,15 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
             local new_snap_width = tonumber(event.element.text)
             if not new_snap_width then return end
             player_global.model.blueprint_configuration:set_snap_width(new_snap_width)
+
+        elseif action == constants.actions.set_default_train_limit then
+            local new_default_limit = tonumber(event.element.text)
+            if not new_default_limit then return end
+            player_global.model.blueprint_configuration:set_default_train_limit(new_default_limit)
         end
     end
 
-    -- handler for slider_textfield element: when the slider updates, update the textfield
+    -- handler for slider_textfield element: when the textfield updates, update the slider
     if event.element.tags.slider_textfield then
         local slider_textfield_flow = event.element.parent
         if not slider_textfield_flow then return end

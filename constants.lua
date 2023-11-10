@@ -31,6 +31,9 @@ constants.actions = {
     toggle_blueprint_snap="toggle_blueprint_snap",
     set_blueprint_snap_width="set_blueprint_snap_width",
     toggle_blueprint_snap_direction="toggle_blueprint_snap_direction",
+    toggle_include_train_stops="toggle_include_train_stops",
+    toggle_limit_train_stops="toggle_limit_train_stops",
+    set_default_train_limit="set_default_train_limit",
 
     toggle_place_trains_with_fuel="toggle_place_trains_with_fuel",
     update_fuel_amount="update_fuel_amount",
