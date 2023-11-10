@@ -1,6 +1,7 @@
 local constants = require("constants")
 local utils = require("utils")
 
+local collapsible_frame = require("views.collapsible_frame")
 local blueprint_orientation_selector = require("views.settings_views.blueprint_orientation_selector")
 local blueprint_snap_selection = require("views.settings_views.blueprint_snap_selection")
 local slider_textfield = require("views.slider_textfield")
@@ -26,17 +27,19 @@ function Exports.build_settings_tab(player)
     scroll_pane.clear()
 
     -- blueprint settings
-    local blueprint_settings_frame = scroll_pane.add{type="frame", style="bordered_frame", direction="vertical"}
-
-    local blueprint_header_label = blueprint_settings_frame.add{
-        type="label",
-        style="bold_label",
-        caption={"tll.blueprint_settings"},
-        tooltip={"tll.blueprint_settings_tooltip"}
-    }
-    blueprint_header_label.style.font_color={1, 0.901961, 0.752941}
-    blueprint_orientation_selector.build_blueprint_orientation_selector(blueprint_config.new_blueprint_orientation, blueprint_settings_frame)
-    blueprint_snap_selection.build_blueprint_snap_selector(player, blueprint_settings_frame)
+    local blueprint_collapsible_frame_name = "blueprint_collapsible_frame_name"
+    local blueprint_collapsible_frame = scroll_pane[blueprint_collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+        scroll_pane,
+        blueprint_collapsible_frame_name
+    )
+    local blueprint_content_flow = collapsible_frame.build_collapsible_frame_contents(
+        blueprint_collapsible_frame,
+        {"tll.blueprint_settings"},
+        {"tll.blueprint_settings_tooltip"},
+        true
+    )
+    blueprint_orientation_selector.build_blueprint_orientation_selector(blueprint_config.new_blueprint_orientation, blueprint_content_flow)
+    blueprint_snap_selection.build_blueprint_snap_selector(player, blueprint_content_flow)
 
     -- fuel settings
     local fuel_settings_frame = scroll_pane.add{type="frame", style="bordered_frame", direction="vertical"}
