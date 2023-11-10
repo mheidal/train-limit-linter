@@ -3,6 +3,8 @@ local utils = require("utils")
 
 local schedule_report_table_scripts = require("scripts.schedule_report_table")
 
+local collapsible_frame = require("views.collapsible_frame")
+
 local Exports = {}
 
 ---@param player LuaPlayer
@@ -209,41 +211,24 @@ function Exports.build_display_tab(player)
 
     local table_config = player_global.model.schedule_table_configuration
 
-    local controls_frame_name = "controls_frame"
-    local controls_frame = display_content_frame[controls_frame_name] or display_content_frame.add{
-        type="frame",
-        name=controls_frame_name,
-        direction="vertical",
-        style="subpanel_frame"
-    }
-    controls_frame.style.horizontally_stretchable = true
+    local collapsible_frame_name = "display_collapsible_frame"
+    local display_settings_collapsible_frame = display_content_frame[collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+        display_content_frame,
+        collapsible_frame_name
+    )
+    local collapsible_frame_content_flow = collapsible_frame.build_collapsible_frame_contents(
+        display_settings_collapsible_frame,
+        constants.actions.toggle_display_settings_visible,
+        {"tll.display_settings"},
+        nil,
+        table_config.display_settings_visible
+    )
 
-    controls_frame.clear()
-
-    local show_hide_flow = controls_frame.add{
-        type="flow",
-        direction="horizontal",
-        style="player_input_horizontal_flow",
-    }
-
-    local show_hide_button_sprite = table_config.show_settings and "utility/collapse" or "utility/expand"
-    local show_hide_button_hovered_sprite = table_config.show_settings and "utility/collapse_dark" or "utility/expand_dark"
-
-    show_hide_flow.add{
-        type="sprite-button",
-        style="control_settings_section_button",
-        tags={action=constants.actions.toggle_show_settings},
-        sprite=show_hide_button_sprite,
-        hovered_sprite=show_hide_button_hovered_sprite,
-    }
-
-    show_hide_flow.add{type="label", style="caption_label", caption={"tll.tooltip_title", {"tll.display_settings"}}}
-
-    local controls_flow = controls_frame.add{
+    local controls_flow = collapsible_frame_content_flow.add{
         type="flow",
         direction="vertical",
         style="tll_controls_flow",
-        visible=table_config.show_settings,
+        visible=table_config.display_settings_visible,
     }
 
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_all_surfaces}, caption={"tll.show_all_surfaces"}, state=table_config.show_all_surfaces}

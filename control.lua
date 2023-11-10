@@ -252,8 +252,8 @@ script.on_event(defines.events.on_gui_click, function (event)
             player_global.model.main_interface_selected_tab = tab_index
             main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_show_settings then
-            player_global.model.schedule_table_configuration:toggle_show_settings()
+        elseif action == constants.actions.toggle_display_settings_visible then
+            player_global.model.schedule_table_configuration:toggle_display_settings_visible()
             main_interface.build_interface(player)
         end
     end
