@@ -2,6 +2,7 @@ local constants = require("constants")
 local globals = require("scripts.globals")
 
 -- view
+local collapsible_frame = require("views.collapsible_frame")
 local slider_textfield = require("views.slider_textfield")
 local icon_selector_textfield = require("views.icon_selector_textfield")
 
@@ -252,9 +253,8 @@ script.on_event(defines.events.on_gui_click, function (event)
             player_global.model.main_interface_selected_tab = tab_index
             main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_display_settings_visible then
-            player_global.model.schedule_table_configuration:toggle_display_settings_visible()
-            main_interface.build_interface(player)
+        elseif action == constants.actions.toggle_collapsible_frame_content_visible then
+            collapsible_frame.toggle_collapsible_frame_visible(event.element)
         end
     end
 end)

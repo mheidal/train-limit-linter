@@ -218,17 +218,15 @@ function Exports.build_display_tab(player)
     )
     local collapsible_frame_content_flow = collapsible_frame.build_collapsible_frame_contents(
         display_settings_collapsible_frame,
-        constants.actions.toggle_display_settings_visible,
         {"tll.display_settings"},
         nil,
-        table_config.display_settings_visible
+        true
     )
 
     local controls_flow = collapsible_frame_content_flow.add{
         type="flow",
         direction="vertical",
         style="tll_controls_flow",
-        visible=table_config.display_settings_visible,
     }
 
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_all_surfaces}, caption={"tll.show_all_surfaces"}, state=table_config.show_all_surfaces}
