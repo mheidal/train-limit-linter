@@ -535,3 +535,40 @@ script.on_configuration_changed(function (config_changed_data)
         end
     end
 end)
+
+script.on_event("tll_test", function (event)
+    local player = game.get_player(event.player_index)
+    if not player then return end
+    ---@type TLLPlayerGlobal
+    local pg = global.players[player.index]
+    local script_inventory = game.create_inventory(1)
+    local blueprint_book = script_inventory[1]
+    blueprint_book.set_stack{name="tll_cursor_blueprint_book"}
+    blueprint_book.label = "Blueprint book"
+    local blueprint_book_inventory = blueprint_book.get_inventory(defines.inventory.item_main)
+    if not blueprint_book_inventory then return end
+
+    local train_blueprint
+    local train_blueprint2
+    for sname, s in pairs(game.surfaces) do
+        for tid, t in pairs(s.get_trains()) do
+            pg.model.blueprint_configuration:set_new_blueprint_orientation(constants.orientations.l)
+            train_blueprint = schedule_report_table_scripts.create_blueprint_from_train(player, t, sname)
+            train_blueprint.label = "Blueprint 1"
+            pg.model.blueprint_configuration:set_new_blueprint_orientation(constants.orientations.d)
+            train_blueprint2 = schedule_report_table_scripts.create_blueprint_from_train(player, t, sname)
+            train_blueprint2.label = "Blueprint 2"
+            goto done
+        end
+    end
+    ::done::
+    if not train_blueprint then return end
+    if not train_blueprint2 then return end
+    blueprint_book_inventory.insert(train_blueprint)
+    blueprint_book_inventory.insert(train_blueprint2)
+    local cursor_stack = player.cursor_stack
+    if cursor_stack then
+        cursor_stack.set_stack(blueprint_book)
+    end
+    script_inventory.destroy()
+end)

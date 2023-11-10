@@ -303,13 +303,14 @@ end
 ---@param player LuaPlayer
 ---@param train LuaTrain
 ---@param surface_name string
+---@return LuaItemStack?
 function Exports.create_blueprint_from_train(player, train, surface_name)
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
     local surface = game.get_surface(surface_name)
-    if surface == nil then return end
+    if not surface then return end
     local script_inventory = game.create_inventory(2)
     local aggregated_blueprint_slot = script_inventory[1]
     aggregated_blueprint_slot.set_stack{name="tll_cursor_blueprint"}
@@ -387,9 +388,15 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
 
     aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
     aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player, prev_vert_offset)
-    player.add_to_clipboard(aggregated_blueprint_slot)
-    player.activate_paste()
-    script_inventory.destroy()
+    return aggregated_blueprint_slot -- TODO: will this cause garbage to pile up?
+end
+
+---@param player LuaPlayer
+---@param train_stop_name LuaEntity
+---@param surface_name string
+function Exports.create_blueprint_from_train_stop(player, train_stop_name, surface_name)
+    local surface = game.get_surface(surface_name)
+    local train_stops = game.get_train_stops()
 end
 
 return Exports
