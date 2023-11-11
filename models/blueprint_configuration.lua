@@ -30,7 +30,7 @@ function TLLBlueprintConfiguration.new()
         snap_width = 2,
         include_train_stops=false,
         limit_train_stops=false,
-        default_train_limit=nil,
+        default_train_limit=0,
     }
     setmetatable(self, mt)
     return self

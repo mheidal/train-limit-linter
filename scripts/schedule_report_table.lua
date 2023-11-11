@@ -332,11 +332,14 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
 
     local surface = game.get_surface(surface_name)
     if not surface then return end
-    local script_inventory = game.create_inventory(2) -- TODO: global scratchbook inventory
+
+    local script_inventory = player_global.model.inventory_scratch_pad
+    script_inventory.clear()
+
     local aggregated_blueprint_slot = script_inventory[1]
-    aggregated_blueprint_slot.set_stack{name="tll_cursor_blueprint"}
+    aggregated_blueprint_slot.set_stack{name="blueprint"}
     local single_carriage_slot = script_inventory[2]
-    single_carriage_slot.set_stack{name="tll_cursor_blueprint"}
+    single_carriage_slot.set_stack{name="blueprint"}
 
     local prev_vert_offset = 0
     local prev_orientation = nil
@@ -409,11 +412,19 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
 
     aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
     aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player, prev_vert_offset)
-    return aggregated_blueprint_slot -- TODO: will this cause garbage to pile up?
+
+    aggregated_blueprint_slot.label = utils.train_schedule_to_key(train.schedule)
+
+    return aggregated_blueprint_slot
 end
 
-function Exports.create_blueprint_from_train_stop(name, color, train_limit)
-    local script_inventory = game.create_inventory(1) -- TODO: global scratchbook inventory
+---@param script_inventory LuaInventory
+---@param name string
+---@param color Color
+---@param train_limit number?
+---@return LuaItemStack
+function Exports.create_blueprint_from_train_stop(script_inventory, name, color, train_limit)
+    script_inventory.clear()
     local blueprint = script_inventory[1]
     blueprint.set_stack("tll_cursor_blueprint")
 
