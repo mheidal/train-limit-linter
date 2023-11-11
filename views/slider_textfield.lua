@@ -9,7 +9,7 @@ Exports = {}
 ---@param value number
 ---@param value_step number
 ---@param minimum_value number
----@param maximum_value number?
+---@param maximum_value number
 ---@param enabled_condition boolean
 ---@param cap_textfield_value boolean
 ---@return LuaGuiElement -- the flow containing the two

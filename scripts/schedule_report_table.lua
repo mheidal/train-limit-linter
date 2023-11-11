@@ -5,20 +5,12 @@ local utils = require("utils")
 ---@field surface string
 ---@field train_schedule_groups LuaTrain[][]
 
----@class ScheduleTableData
+---@class TrainStopData
 ---@field limit number
 ---@field not_set boolean
 ---@field dynamic boolean
 ---@field hidden boolean
 ---@field trains_with_no_schedule_parked table<number, TrainStopAndTrain[]>
----@field train_stops table<string, TrainStopData[]> mapping from backer names to array of data about each train stop with that backer name
-
----@class TrainStopData
----@field unit_number number
----@field limit number
----@field not_set boolean
----@field dynamic boolean
----@field color Color
 
 ---@class TrainStopAndTrain
 ---@field train_stop number unit number
@@ -134,16 +126,15 @@ end
 ---@param train_schedule_group table: array[LuaTrain]
 ---@param surface LuaSurface
 ---@param enabled_excluded_keywords table: array[toggleable_item]
----@return ScheduleTableData: info about train stops
+---@return TrainStopData: info about train stops
 function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
-    ---@type ScheduleTableData
+    ---@type TrainStopData
     local ret = {
         limit=0,
         not_set=false,
         dynamic=false,
         hidden=false,
-        trains_with_no_schedule_parked = {},
-        train_stops = {},
+        trains_with_no_schedule_parked = {}
     }
     ---@type TrainSchedule
     local shared_schedule = train_schedule_group[1].schedule
@@ -176,14 +167,6 @@ function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excl
 
             if not station_is_excluded then
                 for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
-                    ---@type TrainStopData
-                    local train_stop_data = {
-                        unit_number=train_stop.unit_number,
-                        limit=0,
-                        not_set=false,
-                        dynamic=false,
-                        color=train_stop.color,
-                    }
 
                     local rails_near_train_stop = get_rails_near_train_stop(train_stop)
                     for rail_unit_number, _ in pairs(rails_near_train_stop) do
@@ -199,18 +182,14 @@ function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excl
                     local control_behavior = train_stop.get_control_behavior()
                     ---@diagnostic disable-next-line not sure how to indicate to VS Code that this is LuaTrainStopControlBehavior
                     if control_behavior and control_behavior.set_trains_limit then
-                        train_stop_data.dynamic = true
                         ret.dynamic = true
                     end
-                    if train_stop.trains_limit == constants.magic_numbers.train_limit_not_set then
-                        train_stop_data.not_set = true
+                    -- no train limit is implemented as limit == 2 ^ 32 - 1
+                    if train_stop.trains_limit == (2 ^ 32) - 1 then
                         ret.not_set = true
                     else
-                        train_stop_data.limit = train_stop_data.limit + train_stop.trains_limit
                         ret.limit = ret.limit + train_stop.trains_limit
                     end
-                    ret.train_stops[record.station] = ret.train_stops[record.station] or {}
-                    table.insert(ret.train_stops[record.station], train_stop_data)
                 end
             end
         end
@@ -324,18 +303,14 @@ end
 ---@param player LuaPlayer
 ---@param train LuaTrain
 ---@param surface_name string
----@return LuaItemStack?
 function Exports.create_blueprint_from_train(player, train, surface_name)
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
     local surface = game.get_surface(surface_name)
-    if not surface then return end
-
-    local script_inventory = player_global.model.inventory_scratch_pad
-    script_inventory.clear()
-
+    if surface == nil then return end
+    local script_inventory = game.create_inventory(2)
     local aggregated_blueprint_slot = script_inventory[1]
     aggregated_blueprint_slot.set_stack{name="tll_cursor_blueprint"}
     local single_carriage_slot = script_inventory[2]
@@ -412,37 +387,9 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
 
     aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
     aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player, prev_vert_offset)
-
-    aggregated_blueprint_slot.label = utils.train_schedule_to_key(train.schedule)
-
-    return aggregated_blueprint_slot
-end
-
----@param script_inventory LuaInventory
----@param name string
----@param color Color
----@param train_limit number?
----@return LuaItemStack
-function Exports.create_blueprint_from_train_stop(script_inventory, name, color, train_limit)
-    script_inventory.clear()
-    local blueprint = script_inventory[1]
-    blueprint.set_stack("tll_cursor_blueprint")
-
-    blueprint.set_blueprint_entities({
-        {
-            entity_number=1,
-            name="train-stop", -- TODO: does this mess with other mods with custom train stops?
-            position={
-                x=1,
-                y=1,
-            },
-            station=name,
-            color=color,
-            manual_trains_limit=train_limit,
-        }
-    })
-    blueprint.label = "Train stop '" .. name .. "'" -- TODO: localisation
-    return blueprint
+    player.add_to_clipboard(aggregated_blueprint_slot)
+    player.activate_paste()
+    script_inventory.destroy()
 end
 
 return Exports

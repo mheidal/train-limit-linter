@@ -91,33 +91,10 @@ script.on_event(defines.events.on_lua_shortcut, function(event)
     end
 end)
 
----@param script_inventory LuaInventory
----@return LuaItemStack
-local function create_blueprint_book(script_inventory)
-    script_inventory.clear()
-    local blueprint_book = script_inventory[1]
-    blueprint_book.set_stack{name="tll_cursor_blueprint_book"}
-    return blueprint_book
-end
-
 ---@param event EventData.on_gui_click
 ---@param player LuaPlayer
 ---@param player_global TLLPlayerGlobal
 local function schedule_report_table_create_blueprint(event, player, player_global)
-
-    local blueprint_config = player_global.model.blueprint_configuration
-
-    local blueprint_book = create_blueprint_book(player_global.model.inventory_scratch_pad)
-
-    local cursor_stack = player.cursor_stack
-    if cursor_stack then
-        cursor_stack.set_stack(blueprint_book)
-    else
-        error("Could not add blueprint book to cursor")
-    end
-    local blueprint_book_inventory = cursor_stack.get_inventory(defines.inventory.item_main)
-    if not blueprint_book_inventory then return end
-
     local template_train
     local template_train_ids = event.element.tags.template_train_ids
     if type(template_train_ids) ~= "table" then return end
@@ -134,27 +111,7 @@ local function schedule_report_table_create_blueprint(event, player, player_glob
     end
     local surface_name = event.element.tags.surface
     if type(surface_name) ~= "string" then return end
-    local train_blueprint = schedule_report_table_scripts.create_blueprint_from_train(player, template_train, surface_name)
-    if not train_blueprint then
-        player.create_local_flying_text({create_at_cursor=true, text={"tll.could_not_create_blueprint"}})
-        return
-    end
-    if not blueprint_config.include_train_stops then
-        player.add_to_clipboard(train_blueprint)
-        player.activate_paste()
-    else
-        blueprint_book_inventory.insert(train_blueprint)
-
-        local train_limit = blueprint_config.limit_train_stops and blueprint_config.default_train_limit or nil
-        for _, train_stop in pairs(event.element.tags.template_train_stops) do
-            blueprint_book_inventory.insert(schedule_report_table_scripts.create_blueprint_from_train_stop(
-                player_global.model.inventory_scratch_pad,
-                train_stop.name,
-                train_stop.color,
-                train_limit)
-            )
-        end
-    end
+    schedule_report_table_scripts.create_blueprint_from_train(player, template_train, surface_name)
 end
 
 script.on_event(defines.events.on_gui_click, function (event)
@@ -357,14 +314,6 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
         elseif action == constants.actions.toggle_place_trains_with_fuel then
             player_global.model.fuel_configuration:toggle_add_fuel()
             main_interface.build_interface(player)
-
-        elseif action == constants.actions.toggle_include_train_stops then
-            player_global.model.blueprint_configuration:toggle_include_train_stops()
-            main_interface.build_interface(player)
-
-        elseif action == constants.actions.toggle_limit_train_stops then
-            player_global.model.blueprint_configuration:toggle_limit_train_stops()
-            main_interface.build_interface(player)
         end
     end
 end)
@@ -391,14 +340,9 @@ script.on_event(defines.events.on_gui_value_changed, function (event)
             local fuel_category = event.element.tags.fuel_category
             local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[fuel_category]
             fuel_config:set_fuel_amount(new_fuel_amount)
-
         elseif action == constants.actions.set_blueprint_snap_width then
             local new_snap_width = event.element.slider_value
             player_global.model.blueprint_configuration:set_snap_width(new_snap_width)
-
-        elseif action == constants.actions.set_default_train_limit then
-            local new_default_limit = event.element.slider_value
-            player_global.model.blueprint_configuration:set_default_train_limit(new_default_limit)
         end
     end
 end)
@@ -424,15 +368,10 @@ script.on_event(defines.events.on_gui_text_changed, function (event)
             local new_snap_width = tonumber(event.element.text)
             if not new_snap_width then return end
             player_global.model.blueprint_configuration:set_snap_width(new_snap_width)
-
-        elseif action == constants.actions.set_default_train_limit then
-            local new_default_limit = tonumber(event.element.text)
-            if not new_default_limit then return end
-            player_global.model.blueprint_configuration:set_default_train_limit(new_default_limit)
         end
     end
 
-    -- handler for slider_textfield element: when the textfield updates, update the slider
+    -- handler for slider_textfield element: when the slider updates, update the textfield
     if event.element.tags.slider_textfield then
         local slider_textfield_flow = event.element.parent
         if not slider_textfield_flow then return end
@@ -548,7 +487,6 @@ script.on_event(defines.events.on_player_created, function(event)
 end)
 
 script.on_event(defines.events.on_player_removed, function(event)
-    global.players[event.player_index].model.inventory_scratch_pad.destroy()
     global.players[event.player_index] = nil
 end)
 

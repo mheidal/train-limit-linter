@@ -29,7 +29,6 @@ local TLLCollapsibleFrameConfiguration = require("models.collapsible_frame_confi
 ---@field main_interface_selected_tab number?
 ---@field main_interface_open boolean
 ---@field collapsible_frame_configuration TLLCollapsibleFrameConfiguration
----@field inventory_scratch_pad LuaInventory
 
 ---@class TLLPlayerView
 ---@field main_frame LuaGuiElement?
@@ -53,9 +52,8 @@ function Exports.get_empty_player_view()
     }
 end
 
----@param inventory_scratch_pad LuaInventory?
 ---@return TLLPlayerGlobal
-function Exports.get_default_player_global(inventory_scratch_pad)
+function Exports.get_default_player_global()
 
     local fuel_config = TLLFuelConfiguration.new()
 
@@ -76,7 +74,6 @@ function Exports.get_default_player_global(inventory_scratch_pad)
             modal_function_configuration = TLLModalFunctionConfiguration.new(),
             main_interface_open=false,
             collapsible_frame_configuration = TLLCollapsibleFrameConfiguration.new(),
-            inventory_scratch_pad = inventory_scratch_pad or game.create_inventory(100)
         },
         view = Exports.get_empty_player_view()
     }
@@ -94,8 +91,7 @@ end
 
 function Exports.migrate_global(player)
     local old_global = global.players[player.index]
-    local inventory_scratch_pad = old_global and old_global.model and old_global.model.inventory_scratch_pad
-    local new_global = Exports.get_default_player_global(inventory_scratch_pad)
+    local new_global = Exports.get_default_player_global()
 
     for model_key, model_value in pairs(old_global.model) do
         if type(model_value) == "table" then
