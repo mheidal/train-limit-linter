@@ -61,7 +61,7 @@ function Exports.build_settings_tab(player)
     slider_textfield.add_slider_textfield(
         blueprint_content_flow,
         {action=constants.actions.set_default_train_limit},
-        0,
+        blueprint_config.default_train_limit,
         1,
         0,
         nil,
