@@ -1,11 +1,4 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.0.9
-Date: 2023-11-11
-  Features:
-    - Added ability to copy train stops.
-  Bugfixes:
-    - Removed memory-leaking creation of script inventories.
----------------------------------------------------------------------------------------------------
 Version: 1.0.8
 Date: 2023-11-10
   Changes:
