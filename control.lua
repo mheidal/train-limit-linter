@@ -579,8 +579,3 @@ script.on_configuration_changed(function (config_changed_data)
         end
     end
 end)
-
-script.on_event("tll_test", function (event)
-    local player = game.get_player(event.player_index)
-    globals.migrate_global(player)
-end)

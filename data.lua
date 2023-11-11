@@ -77,12 +77,6 @@ data:extend({
     order = "a"
   },
   {
-    type="custom-input",
-    name="tll_test",
-    key_sequence="CONTROL + G",
-    order = "a"
-  },
-  {
     type="virtual-signal",
     name="tll-select-icon",
     icon="__core__/graphics/icons/mip/select-icon-white.png",
