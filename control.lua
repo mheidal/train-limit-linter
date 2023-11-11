@@ -91,10 +91,21 @@ script.on_event(defines.events.on_lua_shortcut, function(event)
     end
 end)
 
+---@return LuaItemStack
+local function create_blueprint_book()
+    local script_inventory = game.create_inventory(1) -- TODO: global scratchbook inventory
+    local blueprint_book = script_inventory[1]
+    blueprint_book.set_stack{name="tll_cursor_blueprint_book"}
+    return blueprint_book
+end
+
 ---@param event EventData.on_gui_click
 ---@param player LuaPlayer
 ---@param player_global TLLPlayerGlobal
 local function schedule_report_table_create_blueprint(event, player, player_global)
+
+    local blueprint_config = player_global.model.blueprint_configuration
+
     local template_train
     local template_train_ids = event.element.tags.template_train_ids
     if type(template_train_ids) ~= "table" then return end
@@ -111,7 +122,33 @@ local function schedule_report_table_create_blueprint(event, player, player_glob
     end
     local surface_name = event.element.tags.surface
     if type(surface_name) ~= "string" then return end
-    schedule_report_table_scripts.create_blueprint_from_train(player, template_train, surface_name)
+    local train_blueprint = schedule_report_table_scripts.create_blueprint_from_train(player, template_train, surface_name)
+    if not train_blueprint then
+        player.create_local_flying_text({create_at_cursor=true, text={"tll.could_not_create_blueprint"}})
+        return
+    end
+    if not blueprint_config.include_train_stops then
+        player.add_to_clipboard(train_blueprint)
+        player.activate_paste()
+    else
+        local blueprint_book = create_blueprint_book()
+        local cursor_stack = player.cursor_stack
+        if cursor_stack then
+            cursor_stack.set_stack(blueprint_book)
+        else
+            error("Could not add blueprint book to cursor")
+        end
+        cursor_stack.label = "Blueprint book"
+        local blueprint_book_inventory = cursor_stack.get_inventory(defines.inventory.item_main)
+        if not blueprint_book_inventory then return end
+
+        blueprint_book_inventory.insert(train_blueprint)
+
+        local train_limit = blueprint_config.limit_train_stops and blueprint_config.default_train_limit or nil
+        for _, train_stop in pairs(event.element.tags.template_train_stops) do
+            blueprint_book_inventory.insert(schedule_report_table_scripts.create_blueprint_from_train_stop(train_stop.name, train_stop.color, train_limit))
+        end
+    end
 end
 
 script.on_event(defines.events.on_gui_click, function (event)
@@ -534,41 +571,4 @@ script.on_configuration_changed(function (config_changed_data)
             end
         end
     end
-end)
-
-script.on_event("tll_test", function (event)
-    local player = game.get_player(event.player_index)
-    if not player then return end
-    ---@type TLLPlayerGlobal
-    local pg = global.players[player.index]
-    local script_inventory = game.create_inventory(1)
-    local blueprint_book = script_inventory[1]
-    blueprint_book.set_stack{name="tll_cursor_blueprint_book"}
-    blueprint_book.label = "Blueprint book"
-    local blueprint_book_inventory = blueprint_book.get_inventory(defines.inventory.item_main)
-    if not blueprint_book_inventory then return end
-
-    local train_blueprint
-    local train_blueprint2
-    for sname, s in pairs(game.surfaces) do
-        for tid, t in pairs(s.get_trains()) do
-            pg.model.blueprint_configuration:set_new_blueprint_orientation(constants.orientations.l)
-            train_blueprint = schedule_report_table_scripts.create_blueprint_from_train(player, t, sname)
-            train_blueprint.label = "Blueprint 1"
-            pg.model.blueprint_configuration:set_new_blueprint_orientation(constants.orientations.d)
-            train_blueprint2 = schedule_report_table_scripts.create_blueprint_from_train(player, t, sname)
-            train_blueprint2.label = "Blueprint 2"
-            goto done
-        end
-    end
-    ::done::
-    if not train_blueprint then return end
-    if not train_blueprint2 then return end
-    blueprint_book_inventory.insert(train_blueprint)
-    blueprint_book_inventory.insert(train_blueprint2)
-    local cursor_stack = player.cursor_stack
-    if cursor_stack then
-        cursor_stack.set_stack(blueprint_book)
-    end
-    script_inventory.destroy()
 end)

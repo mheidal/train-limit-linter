@@ -18,6 +18,7 @@ local utils = require("utils")
 ---@field limit number
 ---@field not_set boolean
 ---@field dynamic boolean
+---@field color Color
 
 ---@class TrainStopAndTrain
 ---@field train_stop number unit number
@@ -181,6 +182,7 @@ function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excl
                         limit=0,
                         not_set=false,
                         dynamic=false,
+                        color=train_stop.color,
                     }
 
                     local rails_near_train_stop = get_rails_near_train_stop(train_stop)
@@ -330,7 +332,7 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
 
     local surface = game.get_surface(surface_name)
     if not surface then return end
-    local script_inventory = game.create_inventory(2)
+    local script_inventory = game.create_inventory(2) -- TODO: global scratchbook inventory
     local aggregated_blueprint_slot = script_inventory[1]
     aggregated_blueprint_slot.set_stack{name="tll_cursor_blueprint"}
     local single_carriage_slot = script_inventory[2]
@@ -410,12 +412,26 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
     return aggregated_blueprint_slot -- TODO: will this cause garbage to pile up?
 end
 
----@param player LuaPlayer
----@param train_stop_name LuaEntity
----@param surface_name string
-function Exports.create_blueprint_from_train_stop(player, train_stop_name, surface_name)
-    local surface = game.get_surface(surface_name)
-    local train_stops = game.get_train_stops()
+function Exports.create_blueprint_from_train_stop(name, color, train_limit)
+    local script_inventory = game.create_inventory(1) -- TODO: global scratchbook inventory
+    local blueprint = script_inventory[1]
+    blueprint.set_stack("tll_cursor_blueprint")
+
+    blueprint.set_blueprint_entities({
+        {
+            entity_number=1,
+            name="train-stop", -- TODO: does this mess with other mods with custom train stops?
+            position={
+                x=1,
+                y=1,
+            },
+            station=name,
+            color=color,
+            manual_trains_limit=train_limit,
+        }
+    })
+    blueprint.label = "Train stop '" .. name .. "'" -- TODO: localisation
+    return blueprint
 end
 
 return Exports

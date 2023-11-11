@@ -123,6 +123,14 @@ local function build_train_schedule_group_report(player)
                         table.insert(template_train_ids, train.id)
                     end
 
+                    local template_train_stops = {}
+                    for train_stop_name, train_stop_group_data in pairs(schedule_report_data.train_stops) do
+                        table.insert(template_train_stops, {
+                            name=train_stop_name,
+                            color=train_stop_group_data[1].color
+                        })
+                    end
+
                     -- cell 1
                     if table_config.show_all_surfaces then
                         schedule_report_table.add{type="label", caption=surface.name}
@@ -179,7 +187,8 @@ style="tll_horizontal_stretch_squash_label"
                         action=any_trains_with_no_schedule_parked and constants.actions.train_schedule_create_blueprint_and_ping_trains or constants.actions.train_schedule_create_blueprint,
                         template_train_ids=template_train_ids,
                         surface=surface.name,
-                        parked_train_positions=any_trains_with_no_schedule_parked and parked_train_positions_and_train_stops or nil
+                        parked_train_positions=any_trains_with_no_schedule_parked and parked_train_positions_and_train_stops or nil,
+                        template_train_stops=template_train_stops
                     }
 
 
