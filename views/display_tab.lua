@@ -62,9 +62,9 @@ local function build_train_schedule_group_report(player)
                 local train_schedule_group = train_schedule_groups[schedule_name]
                 local schedule_report_data = schedule_report_table_scripts.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
 
-                local satisfied = (not (schedule_report_data.dynamic or schedule_report_data.not_set)) and (schedule_report_data.limit - #train_schedule_group == 1)
-
                 local single_station_schedule = #train_schedule_group[1].schedule.records == 1
+
+                local satisfied = (not (schedule_report_data.dynamic or schedule_report_data.not_set or single_station_schedule)) and (schedule_report_data.limit - #train_schedule_group == 1)
 
                 -- barrier for showing a particular schedule
                 if (
