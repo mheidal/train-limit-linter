@@ -337,9 +337,9 @@ function Exports.create_blueprint_from_train(player, train, surface_name)
     script_inventory.clear()
 
     local aggregated_blueprint_slot = script_inventory[1]
-    aggregated_blueprint_slot.set_stack{name="blueprint"}
+    aggregated_blueprint_slot.set_stack{name="tll_cursor_blueprint"}
     local single_carriage_slot = script_inventory[2]
-    single_carriage_slot.set_stack{name="blueprint"}
+    single_carriage_slot.set_stack{name="tll_cursor_blueprint"}
 
     local prev_vert_offset = 0
     local prev_orientation = nil
