@@ -27,7 +27,7 @@ function Exports.build_settings_tab(player)
     scroll_pane.clear()
 
     -- blueprint settings
-    local blueprint_collapsible_frame_name = "blueprint_collapsible_frame_name"
+        local blueprint_collapsible_frame_name = "blueprint_collapsible_frame_name"
     local blueprint_collapsible_frame = scroll_pane[blueprint_collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
         scroll_pane,
         blueprint_collapsible_frame_name
@@ -41,6 +41,33 @@ function Exports.build_settings_tab(player)
     )
     blueprint_orientation_selector.build_blueprint_orientation_selector(blueprint_config.new_blueprint_orientation, blueprint_content_flow)
     blueprint_snap_selection.build_blueprint_snap_selector(player, blueprint_content_flow)
+
+    blueprint_content_flow.add{
+        type="checkbox",
+        tags={action=constants.actions.toggle_include_train_stops},
+        state=blueprint_config.include_train_stops,
+        caption={"tll.include_train_stops"},
+        tooltip={"tll.include_train_stops_tooltip"}
+    }
+
+    blueprint_content_flow.add{
+        type="checkbox",
+        tags={action=constants.actions.toggle_limit_train_stops},
+        state=blueprint_config.limit_train_stops,
+        enabled=blueprint_config.include_train_stops,
+        caption={"tll.limit_train_stops"},
+    }
+
+    slider_textfield.add_slider_textfield(
+        blueprint_content_flow,
+        {action=constants.actions.set_default_train_limit},
+        blueprint_config.default_train_limit,
+        1,
+        0,
+        nil,
+        blueprint_config.include_train_stops and blueprint_config.limit_train_stops,
+        false
+    )
 
     -- fuel settings
     local fuel_collapsible_frame_name = "fuel_collapsible_frame_name"

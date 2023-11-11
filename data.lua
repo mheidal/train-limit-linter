@@ -61,6 +61,14 @@ cursor_blueprint.order = "z_tll"
 table.insert(cursor_blueprint.flags, "hidden")
 table.insert(cursor_blueprint.flags, "only-in-cursor")
 
+local cursor_blueprint_book = utils.deep_copy(data.raw["blueprint-book"]["blueprint-book"])
+cursor_blueprint_book.name = "tll_cursor_blueprint_book"
+cursor_blueprint_book.order = "z_tll"
+cursor_blueprint_book.flags = {
+  "hidden",
+  "only-in-cursor",
+}
+
 data:extend({
   {
     type="custom-input",
@@ -76,6 +84,7 @@ data:extend({
     order="a"
   },
   cursor_blueprint,
+  cursor_blueprint_book,
   {
     type="shortcut",
     name="tll_toggle_interface",
