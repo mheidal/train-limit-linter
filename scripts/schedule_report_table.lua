@@ -5,12 +5,19 @@ local utils = require("utils")
 ---@field surface string
 ---@field train_schedule_groups LuaTrain[][]
 
----@class TrainStopData
+---@class ScheduleTableData
 ---@field limit number
 ---@field not_set boolean
 ---@field dynamic boolean
 ---@field hidden boolean
 ---@field trains_with_no_schedule_parked table<number, TrainStopAndTrain[]>
+---@field train_stops table<string, TrainStopData[]> mapping from backer names to array of data about each train stop with that backer name
+
+---@class TrainStopData
+---@field unit_number number
+---@field limit number
+---@field not_set boolean
+---@field dynamic boolean
 
 ---@class TrainStopAndTrain
 ---@field train_stop number unit number
@@ -126,15 +133,16 @@ end
 ---@param train_schedule_group table: array[LuaTrain]
 ---@param surface LuaSurface
 ---@param enabled_excluded_keywords table: array[toggleable_item]
----@return TrainStopData: info about train stops
+---@return ScheduleTableData: info about train stops
 function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
-    ---@type TrainStopData
+    ---@type ScheduleTableData
     local ret = {
         limit=0,
         not_set=false,
         dynamic=false,
         hidden=false,
-        trains_with_no_schedule_parked = {}
+        trains_with_no_schedule_parked = {},
+        train_stops = {},
     }
     ---@type TrainSchedule
     local shared_schedule = train_schedule_group[1].schedule
@@ -167,6 +175,13 @@ function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excl
 
             if not station_is_excluded then
                 for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
+                    ---@type TrainStopData
+                    local train_stop_data = {
+                        unit_number=train_stop.unit_number,
+                        limit=0,
+                        not_set=false,
+                        dynamic=false,
+                    }
 
                     local rails_near_train_stop = get_rails_near_train_stop(train_stop)
                     for rail_unit_number, _ in pairs(rails_near_train_stop) do
@@ -182,14 +197,18 @@ function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excl
                     local control_behavior = train_stop.get_control_behavior()
                     ---@diagnostic disable-next-line not sure how to indicate to VS Code that this is LuaTrainStopControlBehavior
                     if control_behavior and control_behavior.set_trains_limit then
+                        train_stop_data.dynamic = true
                         ret.dynamic = true
                     end
-                    -- no train limit is implemented as limit == 2 ^ 32 - 1
-                    if train_stop.trains_limit == (2 ^ 32) - 1 then
+                    if train_stop.trains_limit == constants.magic_numbers.train_limit_not_set then
+                        train_stop_data.not_set = true
                         ret.not_set = true
                     else
+                        train_stop_data.limit = train_stop_data.limit + train_stop.trains_limit
                         ret.limit = ret.limit + train_stop.trains_limit
                     end
+                    ret.train_stops[record.station] = ret.train_stops[record.station] or {}
+                    table.insert(ret.train_stops[record.station], train_stop_data)
                 end
             end
         end

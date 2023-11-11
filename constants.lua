@@ -86,4 +86,9 @@ constants.style_data = {
 
 constants.default_surface_name = "nauvis"
 
+constants.magic_numbers = {
+    -- no train limit is implemented as limit == 2 ^ 32 - 1
+    train_limit_not_set=(2 ^ 32) - 1,
+}
+
 return constants
