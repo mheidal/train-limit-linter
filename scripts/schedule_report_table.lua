@@ -131,9 +131,9 @@ local function get_rails_near_train_stop(train_stop)
     return rails
 end
 
----@param train_schedule_group table: array[LuaTrain]
+---@param train_schedule_group LuaTrain[]
 ---@param surface LuaSurface
----@param enabled_excluded_keywords table: array[toggleable_item]
+---@param enabled_excluded_keywords TLLToggleableItem[]
 ---@return ScheduleTableData: info about train stops
 function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
     ---@type ScheduleTableData
