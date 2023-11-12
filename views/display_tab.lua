@@ -76,6 +76,24 @@ local function build_train_schedule_group_report(player)
                 ) then
                     any_schedule_shown = true
 
+                    local schedule_caption = ""
+                    for _, record in pairs(train_schedule_group[1].schedule.records) do
+                        if schedule_caption == "" then
+                            schedule_caption = record.station
+                        else
+                            schedule_caption = schedule_caption .. " → " .. record.station
+                        end
+                        if table_config.show_train_limits_separately then
+                            local train_group_limit = 0
+                            if schedule_report_data.train_stops[record.station] then
+                                for _, train_stop_data in pairs(schedule_report_data.train_stops[record.station]) do
+                                    train_group_limit = train_group_limit + train_stop_data.limit
+                                end
+                            end
+                            schedule_caption = schedule_caption .. " (" .. train_group_limit .. ")"
+                        end
+                    end
+
                     local train_limit_sum_caption = {
                         "",
                         tostring(schedule_report_data.limit),
@@ -145,7 +163,7 @@ local function build_train_schedule_group_report(player)
                     }
                     local schedule_cell_label = schedule_cell.add{
                         type="label",
-                        caption=schedule_name,
+                        caption=schedule_caption,
 style="tll_horizontal_stretch_squash_label"
                     }
                     schedule_cell_label.style.font_color=train_count_label_color
