@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.13
+Date: 2023-11-11
+  Features:
+    - Added warning for when schedules include a train stop but there are no train stops with that name
+      anywhere on that train's surface.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.12
 Date: 2023-11-11
   Features:

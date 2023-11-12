@@ -64,7 +64,25 @@ local function build_train_schedule_group_report(player)
 
                 local single_station_schedule = #train_schedule_group[1].schedule.records == 1
 
-                local satisfied = (not (schedule_report_data.dynamic or schedule_report_data.not_set or single_station_schedule)) and (schedule_report_data.limit - #train_schedule_group == 1)
+
+                local nonexistent_stations_in_schedule = {}
+                local any_nonexistent_stations_in_schedule = false
+                for _, record in pairs(train_schedule_group[1].schedule.records) do
+                    if not schedule_report_data.train_stops[record.station] then
+                        nonexistent_stations_in_schedule[record.station] = true
+                        any_nonexistent_stations_in_schedule = true
+                    end
+                end
+
+                local satisfied = (
+                    (not (
+                        schedule_report_data.dynamic
+                        or schedule_report_data.not_set
+                        or single_station_schedule
+                        or any_nonexistent_stations_in_schedule
+                    ))
+                    and (schedule_report_data.limit - #train_schedule_group == 1)
+                )
 
                 -- barrier for showing a particular schedule
                 if (
@@ -76,6 +94,7 @@ local function build_train_schedule_group_report(player)
                 ) then
                     any_schedule_shown = true
 
+                    -- schedule caption
                     local schedule_caption = ""
                     for _, record in pairs(train_schedule_group[1].schedule.records) do
                         if schedule_caption == "" then
@@ -92,6 +111,14 @@ local function build_train_schedule_group_report(player)
                             end
                             schedule_caption = schedule_caption .. " (" .. train_group_limit .. ")"
                         end
+                        if nonexistent_stations_in_schedule[record.station] then
+                            schedule_caption = schedule_caption .. " [img=utility/warning_icon]"
+                        end
+                    end
+
+                    local schedule_caption_tooltip = utils.deep_copy(schedule_caption)
+                    for station, _ in pairs(nonexistent_stations_in_schedule) do
+                        schedule_caption_tooltip = {"", schedule_caption_tooltip, {"tll.no_stations_with_name", station}}
                     end
 
                     local train_limit_sum_caption = {
@@ -106,7 +133,12 @@ local function build_train_schedule_group_report(player)
                         schedule_report_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
                     }
 
-                    local show_opinionation = not schedule_report_data.not_set and not schedule_report_data.dynamic and not single_station_schedule
+                    local show_opinionation = (
+                        not schedule_report_data.not_set
+                        and not schedule_report_data.dynamic
+                        and not single_station_schedule
+                        and not any_nonexistent_stations_in_schedule
+                    )
 
                     local train_count_difference = schedule_report_data.limit - 1 - #train_schedule_group
 
@@ -165,7 +197,8 @@ local function build_train_schedule_group_report(player)
                     local schedule_cell_label = schedule_cell.add{
                         type="label",
                         caption=schedule_caption,
-style="tll_horizontal_stretch_squash_label"
+                        tooltip=schedule_caption_tooltip,
+                        style="tll_horizontal_stretch_squash_label",
                     }
                     schedule_cell_label.style.font_color=train_count_label_color
 
