@@ -6,6 +6,7 @@ local TLLFuelConfiguration = require("models.fuel_configuration")
 local TLLModalFunctionConfiguration = require("models.modal_function_configuration")
 local fuel_category_data = require("models.fuel_category_data")
 local TLLCollapsibleFrameConfiguration = require("models.collapsible_frame_configuration")
+local TLLGeneralConfiguration = require("models.general_configuration")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
@@ -30,6 +31,7 @@ local TLLCollapsibleFrameConfiguration = require("models.collapsible_frame_confi
 ---@field main_interface_open boolean
 ---@field collapsible_frame_configuration TLLCollapsibleFrameConfiguration
 ---@field inventory_scratch_pad LuaInventory
+---@field general_configuration TLLGeneralConfiguration
 
 ---@class TLLPlayerView
 ---@field main_frame LuaGuiElement?
@@ -76,7 +78,8 @@ function Exports.get_default_player_global(inventory_scratch_pad)
             modal_function_configuration = TLLModalFunctionConfiguration.new(),
             main_interface_open=false,
             collapsible_frame_configuration = TLLCollapsibleFrameConfiguration.new(),
-            inventory_scratch_pad = inventory_scratch_pad or game.create_inventory(100)
+            inventory_scratch_pad = inventory_scratch_pad or game.create_inventory(100),
+            general_configuration = TLLGeneralConfiguration.new(),
         },
         view = Exports.get_empty_player_view()
     }

@@ -310,6 +310,10 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.toggle_fuel_settings_visible then
             player_global.model.collapsible_frame_configuration:toggle_fuel_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
+
+        elseif action == constants.actions.toggle_general_settings_visible then
+            player_global.model.collapsible_frame_configuration:toggle_general_settings_visible()
+            collapsible_frame.toggle_collapsible_frame_visible(event.element)
         end
     end
 end)
@@ -371,6 +375,10 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
 
         elseif action == constants.actions.toggle_limit_train_stops then
             player_global.model.blueprint_configuration:toggle_limit_train_stops()
+            main_interface.build_interface(player)
+
+        elseif action == constants.actions.toggle_opinionation then
+            player_global.model.general_configuration:toggle_opinionate()
             main_interface.build_interface(player)
         end
     end

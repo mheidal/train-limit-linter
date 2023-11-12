@@ -186,6 +186,29 @@ function Exports.build_settings_tab(player)
             }
         end
     end
+
+    -- general settings
+    local general_collapsible_frame_name = "general_collapsible_frame_name"
+    local general_collapsible_frame = scroll_pane[general_collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+        scroll_pane,
+        general_collapsible_frame_name
+    )
+    local general_content_flow = collapsible_frame.build_collapsible_frame_contents(
+        general_collapsible_frame,
+        constants.actions.toggle_general_settings_visible,
+        {"tll.general_settings"},
+        {"tll.general_settings"},
+        player_global.model.collapsible_frame_configuration.general_settings_visible
+    )
+    local general_config = player_global.model.general_configuration
+    general_content_flow.add{
+        type="checkbox",
+        state=general_config.opinionate,
+        tags={action=constants.actions.toggle_opinionation},
+        caption={"tll.toggle_opinionation"},
+        tooltip={"tll.toggle_opinionation_tooltip"},
+    }
+
 end
 
 return Exports
