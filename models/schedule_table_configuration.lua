@@ -4,12 +4,14 @@
 ---@field show_not_set boolean
 ---@field show_dynamic boolean
 ---@field show_single_station_schedules boolean
+---@field show_train_limits_separately boolean
 ---@field new fun(): TLLScheduleTableConfiguration
 ---@field toggle_show_all_surfaces fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_satisfied fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_not_set fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_dynamic fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_single_station_schedules fun(self: TLLScheduleTableConfiguration)
+---@field toggle_show_train_limits_separately fun(self: TLLScheduleTableConfiguration)
 
 ---@class TLLScheduleTableConfiguration
 local TLLScheduleTableConfiguration = {}
@@ -23,6 +25,7 @@ function TLLScheduleTableConfiguration.new()
         show_not_set = false,
         show_dynamic = false,
         show_single_station_schedules = false,
+        show_train_limits_separately = false,
     }
     setmetatable(self, mt)
     return self
@@ -46,6 +49,10 @@ end
 
 function TLLScheduleTableConfiguration:toggle_show_single_station_schedules()
     self.show_single_station_schedules = not self.show_single_station_schedules
+end
+
+function TLLScheduleTableConfiguration:toggle_show_train_limits_separately()
+    self.show_train_limits_separately = not self.show_train_limits_separately
 end
 
 return TLLScheduleTableConfiguration

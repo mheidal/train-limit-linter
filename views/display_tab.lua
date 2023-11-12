@@ -58,7 +58,7 @@ local function build_train_schedule_group_report(player)
             table.sort(sorted_schedule_names)
 
             for _, schedule_name in pairs(sorted_schedule_names) do
-
+                ---@type LuaTrain[]
                 local train_schedule_group = train_schedule_groups[schedule_name]
                 local schedule_report_data = schedule_report_table_scripts.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
 
@@ -75,6 +75,24 @@ local function build_train_schedule_group_report(player)
                     and (table_config.show_single_station_schedules or (not single_station_schedule))
                 ) then
                     any_schedule_shown = true
+
+                    local schedule_caption = ""
+                    for _, record in pairs(train_schedule_group[1].schedule.records) do
+                        if schedule_caption == "" then
+                            schedule_caption = record.station
+                        else
+                            schedule_caption = schedule_caption .. " → " .. record.station
+                        end
+                        if table_config.show_train_limits_separately then
+                            local train_group_limit = 0
+                            if schedule_report_data.train_stops[record.station] then
+                                for _, train_stop_data in pairs(schedule_report_data.train_stops[record.station]) do
+                                    train_group_limit = train_group_limit + train_stop_data.limit
+                                end
+                            end
+                            schedule_caption = schedule_caption .. " (" .. train_group_limit .. ")"
+                        end
+                    end
 
                     local train_limit_sum_caption = {
                         "",
@@ -145,7 +163,7 @@ local function build_train_schedule_group_report(player)
                     }
                     local schedule_cell_label = schedule_cell.add{
                         type="label",
-                        caption=schedule_name,
+                        caption=schedule_caption,
 style="tll_horizontal_stretch_squash_label"
                     }
                     schedule_cell_label.style.font_color=train_count_label_color
@@ -244,6 +262,7 @@ function Exports.build_display_tab(player)
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_not_set}, caption={"tll.show_not_set"}, state=table_config.show_not_set}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_dynamic}, caption={"tll.show_dynamic"}, state=table_config.show_dynamic}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_single_station_schedules}, caption={"tll.show_single_station_schedules"}, state=table_config.show_single_station_schedules}
+    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_train_limits_separately}, caption={"tll.show_train_limits_separately"}, state=table_config.show_train_limits_separately}
 
     local report_frame_name = "report_frame_name"
 
