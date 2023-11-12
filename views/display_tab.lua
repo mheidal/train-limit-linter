@@ -145,7 +145,8 @@ local function build_train_schedule_group_report(player)
                     for train_stop_name, train_stop_group_data in pairs(schedule_report_data.train_stops) do
                         table.insert(template_train_stops, {
                             name=train_stop_name,
-                            color=train_stop_group_data[1].color
+                            color=train_stop_group_data[1].color,
+                            proto_name=train_stop_group_data[1].proto_name,
                         })
                     end
 

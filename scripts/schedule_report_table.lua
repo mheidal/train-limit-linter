@@ -19,6 +19,7 @@ local utils = require("utils")
 ---@field not_set boolean
 ---@field dynamic boolean
 ---@field color Color
+---@field proto_name string
 
 ---@class TrainStopAndTrain
 ---@field train_stop number unit number
@@ -183,6 +184,7 @@ function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excl
                         not_set=false,
                         dynamic=false,
                         color=train_stop.color,
+                        proto_name=train_stop.name,
                     }
 
                     local rails_near_train_stop = get_rails_near_train_stop(train_stop)
@@ -422,8 +424,9 @@ end
 ---@param name string
 ---@param color Color
 ---@param train_limit number?
+---@param proto_name string
 ---@return LuaItemStack
-function Exports.create_blueprint_from_train_stop(script_inventory, name, color, train_limit)
+function Exports.create_blueprint_from_train_stop(script_inventory, name, color, train_limit, proto_name)
     script_inventory.clear()
     local blueprint = script_inventory[1]
     blueprint.set_stack("tll_cursor_blueprint")
@@ -431,7 +434,7 @@ function Exports.create_blueprint_from_train_stop(script_inventory, name, color,
     blueprint.set_blueprint_entities({
         {
             entity_number=1,
-            name="train-stop", -- TODO: does this mess with other mods with custom train stops?
+            name=proto_name,
             position={
                 x=1,
                 y=1,
@@ -441,7 +444,7 @@ function Exports.create_blueprint_from_train_stop(script_inventory, name, color,
             manual_trains_limit=train_limit,
         }
     })
-    blueprint.label = "Train stop '" .. name .. "'" -- TODO: localisation
+    blueprint.label = "[entity=" .. proto_name .. "] '" .. name .. "'"
     return blueprint
 end
 
