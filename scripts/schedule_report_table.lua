@@ -425,11 +425,13 @@ end
 ---@param color Color
 ---@param train_limit number?
 ---@param proto_name string
----@return LuaItemStack
+---@return LuaItemStack?
 function Exports.create_blueprint_from_train_stop(script_inventory, name, color, train_limit, proto_name)
     script_inventory.clear()
     local blueprint = script_inventory[1]
     blueprint.set_stack("tll_cursor_blueprint")
+
+    if game.entity_prototypes[proto_name].flags["not-blueprintable"] then return end
 
     blueprint.set_blueprint_entities({
         {
