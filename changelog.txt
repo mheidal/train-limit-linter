@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.14
+Date: 2023-11-12
+  Bugfixes:
+    - Fixed crash when trying to create a blueprint containing a non-blueprintable train stop (for
+      example, Space Exploration's space elevators).
+---------------------------------------------------------------------------------------------------
 Version: 1.0.13
 Date: 2023-11-11
   Features:
