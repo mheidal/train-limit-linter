@@ -134,10 +134,13 @@ local function build_train_schedule_group_report(player)
                     }
 
                     local show_opinionation = (
-                        not schedule_report_data.not_set
-                        and not schedule_report_data.dynamic
-                        and not single_station_schedule
-                        and not any_nonexistent_stations_in_schedule
+                        player_global.model.general_configuration.opinionate
+                        or (
+                                not schedule_report_data.not_set
+                                and not schedule_report_data.dynamic
+                                and not single_station_schedule
+                                and not any_nonexistent_stations_in_schedule
+                        )
                     )
 
                     local train_count_difference = schedule_report_data.limit - 1 - #train_schedule_group
