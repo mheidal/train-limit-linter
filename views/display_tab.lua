@@ -97,13 +97,13 @@ local function build_train_schedule_group_report(player)
                     any_schedule_shown = true
 
                     -- schedule caption
-                    local schedule_caption = ""
+                    local schedule_caption
                     for _, record in pairs(train_schedule_group[1].schedule.records) do
-                        local stop_name = record.station or ("Temporary: [" .. record.rail.position.x .. "," .. record.rail.position.y .. "]")
-                        if schedule_caption == "" then
+                        local stop_name = record.station or {"tll.temporary", record.rail.position.x, record.rail.position.y}
+                        if not schedule_caption then
                             schedule_caption = stop_name
                         else
-                            schedule_caption = schedule_caption .. " → " .. stop_name
+                            schedule_caption = {"", schedule_caption, " → ",  stop_name}
                         end
 
                         if record.station then
@@ -114,10 +114,10 @@ local function build_train_schedule_group_report(player)
                                         train_group_limit = train_group_limit + train_stop_data.limit
                                     end
                                 end
-                                schedule_caption = schedule_caption .. " (" .. train_group_limit .. ")"
+                                schedule_caption = {"", schedule_caption, " (" .. train_group_limit .. ")"}
                             end
                             if nonexistent_stations_in_schedule[record.station] then
-                                schedule_caption = schedule_caption .. " [img=utility/warning_icon]"
+                                schedule_caption = {"", schedule_caption, {"tll.warning_icon"}}
                             end
                         end
                     end
