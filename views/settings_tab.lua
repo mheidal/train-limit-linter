@@ -201,13 +201,6 @@ function Exports.build_settings_tab(player)
         player_global.model.collapsible_frame_configuration.general_settings_visible
     )
     local general_config = player_global.model.general_configuration
-    general_content_flow.add{
-        type="checkbox",
-        state=general_config.opinionate,
-        tags={action=constants.actions.toggle_opinionation},
-        caption={"tll.toggle_opinionation"},
-        tooltip={"tll.toggle_opinionation_tooltip"},
-    }
 
 end
 

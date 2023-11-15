@@ -377,7 +377,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             main_interface.build_interface(player)
 
         elseif action == constants.actions.toggle_opinionation then
-            player_global.model.general_configuration:toggle_opinionate()
+            player_global.model.schedule_table_configuration:toggle_opinionate()
             main_interface.build_interface(player)
         end
     end

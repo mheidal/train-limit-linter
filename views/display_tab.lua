@@ -105,7 +105,7 @@ local function build_train_schedule_group_report(player)
                     )
 
                     -- whether the schedule should have any stated opinion (warnings, coloration)
-                    local opinionate = player_global.model.general_configuration.opinionate
+                    local opinionate = player_global.model.schedule_table_configuration.opinionate
 
                     -- schedule caption
                     local schedule_caption
@@ -308,6 +308,14 @@ function Exports.build_display_tab(player)
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_dynamic}, caption={"tll.show_dynamic"}, state=table_config.show_dynamic}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_single_station_schedules}, caption={"tll.show_single_station_schedules"}, state=table_config.show_single_station_schedules}
     controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_train_limits_separately}, caption={"tll.show_train_limits_separately"}, state=table_config.show_train_limits_separately}
+
+    controls_flow.add{
+        type="checkbox",
+        state=table_config.opinionate,
+        tags={action=constants.actions.toggle_opinionation},
+        caption={"tll.toggle_opinionation"},
+        tooltip={"tll.toggle_opinionation_tooltip"},
+    }
 
     local report_frame_name = "report_frame_name"
 
