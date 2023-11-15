@@ -302,20 +302,18 @@ function Exports.build_display_tab(player)
         style="tll_controls_flow",
     }
 
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_all_surfaces}, caption={"tll.show_all_surfaces"}, state=table_config.show_all_surfaces}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=table_config.show_satisfied}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_not_set}, caption={"tll.show_not_set"}, state=table_config.show_not_set}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_dynamic}, caption={"tll.show_dynamic"}, state=table_config.show_dynamic}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_single_station_schedules}, caption={"tll.show_single_station_schedules"}, state=table_config.show_single_station_schedules}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_train_limits_separately}, caption={"tll.show_train_limits_separately"}, state=table_config.show_train_limits_separately}
+    local function add_checkbox(action, caption, tooltip, state)
+        controls_flow.add{type="checkbox", tags={action=action}, caption=caption, tooltip=tooltip, state=state}
+    end
 
-    controls_flow.add{
-        type="checkbox",
-        state=table_config.opinionate,
-        tags={action=constants.actions.toggle_opinionation},
-        caption={"tll.toggle_opinionation"},
-        tooltip={"tll.toggle_opinionation_tooltip"},
-    }
+    add_checkbox(constants.actions.toggle_show_all_surfaces, {"tll.show_all_surfaces"}, nil, table_config.show_all_surfaces)
+    add_checkbox(constants.actions.toggle_show_satisfied, {"tll.show_satisfied"}, nil, table_config.show_satisfied)
+    add_checkbox(constants.actions.toggle_show_not_set, {"tll.show_not_set"}, nil, table_config.show_not_set)
+    add_checkbox(constants.actions.toggle_show_dynamic, {"tll.show_dynamic"}, nil, table_config.show_dynamic)
+    add_checkbox(constants.actions.toggle_show_single_station_schedules, {"tll.show_single_station_schedules"}, nil, table_config.show_single_station_schedules)
+    add_checkbox(constants.actions.toggle_show_train_limits_separately, {"tll.show_train_limits_separately"}, nil, table_config.show_train_limits_separately)
+    add_checkbox(constants.actions.toggle_opinionation, {"tll.toggle_opinionation"}, {"tll.toggle_opinionation_tooltip"}, table_config.opinionate)
+
 
     local report_frame_name = "report_frame_name"
 
