@@ -68,9 +68,11 @@ local function build_train_schedule_group_report(player)
                 local nonexistent_stations_in_schedule = {}
                 local any_nonexistent_stations_in_schedule = false
                 for _, record in pairs(train_schedule_group[1].schedule.records) do
-                    if not schedule_report_data.train_stops[record.station] then
-                        nonexistent_stations_in_schedule[record.station] = true
-                        any_nonexistent_stations_in_schedule = true
+                    if record.station then
+                        if not schedule_report_data.train_stops[record.station] then
+                            nonexistent_stations_in_schedule[record.station] = true
+                            any_nonexistent_stations_in_schedule = true
+                        end
                     end
                 end
 
@@ -95,24 +97,28 @@ local function build_train_schedule_group_report(player)
                     any_schedule_shown = true
 
                     -- schedule caption
-                    local schedule_caption = ""
+                    local schedule_caption
                     for _, record in pairs(train_schedule_group[1].schedule.records) do
-                        if schedule_caption == "" then
-                            schedule_caption = record.station
+                        local stop_name = record.station or {"tll.temporary", record.rail.position.x, record.rail.position.y}
+                        if not schedule_caption then
+                            schedule_caption = stop_name
                         else
-                            schedule_caption = schedule_caption .. " → " .. record.station
+                            schedule_caption = {"", schedule_caption, " → ",  stop_name}
                         end
-                        if table_config.show_train_limits_separately then
-                            local train_group_limit = 0
-                            if schedule_report_data.train_stops[record.station] then
-                                for _, train_stop_data in pairs(schedule_report_data.train_stops[record.station]) do
-                                    train_group_limit = train_group_limit + train_stop_data.limit
+
+                        if record.station then
+                            if table_config.show_train_limits_separately then
+                                local train_group_limit = 0
+                                if schedule_report_data.train_stops[record.station] then
+                                    for _, train_stop_data in pairs(schedule_report_data.train_stops[record.station]) do
+                                        train_group_limit = train_group_limit + train_stop_data.limit
+                                    end
                                 end
+                                schedule_caption = {"", schedule_caption, " (" .. train_group_limit .. ")"}
                             end
-                            schedule_caption = schedule_caption .. " (" .. train_group_limit .. ")"
-                        end
-                        if nonexistent_stations_in_schedule[record.station] then
-                            schedule_caption = schedule_caption .. " [img=utility/warning_icon]"
+                            if nonexistent_stations_in_schedule[record.station] then
+                                schedule_caption = {"", schedule_caption, {"tll.warning_icon"}}
+                            end
                         end
                     end
 
