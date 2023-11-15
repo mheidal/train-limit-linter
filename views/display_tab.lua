@@ -96,6 +96,17 @@ local function build_train_schedule_group_report(player)
                 ) then
                     any_schedule_shown = true
 
+                    -- whether the schedule is valid for evaulation by P + R - 1
+                    local schedule_valid = (
+                        not schedule_report_data.not_set
+                        and not schedule_report_data.dynamic
+                        and not single_station_schedule
+                        and not any_nonexistent_stations_in_schedule
+                    )
+
+                    -- whether the schedule should have any stated opinion (warnings, coloration)
+                    local opinionate = player_global.model.general_configuration.opinionate
+
                     -- schedule caption
                     local schedule_caption
                     for _, record in pairs(train_schedule_group[1].schedule.records) do
@@ -116,7 +127,7 @@ local function build_train_schedule_group_report(player)
                                 end
                                 schedule_caption = {"", schedule_caption, " (" .. train_group_limit .. ")"}
                             end
-                            if nonexistent_stations_in_schedule[record.station] then
+                            if opinionate and nonexistent_stations_in_schedule[record.station] then
                                 schedule_caption = {"", schedule_caption, {"tll.warning_icon"}}
                             end
                         end
@@ -130,44 +141,35 @@ local function build_train_schedule_group_report(player)
                     local train_limit_sum_caption = {
                         "",
                         tostring(schedule_report_data.limit),
-                        (schedule_report_data.not_set or schedule_report_data.dynamic) and {"tll.warning_icon"} or "",
-                    }
-                    local train_limit_sum_tooltip = {
-                        "",
-                        schedule_report_data.not_set and {"tll.train_limit_not_set_tooltip"} or "",
-                        schedule_report_data.not_set and schedule_report_data.dynamic and "\n" or "",
-                        schedule_report_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
+                        (opinionate and (schedule_report_data.not_set or schedule_report_data.dynamic)) and {"tll.warning_icon"} or "",
                     }
 
-                    local show_opinionation = (
-                        player_global.model.general_configuration.opinionate
-                        or (
-                                not schedule_report_data.not_set
-                                and not schedule_report_data.dynamic
-                                and not single_station_schedule
-                                and not any_nonexistent_stations_in_schedule
-                        )
-                    )
+                    local train_limit_sum_tooltip = {
+                        "",
+                        opinionate and schedule_report_data.not_set and {"tll.train_limit_not_set_tooltip"} or "",
+                        opinionate and schedule_report_data.not_set and schedule_report_data.dynamic and "\n" or "",
+                        opinionate and schedule_report_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
+                    }
 
                     local train_count_difference = schedule_report_data.limit - 1 - #train_schedule_group
 
                     -- caption
                     local train_count_caption = tostring(#train_schedule_group)
-                    if show_opinionation and train_count_difference ~= 0 then
+                    if schedule_valid and opinionate and train_count_difference ~= 0 then
                         local diff_str = train_count_difference > 0 and "+" or ""
                         train_count_caption = train_count_caption .. " (" .. diff_str .. tostring(train_count_difference) .. ") [img=info]"
                     end
 
                     -- tooltip
                     local recommended_action_tooltip = nil
-                    if show_opinionation and train_count_difference ~= 0 then
+                    if schedule_valid and opinionate and train_count_difference ~= 0 then
                         local abs_diff = math.abs( train_count_difference)
                         recommended_action_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip", abs_diff} or {"tll.remove_n_trains_tooltip", abs_diff}
                     end
 
                     -- color
                     local train_count_label_color
-                    if show_opinionation then
+                    if schedule_valid and opinionate then
                         if train_count_difference ~= 0 then
                             train_count_label_color = {1, 0.541176, 0.541176}
                         else

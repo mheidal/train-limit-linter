@@ -134,7 +134,7 @@ end
 
 ---@param train_schedule_group LuaTrain[]
 ---@param surface LuaSurface
----@param enabled_excluded_keywords TLLToggleableItem[]
+---@param enabled_excluded_keywords string[]
 ---@return ScheduleTableData: info about train stops
 function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
     ---@type ScheduleTableData
