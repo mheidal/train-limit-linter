@@ -340,6 +340,20 @@ script.on_event(defines.events.on_gui_click, function (event)
             end
             player_global.model.trains_to_remove_list:remove_all()
             toggle_modal(player)
+            rebuild_interfaces(player)
+
+        elseif action == constants.actions.toggle_train_to_remove_button then
+            local train_id = event.element.tags.train_id
+            if not train_id then return end
+            if type(train_id) ~= "number" then return end
+            local checkbox = event.element.parent.parent[constants.gui_element_names.train_removal_modal.checkbox]
+            if player_global.model.trains_to_remove_list.trains_to_remove[train_id] then
+                player_global.model.trains_to_remove_list:remove(train_id)
+                checkbox.state = false
+            else
+                player_global.model.trains_to_remove_list:add(train_id)
+                checkbox.state = true
+            end
         end
     end
 end)
@@ -408,7 +422,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
                 player_global.model.schedule_table_configuration:toggle_opinionate()
                 rebuild_interfaces(player)
 
-            elseif action == constants.actions.toggle_train_to_remove then
+            elseif action == constants.actions.toggle_train_to_remove_checkbox then
                 local train_id = event.element.tags.train_id
                 if not train_id then return end
                 if type(train_id) ~= "number" then return end

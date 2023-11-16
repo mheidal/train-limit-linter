@@ -57,7 +57,8 @@ constants.actions = {
 
     toggle_opinionation="toggle_opinionation",
     change_remove_train_option="change_remove_train_option",
-    toggle_train_to_remove="toggle_train_to_remove",
+    toggle_train_to_remove_checkbox="toggle_train_to_remove_checkbox",
+    toggle_train_to_remove_button="toggle_train_to_remove_button",
     remove_trains="remove_trains",
 }
 
@@ -103,6 +104,12 @@ constants.magic_numbers = {
 constants.remove_train_option_enums = {
     mark="mark",
     delete="delete",
+}
+
+constants.gui_element_names = {
+    train_removal_modal = {
+        checkbox="train_removal_modal_checkbox"
+    }
 }
 
 return constants
