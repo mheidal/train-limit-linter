@@ -43,7 +43,6 @@ local function toggle_interface(player)
             main_frame.ignored_by_interaction = true
         else
             player_global.model.main_interface_open = false
-            player_global.model.last_gui_location = main_frame.location
             player_global.model.main_interface_selected_tab = nil
             main_frame.destroy()
             player_global.view = globals.get_empty_player_view()
@@ -75,7 +74,6 @@ function toggle_modal(player)
         modal.pre_build_cleanup(player)
         modal.build_modal(player)
     else
-        player_global.model.last_modal_location = modal_main_frame.location
         player_global.model.modal_open = false
         modal_main_frame.destroy()
         if player_global.view.main_frame_dimmer ~= nil then
@@ -591,6 +589,21 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
             toggle_modal(player)
         end
     end
+end)
+
+script.on_event(defines.events.on_gui_location_changed, function(event)
+    local player = game.get_player(event.player_index)
+    if not player then return end
+
+    ---@type TLLPlayerGlobal
+    local player_global = global.players[player.index]
+
+    if player_global.model.main_interface_open and player_global.view.main_frame == event.element then
+        player_global.model.last_gui_location = event.element.location
+    elseif player_global.model.modal_open and player_global.view.modal_main_frame == event.element then
+        player_global.model.last_modal_location = event.element.location
+    end
+
 end)
 
 script.on_event(defines.events.on_train_created, function (event)
