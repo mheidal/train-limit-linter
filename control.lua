@@ -18,6 +18,8 @@ local schedule_report_table_scripts = require("scripts.schedule_report_table")
 
 local blueprint_creation_scripts = require("scripts.blueprint_creation")
 
+local train_removal_scripts = require("scripts.train_removal")
+
 -- handlers
 
 ---@param player LuaPlayer
@@ -326,11 +328,20 @@ script.on_event(defines.events.on_gui_click, function (event)
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
         elseif action == constants.actions.remove_trains then
+            local remove_train_option = player_global.model.general_configuration.remove_train_option
+
             for train_id, _ in pairs(player_global.model.trains_to_remove_list.trains_to_remove) do
-                player.print("I was told to remove train with id " .. train_id) -- todo
+                if remove_train_option == constants.remove_train_option_enums.mark then
+                    train_removal_scripts.mark_train_for_deconstruction(train_id, player)
+
+                elseif remove_train_option== constants.remove_train_option_enums.delete then
+                    train_removal_scripts.delete_train(train_id, player)
+
+                elseif remove_train_option == constants.remove_train_option_enums.repath then
+                    train_removal_scripts.repath_train(train_id, player)
+                end
             end
             player_global.model.trains_to_remove_list:remove_all()
-            player.print("I didn't, and now the list is empty!")
             toggle_modal(player)
         end
     end
