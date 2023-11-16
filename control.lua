@@ -197,36 +197,36 @@ script.on_event(defines.events.on_gui_click, function (event)
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.excluded_keywords:set_enabled(text, true)
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
             end
 
         elseif action == constants.actions.delete_excluded_keyword then
             local excluded_keyword = event.element.tags.keyword
             if type(excluded_keyword) ~= "string" then return end
             player_global.model.excluded_keywords:remove_item(excluded_keyword)
-            main_interface.build_interface(player)
+            rebuild_interfaces(player)
 
         elseif action == constants.actions.delete_all_excluded_keywords then
 
             player_global.model.excluded_keywords:remove_all()
-            main_interface.build_interface(player)
+            rebuild_interfaces(player)
 
         elseif action == constants.actions.hide_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.hidden_keywords:set_enabled(text, true)
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
             end
 
         elseif action == constants.actions.delete_hidden_keyword then
             local hidden_keyword = event.element.tags.keyword
             if type(hidden_keyword) ~= "string" then return end
             player_global.model.hidden_keywords:remove_item(hidden_keyword)
-            main_interface.build_interface(player)
+            rebuild_interfaces(player)
 
         elseif action == constants.actions.delete_all_hidden_keywords then
             player_global.model.hidden_keywords:remove_all()
-            main_interface.build_interface(player)
+            rebuild_interfaces(player)
 
         elseif action == constants.actions.train_schedule_create_blueprint then
             schedule_report_table_create_blueprint(event, player, player_global)
@@ -248,7 +248,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             elseif orientation == constants.orientations.l or orientation == constants.orientations.r then
                 player_global.model.blueprint_configuration:set_snap_direction(constants.snap_directions.vertical)
             end
-            main_interface.build_interface(player)
+            rebuild_interfaces(player)
 
         elseif action == constants.actions.open_modal then
             local modal_function = event.element.tags.modal_function
@@ -280,7 +280,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_tag)
             keyword_list:add_from_serialized(text)
 
-            main_interface.build_interface(player)
+            rebuild_interfaces(player)
             toggle_modal(player)
 
         elseif action == constants.actions.focus_modal then
@@ -305,7 +305,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             if not tab_index then return end
             if type(tab_index) ~= "number" then return end
             player_global.model.main_interface_selected_tab = tab_index
-            main_interface.build_interface(player)
+            rebuild_interfaces(player)
 
         elseif action == constants.actions.toggle_display_settings_visible then
             player_global.model.collapsible_frame_configuration:toggle_display_settings_visible()
@@ -356,47 +356,47 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
 
             elseif action == constants.actions.toggle_show_all_surfaces then
                 player_global.model.schedule_table_configuration:toggle_show_all_surfaces()
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_show_satisfied then
                 player_global.model.schedule_table_configuration:toggle_show_satisfied()
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_show_not_set then
                 player_global.model.schedule_table_configuration:toggle_show_not_set()
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_show_dynamic then
                 player_global.model.schedule_table_configuration:toggle_show_dynamic()
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_show_single_station_schedules then
                 player_global.model.schedule_table_configuration:toggle_show_single_station_schedules()
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_show_train_limits_separately then
                 player_global.model.schedule_table_configuration:toggle_show_train_limits_separately()
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_blueprint_snap then
                 player_global.model.blueprint_configuration:toggle_blueprint_snap()
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_place_trains_with_fuel then
                 player_global.model.fuel_configuration:toggle_add_fuel()
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_include_train_stops then
                 player_global.model.blueprint_configuration:toggle_include_train_stops()
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_limit_train_stops then
                 player_global.model.blueprint_configuration:toggle_limit_train_stops()
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_opinionation then
                 player_global.model.schedule_table_configuration:toggle_opinionate()
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_train_to_remove then
                 local train_id = event.element.tags.train_id
@@ -556,13 +556,13 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.excluded_keywords:set_enabled(text, true)
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
             end
         elseif action == constants.actions.hide_textfield_enter_text then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
                 player_global.model.hidden_keywords:set_enabled(text, true)
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
             end
         elseif action == constants.actions.import_keywords_textfield then
             local text = event.element.text
@@ -574,7 +574,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
             local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_tag)
             keyword_list:add_from_serialized(text)
 
-            main_interface.build_interface(player)
+            rebuild_interfaces(player)
 
             toggle_modal(player)
         end
@@ -583,13 +583,13 @@ end)
 
 script.on_event(defines.events.on_train_created, function (event)
     for _, player in pairs(game.players) do
-        main_interface.build_interface(player)
+        rebuild_interfaces(player)
     end
 end)
 
 script.on_event(defines.events.on_train_schedule_changed, function (event)
     for _, player in pairs(game.players) do
-        main_interface.build_interface(player)
+        rebuild_interfaces(player)
     end
 end)
 
