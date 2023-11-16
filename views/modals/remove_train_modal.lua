@@ -22,14 +22,10 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
     local player_global = global.players[player.index]
 
     local content_frame = parent.add{type="frame", direction="vertical", name="modal_content_frame", style="inside_shallow_frame"}
-    header_flow = content_frame.add{type="flow", direction="horizontal"}
+
+    header_flow = content_frame.add{type="flow", direction="vertical"}
     header_flow.style.margin = 10
-
-    local radio_button_flow = header_flow.add{type="flow", direction="vertical"}
-
-    train_removal_buttons.add_train_removal_radio_buttons(radio_button_flow, player_global.model.general_configuration)
-
-    header_flow.add{type="sprite-button", style="tool_button_red", sprite="utility/trash", tags={action=constants.actions.remove_trains}}
+    train_removal_buttons.add_train_removal_radio_buttons(header_flow, player_global.model.general_configuration)
 
     local scroll_pane = content_frame.add{type="scroll-pane", scroll_policy="auto-and-reserve-space"}
     scroll_pane.style.maximal_height = 650
@@ -52,6 +48,10 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
             }
         end
     end
+
+    local footer_frame = content_frame.add{type="frame", direction="horizontal"}
+    footer_frame.add{type="empty-widget", style="tll_spacer"}
+    footer_frame.add{type="button", style="red_confirm_button", caption="Remove trains", tooltip="This will remove trains!", tags={action=constants.actions.remove_trains}}
 
     return return_data
 end

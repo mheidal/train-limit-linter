@@ -6,7 +6,7 @@ local Exports = {}
 ---@param general_config TLLGeneralConfiguration
 function Exports.add_train_removal_radio_buttons(parent, general_config)
 
-    parent.add{type="label", caption=""}
+    parent.add{type="label", caption={"tll.train_removal_options_header"}}
 
     parent.add{
         type="radiobutton",
