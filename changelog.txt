@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.18
+Date: 2023-11-16
+  Changes:
+    - Reduced width of sliders in Settings tab to allow the user to scroll without hitting one.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.17
 Date: 2023-11-16
   Bugfixes:

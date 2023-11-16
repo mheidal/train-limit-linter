@@ -59,13 +59,18 @@ function Exports.build_settings_tab(player)
         caption={"tll.limit_train_stops"},
     }
 
+    local default_train_limit_table = blueprint_content_flow.add{type="table", column_count=2}
+    local default_train_limit_label = default_train_limit_table.add{type="label", caption="Set default train limit"}
+    default_train_limit_label.style.single_line = false
+    default_train_limit_label.style.width = 180
+
     slider_textfield.add_slider_textfield(
-        blueprint_content_flow,
+        default_train_limit_table,
         {action=constants.actions.set_default_train_limit},
         blueprint_config.default_train_limit,
         1,
         0,
-        nil,
+        10,
         blueprint_config.include_train_stops and blueprint_config.limit_train_stops,
         false
     )
