@@ -21,15 +21,26 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
-    local content_frame = parent.add{type="frame", direction="vertical", name="modal_content_frame", style="inside_shallow_frame"}
+    local modal_name = "remove_train_modal_content_frame"
+    local content_frame
+    if parent[modal_name] then
+        content_frame = parent[modal_name]
+    else
+        content_frame = parent.add{type="frame", direction="vertical", name=modal_name, style="inside_shallow_frame"}
+    end
 
-    header_flow = content_frame.add{type="flow", direction="vertical"}
+    local header_flow_name = "header_flow_name"
+    header_flow = content_frame[header_flow_name] or content_frame.add{type="flow", name=header_flow_name, direction="vertical"}
+    header_flow.clear()
     header_flow.style.margin = 10
     train_removal_buttons.add_train_removal_radio_buttons(header_flow, player_global.model.general_configuration)
 
+    local scroll_pane_frame_name = "scroll_pane_frame_name"
+    local scroll_pane_frame = content_frame[scroll_pane_frame_name] or content_frame.add{type="frame", name=scroll_pane_frame_name, direction="vertical", style="deep_frame_in_shallow_frame"}
 
-    local scroll_pane_frame = content_frame.add{type="frame", direction="vertical", style="deep_frame_in_shallow_frame"}
-    local scroll_pane = scroll_pane_frame.add{type="scroll-pane", scroll_policy="auto-and-reserve-space"}
+    local scroll_pane_name = "scroll_pane_name"
+    local scroll_pane = scroll_pane_frame[scroll_pane_name] or scroll_pane_frame.add{type="scroll-pane", name=scroll_pane_name, scroll_policy="auto-and-reserve-space"}
+    scroll_pane.clear()
     scroll_pane.style.maximal_height = 650
     local trains_table = scroll_pane.add{type="table", column_count=3, style="trains_table"}
 
@@ -112,7 +123,9 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
         end
     end
 
-    local footer_frame = content_frame.add{type="frame", direction="horizontal"}
+    local footer_frame_name = "footer_frame_name"
+    local footer_frame = content_frame[footer_frame_name] or content_frame.add{type="frame", name=footer_frame_name, direction="horizontal"}
+    footer_frame.clear()
     footer_frame.add{type="empty-widget", style="tll_spacer"}
     footer_frame.add{type="button", style="red_confirm_button", caption={"tll.remove_trains_header"}, tags={action=constants.actions.remove_trains}}
 

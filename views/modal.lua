@@ -40,18 +40,21 @@ function Exports.build_modal(player)
         modal_main_frame.location = player_global.model.last_modal_location
     end
 
-    modal_main_frame.clear()
 
     player_global.view.modal_main_frame = modal_main_frame
     player.opened = modal_main_frame
 
     -- titlebar
-    local titlebar_flow = modal_main_frame.add{
+    local titlebar_flow_name = "tll_titlebar_flow"
+
+    local titlebar_flow = modal_main_frame[titlebar_flow_name] or modal_main_frame.add{
         type="flow",
         direction="horizontal",
-        name="tll_titlebar_flow",
+        name=titlebar_flow_name,
         style="flib_titlebar_flow"
     }
+    titlebar_flow.clear()
+
     titlebar_flow.drag_target = modal_main_frame
     local titlebar_caption = titlebar_flow.add{type="label", style="frame_title"}
     titlebar_flow.add{type="empty-widget", style="flib_titlebar_drag_handle", ignored_by_interaction=true}

@@ -9,6 +9,7 @@ local Exports = {}
 ---@param args table?
 ---@return TLLModalContentData
 Exports[constants.modal_functions.train_stop_name_selector] = function (player, parent, args)
+    parent.clear()
     local return_data =  TLLModalContentData.new()
     return_data:set_titlebar_caption{"tll.train_stop_name_selector_titlebar_caption"}
     return_data:set_close_button_visible(true)
