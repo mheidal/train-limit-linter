@@ -5,6 +5,7 @@ local collapsible_frame = require("views.collapsible_frame")
 local blueprint_orientation_selector = require("views.settings_views.blueprint_orientation_selector")
 local blueprint_snap_selection = require("views.settings_views.blueprint_snap_selection")
 local slider_textfield = require("views.slider_textfield")
+local train_removal_buttons = require("views.train_removal_radio_buttons")
 
 Exports = {}
 
@@ -186,6 +187,25 @@ function Exports.build_settings_tab(player)
             }
         end
     end
+
+    -- general settings
+    local general_collapsible_frame_name = "general_collapsible_frame_name"
+    local general_collapsible_frame = scroll_pane[general_collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+        scroll_pane,
+        general_collapsible_frame_name
+    )
+    local general_content_flow = collapsible_frame.build_collapsible_frame_contents(
+        general_collapsible_frame,
+        constants.actions.toggle_general_settings_visible,
+        {"tll.general_settings"},
+        {"tll.general_settings"},
+        player_global.model.collapsible_frame_configuration.general_settings_visible
+    )
+    local general_config = player_global.model.general_configuration
+
+    local remove_train_options_flow = general_content_flow.add{type="flow", direction="vertical"}
+    train_removal_buttons.add_train_removal_radio_buttons(remove_train_options_flow, general_config)
+
 end
 
 return Exports

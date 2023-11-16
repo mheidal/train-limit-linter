@@ -10,6 +10,7 @@ local Exports = {}
 ---@param args table?
 ---@return TLLModalContentData
 Exports[constants.modal_functions.export_keyword_list] = function (player, parent, args)
+    parent.clear()
     local return_data = TLLModalContentData.new()
     return_data.close_button_visible = true
     return_data.titlebar_visible = true
@@ -44,6 +45,7 @@ end
 ---@param args table?
 ---@return TLLModalContentData
 Exports[constants.modal_functions.import_keyword_list] = function (player, parent, args)
+    parent.clear()
     local return_data = TLLModalContentData.new()
     return_data:set_close_button_visible(true)
     return_data:set_titlebar_visible(true)

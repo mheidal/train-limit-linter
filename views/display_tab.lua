@@ -43,7 +43,7 @@ local function build_train_schedule_group_report(player)
 
     schedule_report_table.add{type="label", caption={"tll.train_count_header"}}
     schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
-    schedule_report_table.add{type="empty-widget"}
+    schedule_report_table.add{type="label", caption={"tll.actions_header"}}
 
 
     for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
@@ -96,6 +96,17 @@ local function build_train_schedule_group_report(player)
                 ) then
                     any_schedule_shown = true
 
+                    -- whether the schedule is valid for evaulation by P + R - 1
+                    local schedule_valid = (
+                        not schedule_report_data.not_set
+                        and not schedule_report_data.dynamic
+                        and not single_station_schedule
+                        and not any_nonexistent_stations_in_schedule
+                    )
+
+                    -- whether the schedule should have any stated opinion (warnings, coloration)
+                    local opinionate = player_global.model.schedule_table_configuration.opinionate
+
                     -- schedule caption
                     local schedule_caption
                     for _, record in pairs(train_schedule_group[1].schedule.records) do
@@ -116,7 +127,7 @@ local function build_train_schedule_group_report(player)
                                 end
                                 schedule_caption = {"", schedule_caption, " (" .. train_group_limit .. ")"}
                             end
-                            if nonexistent_stations_in_schedule[record.station] then
+                            if opinionate and nonexistent_stations_in_schedule[record.station] then
                                 schedule_caption = {"", schedule_caption, {"tll.warning_icon"}}
                             end
                         end
@@ -130,41 +141,35 @@ local function build_train_schedule_group_report(player)
                     local train_limit_sum_caption = {
                         "",
                         tostring(schedule_report_data.limit),
-                        (schedule_report_data.not_set or schedule_report_data.dynamic) and {"tll.warning_icon"} or "",
-                    }
-                    local train_limit_sum_tooltip = {
-                        "",
-                        schedule_report_data.not_set and {"tll.train_limit_not_set_tooltip"} or "",
-                        schedule_report_data.not_set and schedule_report_data.dynamic and "\n" or "",
-                        schedule_report_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
+                        (opinionate and (schedule_report_data.not_set or schedule_report_data.dynamic)) and {"tll.warning_icon"} or "",
                     }
 
-                    local show_opinionation = (
-                        not schedule_report_data.not_set
-                        and not schedule_report_data.dynamic
-                        and not single_station_schedule
-                        and not any_nonexistent_stations_in_schedule
-                    )
+                    local train_limit_sum_tooltip = {
+                        "",
+                        opinionate and schedule_report_data.not_set and {"tll.train_limit_not_set_tooltip"} or "",
+                        opinionate and schedule_report_data.not_set and schedule_report_data.dynamic and "\n" or "",
+                        opinionate and schedule_report_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
+                    }
 
                     local train_count_difference = schedule_report_data.limit - 1 - #train_schedule_group
 
                     -- caption
                     local train_count_caption = tostring(#train_schedule_group)
-                    if show_opinionation and train_count_difference ~= 0 then
+                    if schedule_valid and opinionate and train_count_difference ~= 0 then
                         local diff_str = train_count_difference > 0 and "+" or ""
                         train_count_caption = train_count_caption .. " (" .. diff_str .. tostring(train_count_difference) .. ") [img=info]"
                     end
 
                     -- tooltip
                     local recommended_action_tooltip = nil
-                    if show_opinionation and train_count_difference ~= 0 then
+                    if schedule_valid and opinionate and train_count_difference ~= 0 then
                         local abs_diff = math.abs( train_count_difference)
                         recommended_action_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip", abs_diff} or {"tll.remove_n_trains_tooltip", abs_diff}
                     end
 
                     -- color
                     local train_count_label_color
-                    if show_opinionation then
+                    if schedule_valid and opinionate then
                         if train_count_difference ~= 0 then
                             train_count_label_color = {1, 0.541176, 0.541176}
                         else
@@ -174,10 +179,14 @@ local function build_train_schedule_group_report(player)
                         train_count_label_color = {1, 1, 1}
                     end
 
-                    local template_train_ids = {}
+                    -- ids of trains in this group
+
+                    local train_ids = {}
                     for _, train in pairs(train_schedule_group) do
-                        table.insert(template_train_ids, train.id)
+                        table.insert(train_ids, train.id)
                     end
+
+                    -- info about train stops this group visits
 
                     local template_train_stops = {}
                     for train_stop_name, train_stop_group_data in pairs(schedule_report_data.train_stops) do
@@ -234,6 +243,8 @@ local function build_train_schedule_group_report(player)
 
                     -- cell 5
 
+                    local train_action_flow = schedule_report_table.add{type="flow", direction="horizontal"}
+
                     local copy_sprite = any_trains_with_no_schedule_parked and "utility/warning_icon" or "utility/copy"
                     local copy_tooltip = {
                         "",
@@ -243,19 +254,36 @@ local function build_train_schedule_group_report(player)
 
                     local copy_tags = {
                         action=any_trains_with_no_schedule_parked and constants.actions.train_schedule_create_blueprint_and_ping_trains or constants.actions.train_schedule_create_blueprint,
-                        template_train_ids=template_train_ids,
+                        template_train_ids=train_ids,
                         surface=surface.name,
                         parked_train_positions=any_trains_with_no_schedule_parked and parked_train_positions_and_train_stops or nil,
                         template_train_stops=template_train_stops
                     }
 
 
-                    schedule_report_table.add{
+                    train_action_flow.add{
                         type="sprite-button",
                         sprite=copy_sprite,
                         style="tool_button_blue",
                         tags=copy_tags,
                         tooltip=copy_tooltip,
+                    }
+
+                    local remove_tags = {
+                        action=constants.actions.open_modal,
+                        modal_function=constants.modal_functions.remove_trains,
+                        args={
+                            train_ids=train_ids,
+                        },
+                    }
+
+                    local remove_tooltip = "Remove trains"
+                    train_action_flow.add{
+                        type="sprite-button",
+                        sprite="utility/trash",
+                        style="tool_button_red",
+                        tags=remove_tags,
+                        tooltip=remove_tooltip,
                     }
                 end
             end
@@ -297,12 +325,18 @@ function Exports.build_display_tab(player)
         style="tll_controls_flow",
     }
 
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_all_surfaces}, caption={"tll.show_all_surfaces"}, state=table_config.show_all_surfaces}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_satisfied}, caption={"tll.show_satisfied"}, state=table_config.show_satisfied}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_not_set}, caption={"tll.show_not_set"}, state=table_config.show_not_set}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_dynamic}, caption={"tll.show_dynamic"}, state=table_config.show_dynamic}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_single_station_schedules}, caption={"tll.show_single_station_schedules"}, state=table_config.show_single_station_schedules}
-    controls_flow.add{type="checkbox", tags={action=constants.actions.toggle_show_train_limits_separately}, caption={"tll.show_train_limits_separately"}, state=table_config.show_train_limits_separately}
+    local function add_checkbox(action, caption, tooltip, state)
+        controls_flow.add{type="checkbox", tags={action=action}, caption=caption, tooltip=tooltip, state=state}
+    end
+
+    add_checkbox(constants.actions.toggle_show_all_surfaces, {"tll.show_all_surfaces"}, nil, table_config.show_all_surfaces)
+    add_checkbox(constants.actions.toggle_show_satisfied, {"tll.show_satisfied"}, nil, table_config.show_satisfied)
+    add_checkbox(constants.actions.toggle_show_not_set, {"tll.show_not_set"}, nil, table_config.show_not_set)
+    add_checkbox(constants.actions.toggle_show_dynamic, {"tll.show_dynamic"}, nil, table_config.show_dynamic)
+    add_checkbox(constants.actions.toggle_show_single_station_schedules, {"tll.show_single_station_schedules"}, nil, table_config.show_single_station_schedules)
+    add_checkbox(constants.actions.toggle_show_train_limits_separately, {"tll.show_train_limits_separately"}, nil, table_config.show_train_limits_separately)
+    add_checkbox(constants.actions.toggle_opinionation, {"tll.toggle_opinionation"}, {"tll.toggle_opinionation_tooltip"}, table_config.opinionate)
+
 
     local report_frame_name = "report_frame_name"
 

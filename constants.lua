@@ -18,6 +18,7 @@ constants.actions = {
 
     train_schedule_create_blueprint="train_schedule_create_blueprint",
     train_schedule_create_blueprint_and_ping_trains="train_schedule_create_blueprint_and_ping_trains",
+    train_schedule_remove_trains="train_schedule_remove_trains",
     toggle_show_all_surfaces="toggle_show_all_surfaces",
     toggle_show_satisfied="toggle_show_satisfied",
     toggle_show_not_set="toggle_show_not_set",
@@ -52,6 +53,13 @@ constants.actions = {
     toggle_display_settings_visible="toggle_display_settings_visible",
     toggle_blueprint_settings_visible="toggle_blueprint_settings_visible",
     toggle_fuel_settings_visible="toggle_fuel_settings_visible",
+    toggle_general_settings_visible="toggle_general_settings_visible",
+
+    toggle_opinionation="toggle_opinionation",
+    change_remove_train_option="change_remove_train_option",
+    toggle_train_to_remove_checkbox="toggle_train_to_remove_checkbox",
+    toggle_train_to_remove_button="toggle_train_to_remove_button",
+    remove_trains="remove_trains",
 }
 
 constants.orientations = {
@@ -73,7 +81,8 @@ constants.snap_directions = {
 constants.modal_functions = {
     export_keyword_list="export_keyword_list",
     import_keyword_list="import_keyword_list",
-    train_stop_name_selector="train_stop_name_selector"
+    train_stop_name_selector="train_stop_name_selector",
+    remove_trains="remove_trains",
 }
 
 constants.keyword_lists = {
@@ -90,6 +99,17 @@ constants.default_surface_name = "nauvis"
 constants.magic_numbers = {
     -- no train limit is implemented as limit == 2 ^ 32 - 1
     train_limit_not_set=(2 ^ 32) - 1,
+}
+
+constants.remove_train_option_enums = {
+    mark="mark",
+    delete="delete",
+}
+
+constants.gui_element_names = {
+    train_removal_modal = {
+        checkbox="train_removal_modal_checkbox"
+    }
 }
 
 return constants

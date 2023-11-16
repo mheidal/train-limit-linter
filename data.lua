@@ -33,6 +33,19 @@ styles["tll_frame_semitransparent"] = {
   }
 }
 
+-- from k2
+styles["tll_remove_train_minimap_button"] = {
+  type = "button_style",
+  parent = "button",
+  size = 256,
+  default_graphical_set = {},
+  hovered_graphical_set = {
+    base = { position = { 81, 80 }, size = 1, opacity = 0.7 },
+  },
+  clicked_graphical_set = { position = { 70, 146 }, size = 1, opacity = 0.7 },
+  disabled_graphical_set = {},
+}
+
 styles["tll_content_scroll_pane"] = {
   type="scroll_pane_style",
   vertically_stretchable="on"
