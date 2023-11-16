@@ -10,7 +10,7 @@ script.register_metatable("TLLGeneralConfiguration", mt)
 
 function TLLGeneralConfiguration.new()
     local self = {
-        remove_train_option = constants.remove_train_option_enums.none,
+        remove_train_option = constants.remove_train_option_enums.mark,
     }
     setmetatable(self, mt)
     return self
@@ -18,12 +18,7 @@ end
 
 function TLLGeneralConfiguration:change_remove_train_option(new_option)
     if not constants.remove_train_option_enums[new_option] then error("No such train option") end
-
-    if self.remove_train_option == new_option then
-        self.remove_train_option = constants.remove_train_option_enums.none
-    else
-        self.remove_train_option = new_option
-    end
+    self.remove_train_option = new_option
 end
 
 return TLLGeneralConfiguration

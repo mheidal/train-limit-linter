@@ -104,7 +104,6 @@ constants.remove_train_option_enums = {
     mark="mark",
     delete="delete",
     repath="repath",
-    none="none",
 }
 
 return constants
