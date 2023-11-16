@@ -28,14 +28,6 @@ local function rebuild_interfaces(player)
     modal.build_modal(player)
 end
 
-
-script.on_nth_tick(300, function (event)
-    for _, player in pairs(game.players) do
-        player.print("Rebuilt", {skip=defines.print_skip.never})
-        rebuild_interfaces(player)
-    end
-end)
-
 ---@param player LuaPlayer
 local function toggle_interface(player)
     ---@type TLLPlayerGlobal
