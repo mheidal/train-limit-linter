@@ -3,6 +3,7 @@
 ---@field add fun(self: TLLTrainsToRemoveList, train_id: number)
 ---@field remove fun(self: TLLTrainsToRemoveList, train_id: number)
 ---@field remove_all fun(self: TLLTrainsToRemoveList)
+---@field get_trains_to_remove fun(self: TLLTrainsToRemoveList): table
 
 local TLLTrainsToRemoveList = {}
 local mt = { __index = TLLTrainsToRemoveList }
@@ -28,5 +29,8 @@ function TLLTrainsToRemoveList:remove_all()
     self.trains_to_remove = {}
 end
 
+function TLLTrainsToRemoveList:get_trains_to_remove()
+    return self.trains_to_remove
+end
 
 return TLLTrainsToRemoveList

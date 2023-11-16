@@ -262,7 +262,7 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.remove_trains then
             local remove_train_option = player_global.model.general_configuration.remove_train_option
 
-            for train_id, _ in pairs(player_global.model.trains_to_remove_list.trains_to_remove) do
+            for train_id, _ in pairs(player_global.model.trains_to_remove_list:get_trains_to_remove()) do
                 if remove_train_option == constants.remove_train_option_enums.mark then
                     train_removal_scripts.mark_train_for_deconstruction(train_id, player)
 
@@ -279,7 +279,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             if not train_id then return end
             if type(train_id) ~= "number" then return end
             local checkbox = event.element.parent.parent.parent[constants.gui_element_names.train_removal_modal.checkbox]
-            if player_global.model.trains_to_remove_list.trains_to_remove[train_id] then
+            if player_global.model.trains_to_remove_list:get_trains_to_remove()[train_id] then
                 player_global.model.trains_to_remove_list:remove(train_id)
                 checkbox.state = false
             else

@@ -105,7 +105,7 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
             train_flow.add{
                 type="checkbox",
                 name=constants.gui_element_names.train_removal_modal.checkbox,
-                state=not not player_global.model.trains_to_remove_list.trains_to_remove[train_id], -- hi (coerce to boolean)
+                state=not not player_global.model.trains_to_remove_list:get_trains_to_remove()[train_id], -- hi (coerce to boolean)
                 caption={"tll.remove_train"},
                 tags={action=constants.actions.toggle_train_to_remove_checkbox, train_id=train_id}
             }
