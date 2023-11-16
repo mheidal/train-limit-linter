@@ -17,9 +17,11 @@ local function build_blueprint_snap_selector(player, parent)
         tags={action=constants.actions.toggle_blueprint_snap},
         caption={"tll.enable_blueprint_snap"}
     }
-    blueprint_snap_selector_flow.add{type="label", caption={"tll.set_snap_width"}}
+    local snap_selector_table = blueprint_snap_selector_flow.add{type="table", column_count=2}
+    local snap_selector_label = snap_selector_table.add{type="label", caption={"tll.set_snap_width"}, single_line=false}
+    snap_selector_label.style.width = 180
     slider_textfield.add_slider_textfield(
-        blueprint_snap_selector_flow,
+        snap_selector_table,
         {action=constants.actions.set_blueprint_snap_width},
         config.snap_width,
         2,
