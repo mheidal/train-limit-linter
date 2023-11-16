@@ -57,6 +57,8 @@ constants.actions = {
 
     toggle_opinionation="toggle_opinionation",
     change_remove_train_option="change_remove_train_option",
+    toggle_train_to_remove="toggle_train_to_remove",
+    remove_trains="remove_trains",
 }
 
 constants.orientations = {

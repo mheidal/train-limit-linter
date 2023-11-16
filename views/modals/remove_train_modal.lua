@@ -20,14 +20,18 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
-    local content_frame = parent.add{type="frame", direction="vertical", name="modal_content_frame", style="inside_shallow_frame"}
-    header_flow = content_frame.add{type="flow", direction="vertical"}
-    header_flow.style.margin = 10
+    player_global.model.trains_to_remove_list:remove_all()
 
-    header_flow.add{type="label", caption="remove some trains"}
-    header_flow.add{type="radiobutton", state=true, caption="abc"}
-    header_flow.add{type="radiobutton", state=true, caption="def"}
-    header_flow.add{type="radiobutton", state=true, caption="ghi"}
+    local content_frame = parent.add{type="frame", direction="vertical", name="modal_content_frame", style="inside_shallow_frame"}
+    header_flow = content_frame.add{type="flow", direction="horizontal"}
+    header_flow.style.margin = 10
+    local radio_button_flow = header_flow.add{type="flow", direction="vertical"}
+    radio_button_flow.add{type="label", caption="remove some trains"}
+    radio_button_flow.add{type="radiobutton", state=true, caption="abc"}
+    radio_button_flow.add{type="radiobutton", state=true, caption="def"}
+    radio_button_flow.add{type="radiobutton", state=true, caption="ghi"}
+
+    header_flow.add{type="sprite-button", style="tool_button_red", sprite="utility/trash", tags={action=constants.actions.remove_trains}}
 
     local scroll_pane = content_frame.add{type="scroll-pane", scroll_policy="auto-and-reserve-space"}
     scroll_pane.style.maximal_height = 650
@@ -42,7 +46,12 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
                 .add{type="button", style="locomotive_minimap_button"}
                 .add{type="minimap"}
             minimap.entity = train.front_stock
-            train_flow.add{type="checkbox", state=false, caption="Remove train"}
+            train_flow.add{
+                type="checkbox",
+                state=false,
+                caption="Remove train",
+                tags={action=constants.actions.toggle_train_to_remove, train_id=train_id}
+            }
         end
     end
 

@@ -313,6 +313,14 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.toggle_general_settings_visible then
             player_global.model.collapsible_frame_configuration:toggle_general_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
+
+        elseif action == constants.actions.remove_trains then
+            for train_id, _ in pairs(player_global.model.trains_to_remove_list.trains_to_remove) do
+                player.print("I was told to remove train with id " .. train_id) -- todo
+            end
+            player_global.model.trains_to_remove_list:remove_all()
+            player.print("I didn't, and now the list is empty!")
+            toggle_modal(player)
         end
     end
 end)
@@ -380,7 +388,18 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
             elseif action == constants.actions.toggle_opinionation then
                 player_global.model.schedule_table_configuration:toggle_opinionate()
                 main_interface.build_interface(player)
+
+            elseif action == constants.actions.toggle_train_to_remove then
+                local train_id = event.element.tags.train_id
+                if not train_id then return end
+                if type(train_id) ~= "number" then return end
+                if event.element.state then
+                    player_global.model.trains_to_remove_list:add(train_id)
+                else
+                    player_global.model.trains_to_remove_list:remove(train_id)
+                end
             end
+
         elseif event.element.type == "radiobutton" then
             if action == constants.actions.change_remove_train_option then
                 local new_option = event.element.tags.new_option

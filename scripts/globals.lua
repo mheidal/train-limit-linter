@@ -7,6 +7,7 @@ local TLLModalFunctionConfiguration = require("models.modal_function_configurati
 local fuel_category_data = require("models.fuel_category_data")
 local TLLCollapsibleFrameConfiguration = require("models.collapsible_frame_configuration")
 local TLLGeneralConfiguration = require("models.general_configuration")
+local TLLTrainsToRemoveList = require("models.trains_to_remove_list")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
@@ -32,6 +33,7 @@ local TLLGeneralConfiguration = require("models.general_configuration")
 ---@field collapsible_frame_configuration TLLCollapsibleFrameConfiguration
 ---@field inventory_scratch_pad LuaInventory
 ---@field general_configuration TLLGeneralConfiguration
+---@field trains_to_remove_list TLLTrainsToRemoveList
 
 ---@class TLLPlayerView
 ---@field main_frame LuaGuiElement?
@@ -80,6 +82,7 @@ function Exports.get_default_player_global(inventory_scratch_pad)
             collapsible_frame_configuration = TLLCollapsibleFrameConfiguration.new(),
             inventory_scratch_pad = inventory_scratch_pad or game.create_inventory(100),
             general_configuration = TLLGeneralConfiguration.new(),
+            trains_to_remove_list = TLLTrainsToRemoveList.new(),
         },
         view = Exports.get_empty_player_view()
     }
