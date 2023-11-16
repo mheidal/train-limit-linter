@@ -346,7 +346,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             local train_id = event.element.tags.train_id
             if not train_id then return end
             if type(train_id) ~= "number" then return end
-            local checkbox = event.element.parent.parent[constants.gui_element_names.train_removal_modal.checkbox]
+            local checkbox = event.element.parent.parent.parent[constants.gui_element_names.train_removal_modal.checkbox]
             if player_global.model.trains_to_remove_list.trains_to_remove[train_id] then
                 player_global.model.trains_to_remove_list:remove(train_id)
                 checkbox.state = false
