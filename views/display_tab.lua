@@ -43,7 +43,7 @@ local function build_train_schedule_group_report(player)
 
     schedule_report_table.add{type="label", caption={"tll.train_count_header"}}
     schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
-    schedule_report_table.add{type="empty-widget"}
+    schedule_report_table.add{type="label", caption="Actions"} -- todo locale
 
 
     for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
@@ -179,10 +179,14 @@ local function build_train_schedule_group_report(player)
                         train_count_label_color = {1, 1, 1}
                     end
 
-                    local template_train_ids = {}
+                    -- ids of trains in this group
+
+                    local train_ids = {}
                     for _, train in pairs(train_schedule_group) do
-                        table.insert(template_train_ids, train.id)
+                        table.insert(train_ids, train.id)
                     end
+
+                    -- info about train stops this group visits
 
                     local template_train_stops = {}
                     for train_stop_name, train_stop_group_data in pairs(schedule_report_data.train_stops) do
@@ -239,6 +243,8 @@ local function build_train_schedule_group_report(player)
 
                     -- cell 5
 
+                    local train_action_flow = schedule_report_table.add{type="flow", direction="horizontal"}
+
                     local copy_sprite = any_trains_with_no_schedule_parked and "utility/warning_icon" or "utility/copy"
                     local copy_tooltip = {
                         "",
@@ -248,19 +254,36 @@ local function build_train_schedule_group_report(player)
 
                     local copy_tags = {
                         action=any_trains_with_no_schedule_parked and constants.actions.train_schedule_create_blueprint_and_ping_trains or constants.actions.train_schedule_create_blueprint,
-                        template_train_ids=template_train_ids,
+                        template_train_ids=train_ids,
                         surface=surface.name,
                         parked_train_positions=any_trains_with_no_schedule_parked and parked_train_positions_and_train_stops or nil,
                         template_train_stops=template_train_stops
                     }
 
 
-                    schedule_report_table.add{
+                    train_action_flow.add{
                         type="sprite-button",
                         sprite=copy_sprite,
                         style="tool_button_blue",
                         tags=copy_tags,
                         tooltip=copy_tooltip,
+                    }
+
+                    local remove_tags = {
+                        action=constants.actions.open_modal,
+                        modal_function=constants.modal_functions.remove_trains,
+                        args={
+                            train_ids=train_ids,
+                        },
+                    }
+
+                    local remove_tooltip = "Remove trains"
+                    train_action_flow.add{
+                        type="sprite-button",
+                        sprite="utility/trash",
+                        style="tool_button_red",
+                        tags=remove_tags,
+                        tooltip=remove_tooltip,
                     }
                 end
             end

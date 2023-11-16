@@ -18,6 +18,7 @@ constants.actions = {
 
     train_schedule_create_blueprint="train_schedule_create_blueprint",
     train_schedule_create_blueprint_and_ping_trains="train_schedule_create_blueprint_and_ping_trains",
+    train_schedule_remove_trains="train_schedule_remove_trains",
     toggle_show_all_surfaces="toggle_show_all_surfaces",
     toggle_show_satisfied="toggle_show_satisfied",
     toggle_show_not_set="toggle_show_not_set",
@@ -77,7 +78,8 @@ constants.snap_directions = {
 constants.modal_functions = {
     export_keyword_list="export_keyword_list",
     import_keyword_list="import_keyword_list",
-    train_stop_name_selector="train_stop_name_selector"
+    train_stop_name_selector="train_stop_name_selector",
+    remove_trains="remove_trains",
 }
 
 constants.keyword_lists = {

@@ -4,6 +4,7 @@ local constants = require("constants")
 local modal_content_frame_imports = {
     require("views.modals.keyword_exchange_modal"),
     require("views.modals.train_stop_name_selector_modal"),
+    require("views.modals.remove_train_modal"),
 }
 
 local modal_content_frame_functions = {}
