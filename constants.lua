@@ -103,7 +103,6 @@ constants.magic_numbers = {
 constants.remove_train_option_enums = {
     mark="mark",
     delete="delete",
-    repath="repath",
 }
 
 return constants

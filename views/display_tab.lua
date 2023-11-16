@@ -43,7 +43,7 @@ local function build_train_schedule_group_report(player)
 
     schedule_report_table.add{type="label", caption={"tll.train_count_header"}}
     schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
-    schedule_report_table.add{type="label", caption="Actions"} -- todo locale
+    schedule_report_table.add{type="label", caption={"tll.actions_header"}}
 
 
     for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do

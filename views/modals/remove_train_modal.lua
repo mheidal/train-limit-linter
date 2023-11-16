@@ -14,7 +14,7 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
     local return_data = TLLModalContentData.new()
     return_data.close_button_visible = true
     return_data.titlebar_visible = true
-    return_data.titlebar_caption = "Remove trains" -- todo locale
+    return_data.titlebar_caption = {"tll.remove_trains_header"}
     if not args then return return_data end
     if not args.train_ids then return return_data end
 
@@ -47,7 +47,7 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
             train_flow.add{
                 type="checkbox",
                 state=not not player_global.model.trains_to_remove_list.trains_to_remove[train_id], -- hi (coerce to boolean)
-                caption="Remove train",
+                caption={"tll.remove_train"},
                 tags={action=constants.actions.toggle_train_to_remove, train_id=train_id}
             }
         end

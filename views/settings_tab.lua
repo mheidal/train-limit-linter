@@ -203,7 +203,7 @@ function Exports.build_settings_tab(player)
     )
     local general_config = player_global.model.general_configuration
 
-    local remove_train_options_flow = general_content_flow.add{type="flow", direction="vertical"} -- todo locale
+    local remove_train_options_flow = general_content_flow.add{type="flow", direction="vertical"}
     train_removal_buttons.add_train_removal_radio_buttons(remove_train_options_flow, general_config)
 
 end

@@ -338,9 +338,6 @@ script.on_event(defines.events.on_gui_click, function (event)
 
                 elseif remove_train_option== constants.remove_train_option_enums.delete then
                     train_removal_scripts.delete_train(train_id, player)
-
-                elseif remove_train_option == constants.remove_train_option_enums.repath then
-                    train_removal_scripts.repath_train(train_id, player)
                 end
             end
             player_global.model.trains_to_remove_list:remove_all()
