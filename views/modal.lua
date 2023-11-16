@@ -22,15 +22,25 @@ function Exports.build_modal(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
+    if not player_global.model.modal_open then return end
+
+    local modal_main_frame_name = "tll_modal_main_frame"
+
     ---@type LuaGuiElement
-    local modal_main_frame = player.gui.screen.add{type="frame", name="tll_modal_main_frame", direction="vertical"}
+    local modal_main_frame = player.gui.screen[modal_main_frame_name] or player.gui.screen.add{type="frame", name=modal_main_frame_name, direction="vertical"}
     modal_main_frame.style.size = {0, 0}
     modal_main_frame.style.horizontally_squashable = true
     modal_main_frame.style.vertically_squashable = true
     modal_main_frame.style.horizontally_stretchable = true
     modal_main_frame.style.vertically_stretchable = true
 
-    modal_main_frame.auto_center = true
+    if not player_global.model.last_modal_location then
+        modal_main_frame.auto_center = true
+    else
+        modal_main_frame.location = player_global.model.last_modal_location
+    end
+
+    modal_main_frame.clear()
 
     player_global.view.modal_main_frame = modal_main_frame
     player.opened = modal_main_frame

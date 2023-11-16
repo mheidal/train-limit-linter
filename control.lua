@@ -19,6 +19,12 @@ local schedule_report_table_scripts = require("scripts.schedule_report_table")
 -- handlers
 
 ---@param player LuaPlayer
+local function rebuild_interfaces(player)
+    main_interface.build_interface(player)
+    modal.build_modal(player)
+end
+
+---@param player LuaPlayer
 local function toggle_interface(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -60,8 +66,11 @@ function toggle_modal(player)
             dimmer.location = main_frame.location
             player_global.view.main_frame_dimmer = dimmer
         end
+        player_global.model.modal_open = true
         modal.build_modal(player)
     else
+        player_global.model.last_modal_location = modal_main_frame.location
+        player_global.model.modal_open = false
         modal_main_frame.destroy()
         if player_global.view.main_frame_dimmer ~= nil then
             player_global.view.main_frame_dimmer.destroy()
@@ -405,7 +414,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
                 local new_option = event.element.tags.new_option
                 if not new_option or type(new_option) ~= "string" then return end
                 player_global.model.general_configuration:change_remove_train_option(new_option)
-                main_interface.build_interface(player)
+                rebuild_interfaces(player)
             end
         end
     end

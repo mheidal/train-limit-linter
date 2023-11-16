@@ -27,6 +27,8 @@ local TLLTrainsToRemoveList = require("models.trains_to_remove_list")
 ---@field excluded_keywords TLLKeywordList
 ---@field hidden_keywords TLLKeywordList
 ---@field last_gui_location GuiLocation?
+---@field last_modal_location GuiLocation?
+---@field modal_open boolean
 ---@field modal_function_configuration TLLModalFunctionConfiguration
 ---@field main_interface_selected_tab number?
 ---@field main_interface_open boolean
@@ -77,6 +79,8 @@ function Exports.get_default_player_global(inventory_scratch_pad)
             excluded_keywords = TLLKeywordList.new(),
             hidden_keywords = TLLKeywordList.new(),
             last_gui_location = nil,
+            last_modal_location = nil,
+            modal_open=false,
             modal_function_configuration = TLLModalFunctionConfiguration.new(),
             main_interface_open=false,
             collapsible_frame_configuration = TLLCollapsibleFrameConfiguration.new(),

@@ -1,6 +1,7 @@
 local constants = require("constants")
 local globals = require("scripts.globals")
 local TLLModalContentData = require("models.modal_content_data")
+local train_removal_buttons = require("views.train_removal_radio_buttons")
 
 -- This Exports works differently from the rest!
 local Exports = {}
@@ -25,11 +26,10 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
     local content_frame = parent.add{type="frame", direction="vertical", name="modal_content_frame", style="inside_shallow_frame"}
     header_flow = content_frame.add{type="flow", direction="horizontal"}
     header_flow.style.margin = 10
+
     local radio_button_flow = header_flow.add{type="flow", direction="vertical"}
-    radio_button_flow.add{type="label", caption="remove some trains"}
-    radio_button_flow.add{type="radiobutton", state=true, caption="abc"}
-    radio_button_flow.add{type="radiobutton", state=true, caption="def"}
-    radio_button_flow.add{type="radiobutton", state=true, caption="ghi"}
+
+    train_removal_buttons.add_train_removal_radio_buttons(radio_button_flow, player_global.model.general_configuration)
 
     header_flow.add{type="sprite-button", style="tool_button_red", sprite="utility/trash", tags={action=constants.actions.remove_trains}}
 

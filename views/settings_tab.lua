@@ -5,6 +5,7 @@ local collapsible_frame = require("views.collapsible_frame")
 local blueprint_orientation_selector = require("views.settings_views.blueprint_orientation_selector")
 local blueprint_snap_selection = require("views.settings_views.blueprint_snap_selection")
 local slider_textfield = require("views.slider_textfield")
+local train_removal_buttons = require("views.train_removal_radio_buttons")
 
 Exports = {}
 
@@ -203,37 +204,7 @@ function Exports.build_settings_tab(player)
     local general_config = player_global.model.general_configuration
 
     local remove_train_options_flow = general_content_flow.add{type="flow", direction="vertical"} -- todo locale
-    remove_train_options_flow.add{type="label", caption="Remove train options"}
-
-    remove_train_options_flow.add{
-        type="radiobutton",
-        caption="Mark for deconstruction",
-        tags={
-            action=constants.actions.change_remove_train_option,
-            new_option=constants.remove_train_option_enums.mark
-        },
-        state=general_config.remove_train_option == constants.remove_train_option_enums.mark,
-    }
-
-    remove_train_options_flow.add{
-        type="radiobutton",
-        caption="Delete trains",
-        tags={
-            action=constants.actions.change_remove_train_option,
-            new_option=constants.remove_train_option_enums.delete
-        },
-        state=general_config.remove_train_option == constants.remove_train_option_enums.delete,
-    }
-
-    remove_train_options_flow.add{
-        type="radiobutton",
-        caption="Delete schedule and path trains to specified area",
-        tags={
-            action=constants.actions.change_remove_train_option,
-            new_option=constants.remove_train_option_enums.repath
-        },
-        state=general_config.remove_train_option == constants.remove_train_option_enums.repath,
-    }
+    train_removal_buttons.add_train_removal_radio_buttons(remove_train_options_flow, general_config)
 
 end
 
