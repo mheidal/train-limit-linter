@@ -68,4 +68,14 @@ function Exports.build_modal(player)
 
 end
 
+--- For cleaning up data a modal might use before it's opened. This isn't called before a modal is rebuilt.
+--- At time of writing, only used for remove_train_modal.
+---@param player LuaPlayer
+function Exports.pre_build_cleanup(player)
+    ---@type TLLPlayerGlobal
+    local player_global = global.players[player.index]
+
+    player_global.model.trains_to_remove_list:remove_all()
+end
+
 return Exports

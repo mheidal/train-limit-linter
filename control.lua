@@ -71,6 +71,8 @@ function toggle_modal(player)
             player_global.view.main_frame_dimmer = dimmer
         end
         player_global.model.modal_open = true
+
+        modal.pre_build_cleanup(player)
         modal.build_modal(player)
     else
         player_global.model.last_modal_location = modal_main_frame.location

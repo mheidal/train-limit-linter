@@ -21,8 +21,6 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
-    player_global.model.trains_to_remove_list:remove_all()
-
     local content_frame = parent.add{type="frame", direction="vertical", name="modal_content_frame", style="inside_shallow_frame"}
     header_flow = content_frame.add{type="flow", direction="horizontal"}
     header_flow.style.margin = 10
@@ -48,7 +46,7 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
             minimap.entity = train.front_stock
             train_flow.add{
                 type="checkbox",
-                state=false,
+                state=not not player_global.model.trains_to_remove_list.trains_to_remove[train_id], -- hi (coerce to boolean)
                 caption="Remove train",
                 tags={action=constants.actions.toggle_train_to_remove, train_id=train_id}
             }
