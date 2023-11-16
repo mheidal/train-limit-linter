@@ -16,6 +16,8 @@ local modal = require("views.modal")
 
 local schedule_report_table_scripts = require("scripts.schedule_report_table")
 
+local blueprint_creation_scripts = require("scripts.blueprint_creation")
+
 -- handlers
 
 ---@param player LuaPlayer
@@ -143,7 +145,7 @@ local function schedule_report_table_create_blueprint(event, player, player_glob
     end
     local surface_name = event.element.tags.surface
     if type(surface_name) ~= "string" then return end
-    local train_blueprint = schedule_report_table_scripts.create_blueprint_from_train(player, template_train, surface_name)
+    local train_blueprint = blueprint_creation_scripts.create_blueprint_from_train(player, template_train, surface_name)
     if not train_blueprint then
         player.create_local_flying_text({create_at_cursor=true, text={"tll.could_not_create_blueprint"}})
         return
@@ -156,7 +158,7 @@ local function schedule_report_table_create_blueprint(event, player, player_glob
 
         local train_limit = blueprint_config.limit_train_stops and blueprint_config.default_train_limit or nil
         for _, train_stop in pairs(event.element.tags.template_train_stops) do
-            local train_stop_blueprint = schedule_report_table_scripts.create_blueprint_from_train_stop(
+            local train_stop_blueprint = blueprint_creation_scripts.create_blueprint_from_train_stop(
                 player_global.model.inventory_scratch_pad,
                 train_stop.name,
                 train_stop.color,
