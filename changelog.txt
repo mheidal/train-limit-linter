@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.16
+Date: 2023-11-16
+  Features:
+    - Added ability to remove trains through the interface.
+    - Added toggle for opinionation of the interface (showing or hiding warnings and recommendations).
+---------------------------------------------------------------------------------------------------
 Version: 1.0.15
 Date: 2023-11-14
   Bugfixes:
