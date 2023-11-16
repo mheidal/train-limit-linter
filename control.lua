@@ -326,59 +326,68 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
 
     if event.element.tags.action then
         local action = event.element.tags.action
-        if action == constants.actions.toggle_excluded_keyword then
-            local keyword = event.element.tags.keyword
-            if type(keyword) ~= "string" then return end
-            player_global.model.excluded_keywords:toggle_enabled(keyword)
+        if event.element.type == "checkbox" then
+            if action == constants.actions.toggle_excluded_keyword then
+                local keyword = event.element.tags.keyword
+                if type(keyword) ~= "string" then return end
+                player_global.model.excluded_keywords:toggle_enabled(keyword)
 
-        elseif action == constants.actions.toggle_hidden_keyword then
-            local keyword = event.element.tags.keyword
-            if type(keyword) ~= "string" then return end
-            player_global.model.hidden_keywords:toggle_enabled(keyword)
+            elseif action == constants.actions.toggle_hidden_keyword then
+                local keyword = event.element.tags.keyword
+                if type(keyword) ~= "string" then return end
+                player_global.model.hidden_keywords:toggle_enabled(keyword)
 
-        elseif action == constants.actions.toggle_show_all_surfaces then
-            player_global.model.schedule_table_configuration:toggle_show_all_surfaces()
-            main_interface.build_interface(player)
+            elseif action == constants.actions.toggle_show_all_surfaces then
+                player_global.model.schedule_table_configuration:toggle_show_all_surfaces()
+                main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_show_satisfied then
-            player_global.model.schedule_table_configuration:toggle_show_satisfied()
-            main_interface.build_interface(player)
+            elseif action == constants.actions.toggle_show_satisfied then
+                player_global.model.schedule_table_configuration:toggle_show_satisfied()
+                main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_show_not_set then
-            player_global.model.schedule_table_configuration:toggle_show_not_set()
-            main_interface.build_interface(player)
+            elseif action == constants.actions.toggle_show_not_set then
+                player_global.model.schedule_table_configuration:toggle_show_not_set()
+                main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_show_dynamic then
-            player_global.model.schedule_table_configuration:toggle_show_dynamic()
-            main_interface.build_interface(player)
+            elseif action == constants.actions.toggle_show_dynamic then
+                player_global.model.schedule_table_configuration:toggle_show_dynamic()
+                main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_show_single_station_schedules then
-            player_global.model.schedule_table_configuration:toggle_show_single_station_schedules()
-            main_interface.build_interface(player)
+            elseif action == constants.actions.toggle_show_single_station_schedules then
+                player_global.model.schedule_table_configuration:toggle_show_single_station_schedules()
+                main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_show_train_limits_separately then
-            player_global.model.schedule_table_configuration:toggle_show_train_limits_separately()
-            main_interface.build_interface(player)
+            elseif action == constants.actions.toggle_show_train_limits_separately then
+                player_global.model.schedule_table_configuration:toggle_show_train_limits_separately()
+                main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_blueprint_snap then
-            player_global.model.blueprint_configuration:toggle_blueprint_snap()
-            main_interface.build_interface(player)
+            elseif action == constants.actions.toggle_blueprint_snap then
+                player_global.model.blueprint_configuration:toggle_blueprint_snap()
+                main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_place_trains_with_fuel then
-            player_global.model.fuel_configuration:toggle_add_fuel()
-            main_interface.build_interface(player)
+            elseif action == constants.actions.toggle_place_trains_with_fuel then
+                player_global.model.fuel_configuration:toggle_add_fuel()
+                main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_include_train_stops then
-            player_global.model.blueprint_configuration:toggle_include_train_stops()
-            main_interface.build_interface(player)
+            elseif action == constants.actions.toggle_include_train_stops then
+                player_global.model.blueprint_configuration:toggle_include_train_stops()
+                main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_limit_train_stops then
-            player_global.model.blueprint_configuration:toggle_limit_train_stops()
-            main_interface.build_interface(player)
+            elseif action == constants.actions.toggle_limit_train_stops then
+                player_global.model.blueprint_configuration:toggle_limit_train_stops()
+                main_interface.build_interface(player)
 
-        elseif action == constants.actions.toggle_opinionation then
-            player_global.model.schedule_table_configuration:toggle_opinionate()
-            main_interface.build_interface(player)
+            elseif action == constants.actions.toggle_opinionation then
+                player_global.model.schedule_table_configuration:toggle_opinionate()
+                main_interface.build_interface(player)
+            end
+        elseif event.element.type == "radiobutton" then
+            if action == constants.actions.change_remove_train_option then
+                local new_option = event.element.tags.new_option
+                if not new_option or type(new_option) ~= "string" then return end
+                player_global.model.general_configuration:change_remove_train_option(new_option)
+                main_interface.build_interface(player)
+            end
         end
     end
 end)

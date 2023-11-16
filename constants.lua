@@ -55,6 +55,7 @@ constants.actions = {
     toggle_general_settings_visible="toggle_general_settings_visible",
 
     toggle_opinionation="toggle_opinionation",
+    change_remove_train_option="change_remove_train_option",
 }
 
 constants.orientations = {
@@ -93,6 +94,13 @@ constants.default_surface_name = "nauvis"
 constants.magic_numbers = {
     -- no train limit is implemented as limit == 2 ^ 32 - 1
     train_limit_not_set=(2 ^ 32) - 1,
+}
+
+constants.remove_train_option_enums = {
+    mark="mark",
+    delete="delete",
+    repath="repath",
+    none="none",
 }
 
 return constants
