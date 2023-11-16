@@ -95,10 +95,9 @@ local function orient_train_entities(entities, new_orientation)
             entity.orientation = (new_orientation + 0.5) % 1
         end
     end
-    
+
     return entities
 end
-
 
 -- Given a template train, creates a blueprint containing a copy of that train.
 -- Can use trains at any angle.
@@ -110,7 +109,7 @@ end
 ---@param train LuaTrain
 ---@param surface_name string
 ---@return LuaItemStack?
-function Exports.create_blueprint_from_train(player, train, surface_name)
+local function create_blueprint_from_train(player, train, surface_name)
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -209,7 +208,7 @@ end
 ---@param train_limit number?
 ---@param proto_name string
 ---@return LuaItemStack?
-function Exports.create_blueprint_from_train_stop(script_inventory, name, color, train_limit, proto_name)
+local function create_blueprint_from_train_stop(script_inventory, name, color, train_limit, proto_name)
     script_inventory.clear()
     local blueprint = script_inventory[1]
     blueprint.set_stack("tll_cursor_blueprint")
@@ -231,6 +230,74 @@ function Exports.create_blueprint_from_train_stop(script_inventory, name, color,
     })
     blueprint.label = "[entity=" .. proto_name .. "] '" .. name .. "'"
     return blueprint
+end
+
+---@param script_inventory LuaInventory
+---@return LuaItemStack
+local function create_blueprint_book(script_inventory)
+    script_inventory.clear()
+    local blueprint_book = script_inventory[1]
+    blueprint_book.set_stack{name="tll_cursor_blueprint_book"}
+    return blueprint_book
+end
+
+---@param event EventData.on_gui_click
+---@param player LuaPlayer
+---@param player_global TLLPlayerGlobal
+function Exports.schedule_report_table_create_blueprint(event, player, player_global)
+
+    local blueprint_config = player_global.model.blueprint_configuration
+
+    local blueprint_book = create_blueprint_book(player_global.model.inventory_scratch_pad)
+
+    local cursor_stack = player.cursor_stack
+    if cursor_stack then
+        cursor_stack.set_stack(blueprint_book)
+    else
+        error("Could not add blueprint book to cursor")
+    end
+    local blueprint_book_inventory = cursor_stack.get_inventory(defines.inventory.item_main)
+    if not blueprint_book_inventory then return end
+
+    local template_train
+    local template_train_ids = event.element.tags.template_train_ids
+    if type(template_train_ids) ~= "table" then return end
+    for _, id in pairs(template_train_ids) do
+        local template_option = game.get_train_by_id(id)
+        if template_option then
+            template_train = template_option
+            break
+        end
+    end
+    if template_train == nil then
+        player.create_local_flying_text{text={"tll.no_valid_template_trains"}, create_at_cursor=true}
+        return
+    end
+    local surface_name = event.element.tags.surface
+    if type(surface_name) ~= "string" then return end
+    local train_blueprint = create_blueprint_from_train(player, template_train, surface_name)
+    if not train_blueprint then
+        player.create_local_flying_text({create_at_cursor=true, text={"tll.could_not_create_blueprint"}})
+        return
+    end
+    if not blueprint_config.include_train_stops then
+        player.add_to_clipboard(train_blueprint)
+        player.activate_paste()
+    else
+        blueprint_book_inventory.insert(train_blueprint)
+
+        local train_limit = blueprint_config.limit_train_stops and blueprint_config.default_train_limit or nil
+        for _, train_stop in pairs(event.element.tags.template_train_stops) do
+            local train_stop_blueprint = create_blueprint_from_train_stop(
+                player_global.model.inventory_scratch_pad,
+                train_stop.name,
+                train_stop.color,
+                train_limit,
+                train_stop.proto_name
+            )
+            if train_stop_blueprint then blueprint_book_inventory.insert(train_stop_blueprint) end
+        end
+    end
 end
 
 return Exports
