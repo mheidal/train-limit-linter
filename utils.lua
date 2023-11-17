@@ -37,7 +37,7 @@ function Exports.swap_rich_text_format_to_img(input)
     return modified
 end
 
----@param input string: string possibly containing rich text (format: [foo.bar]). Return with alt rich text format (format: [img=foo.bar])
+---@param input string: string possibly containing rich text (format: [foo.bar]). Return with alt rich text format (format: [img=entity/bar])
 ---@return string
 function Exports.swap_rich_text_format_to_entity(input)
     local modified = input:gsub("%[(%w+)=([%w%-_]+)%]", "[img=entity/%2]")
@@ -103,6 +103,15 @@ function Exports.train_schedule_to_key(schedule)
     end
     if not key then return "" end
     return key
+end
+
+function Exports.find_in_rich_text(superstring, substring)
+    local alt_rich_text_format_img = Exports.swap_rich_text_format_to_img(substring)
+    local alt_rich_text_format_entity = Exports.swap_rich_text_format_to_entity(substring)
+    return (string.find(superstring, substring, nil, true)
+    or string.find(superstring, alt_rich_text_format_img, nil, true)
+    or string.find(superstring, alt_rich_text_format_entity, nil, true)
+    )
 end
 
 Exports.deep_copy = deep_copy

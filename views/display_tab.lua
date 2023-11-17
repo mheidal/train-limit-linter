@@ -17,9 +17,6 @@ local function build_train_schedule_group_report(player)
     if not report_frame then return end
     report_frame.clear()
 
-    local enabled_excluded_keywords = player_global.model.excluded_keywords:get_enabled_keywords()
-    local enabled_hidden_keywords = player_global.model.hidden_keywords:get_enabled_keywords()
-
     local rails_under_trains_without_schedules = schedule_report_table_scripts.get_rails_to_trains_without_schedule()
 
     local table_config = player_global.model.schedule_table_configuration
@@ -60,19 +57,29 @@ local function build_train_schedule_group_report(player)
             for _, schedule_name in pairs(sorted_schedule_names) do
                 ---@type LuaTrain[]
                 local train_schedule_group = train_schedule_groups[schedule_name]
-                local schedule_report_data = schedule_report_table_scripts.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
+                local schedule_report_data = schedule_report_table_scripts.get_train_stop_data(
+                    train_schedule_group,
+                    surface,
+                    player_global.model.excluded_keywords,
+                    player_global.model.hidden_keywords,
+                    rails_under_trains_without_schedules
+                )
 
-                local single_station_schedule = #train_schedule_group[1].schedule.records == 1
+                local non_excluded_schedule = {}
+                for _, record in pairs(train_schedule_group[1].schedule.records) do
+                    if not record.temporary and record.station and (not schedule_report_data.train_stops[record.station] or not schedule_report_data.train_stops[record.station].excluded) then
+                        table.insert(non_excluded_schedule, record.station)
+                    end
+                end
 
+                local single_station_schedule = #non_excluded_schedule == 1
 
                 local nonexistent_stations_in_schedule = {}
                 local any_nonexistent_stations_in_schedule = false
-                for _, record in pairs(train_schedule_group[1].schedule.records) do
-                    if record.station then
-                        if not schedule_report_data.train_stops[record.station] then
-                            nonexistent_stations_in_schedule[record.station] = true
-                            any_nonexistent_stations_in_schedule = true
-                        end
+                for _, station in pairs(non_excluded_schedule) do
+                    if not schedule_report_data.train_stops[station] and not player_global.model.excluded_keywords:matches_any(station) then
+                        nonexistent_stations_in_schedule[station] = true
+                        any_nonexistent_stations_in_schedule = true
                     end
                 end
 
