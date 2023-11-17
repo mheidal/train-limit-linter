@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.19
+Date: 2023-11-16
+  Bugfixes:
+    - Altered behavior of excluded keywords to prevent "no stations with this name" from displaying
+      when a station was excluded.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.18
 Date: 2023-11-16
   Changes:
