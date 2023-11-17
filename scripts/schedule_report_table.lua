@@ -20,6 +20,7 @@ local utils = require("utils")
 ---@field dynamic boolean
 ---@field color Color
 ---@field proto_name string
+---@field excluded boolean
 
 ---@class TrainStopAndTrain
 ---@field train_stop number unit number
@@ -134,9 +135,10 @@ end
 
 ---@param train_schedule_group LuaTrain[]
 ---@param surface LuaSurface
----@param enabled_excluded_keywords string[]
+---@param excluded_keyword_list TLLKeywordList
+---@param hidden_keyword_list TLLKeywordList
 ---@return ScheduleTableData: info about train stops
-function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excluded_keywords, enabled_hidden_keywords, rails_under_trains_without_schedules)
+function Exports.get_train_stop_data(train_schedule_group, surface, excluded_keyword_list, hidden_keyword_list, rails_under_trains_without_schedules)
     ---@type ScheduleTableData
     local ret = {
         limit=0,
@@ -151,42 +153,26 @@ function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excl
 
     for _, record in pairs(shared_schedule.records) do
         if not record.temporary then
-            for _, keyword in pairs(enabled_hidden_keywords) do
-                local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(keyword)
-                local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(keyword)
-                if (string.find(record.station, keyword, nil, true)
-                    or string.find(record.station, alt_rich_text_format_img, nil, true)
-                    or string.find(record.station, alt_rich_text_format_entity, nil, true)
-                    ) then
-                    ret.hidden = true
-                    return ret
-                end
+            if hidden_keyword_list:matches_any(record.station) then
+                ret.hidden = true
+                return ret
             end
 
-            local station_is_excluded = false
-            for _, enabled_keyword in pairs(enabled_excluded_keywords) do
-                local alt_rich_text_format_img = utils.swap_rich_text_format_to_img(enabled_keyword)
-                local alt_rich_text_format_entity = utils.swap_rich_text_format_to_entity(enabled_keyword)
-                if (string.find(record.station, enabled_keyword, nil, true)
-                    or string.find(record.station, alt_rich_text_format_img, nil, true)
-                    or string.find(record.station, alt_rich_text_format_entity, nil, true)
-                    ) then
-                    station_is_excluded = true
-                end
-            end
+            local station_is_excluded = excluded_keyword_list:matches_any(record.station)
 
-            if not station_is_excluded then
-                for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
-                    ---@type TrainStopData
-                    local train_stop_data = {
-                        unit_number=train_stop.unit_number,
-                        limit=0,
-                        not_set=false,
-                        dynamic=false,
-                        color=train_stop.color,
-                        proto_name=train_stop.name,
-                    }
+            for _, train_stop in pairs(surface.get_train_stops({name=record.station})) do
+                ---@type TrainStopData
+                local train_stop_data = {
+                    unit_number=train_stop.unit_number,
+                    limit=0,
+                    not_set=false,
+                    dynamic=false,
+                    color=train_stop.color,
+                    proto_name=train_stop.name,
+                    excluded=station_is_excluded,
+                }
 
+                if not station_is_excluded then
                     local rails_near_train_stop = get_rails_near_train_stop(train_stop)
                     for rail_unit_number, _ in pairs(rails_near_train_stop) do
                         local rail_and_train = rails_under_trains_without_schedules[rail_unit_number]
@@ -197,7 +183,7 @@ function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excl
                             }
                         end
                     end
-
+    
                     local control_behavior = train_stop.get_control_behavior()
                     ---@diagnostic disable-next-line not sure how to indicate to VS Code that this is LuaTrainStopControlBehavior
                     if control_behavior and control_behavior.set_trains_limit then
@@ -211,9 +197,10 @@ function Exports.get_train_stop_data(train_schedule_group, surface, enabled_excl
                         train_stop_data.limit = train_stop_data.limit + train_stop.trains_limit
                         ret.limit = ret.limit + train_stop.trains_limit
                     end
-                    ret.train_stops[record.station] = ret.train_stops[record.station] or {}
-                    table.insert(ret.train_stops[record.station], train_stop_data)
                 end
+
+                ret.train_stops[record.station] = ret.train_stops[record.station] or {}
+                table.insert(ret.train_stops[record.station], train_stop_data)
             end
         end
     end

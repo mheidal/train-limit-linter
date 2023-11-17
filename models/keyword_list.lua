@@ -12,6 +12,7 @@ local utils = require("utils")
 ---@field get_keywords fun(self: TLLKeywordList): table<string, TLLToggleableItem>
 ---@field serialize fun(self: TLLKeywordList): string
 ---@field add_from_serialized fun(self: TLLKeywordList, serialized: string)
+---@field matches_any fun(self: TLLKeywordList, test_string: string): boolean
 
 ---@class TLLToggleableItem
 ---@field enabled boolean
@@ -112,6 +113,15 @@ function TLLKeywordList:add_from_serialized(serialized)
     for _, keyword in pairs(keywords) do
         self:set_enabled(keyword, true)
     end
+end
+
+function TLLKeywordList:matches_any(test_string)
+    for _, keyword in pairs(self:get_enabled_keywords()) do
+        if utils.find_in_rich_text(keyword, test_string) then
+            return true
+        end
+    end
+    return false
 end
 
 return TLLKeywordList
