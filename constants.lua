@@ -9,12 +9,14 @@ constants.actions = {
     exclude_textfield_enter_text="exclude_textfield_enter_text",
     exclude_textfield_apply="exclude_textfield_apply",
     delete_all_excluded_keywords="delete_all_excluded_keywords",
+    set_excluded_keyword_match_type="set_excluded_keyword_match_type",
 
     hide_textfield_enter_text="hide_textfield_enter_text",
     hide_textfield_apply="hide_textfield_apply",
     toggle_hidden_keyword="toggle_hidden_keyword",
     delete_hidden_keyword="delete_hidden_keyword",
     delete_all_hidden_keywords="delete_all_hidden_keywords",
+    set_hidden_keyword_match_type="set_excluded_keyword_match_type",
 
     train_schedule_create_blueprint="train_schedule_create_blueprint",
     train_schedule_create_blueprint_and_ping_trains="train_schedule_create_blueprint_and_ping_trains",
@@ -110,6 +112,11 @@ constants.gui_element_names = {
     train_removal_modal = {
         checkbox="train_removal_modal_checkbox"
     }
+}
+
+constants.keyword_match_types = {
+    exact="exact",
+    substring="substring",
 }
 
 return constants

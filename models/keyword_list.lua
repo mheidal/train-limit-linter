@@ -1,3 +1,4 @@
+local constants = require("constants")
 local utils = require("utils")
 
 ---@class TLLKeywordList
@@ -13,10 +14,15 @@ local utils = require("utils")
 ---@field serialize fun(self: TLLKeywordList): string
 ---@field add_from_serialized fun(self: TLLKeywordList, serialized: string)
 ---@field matches_any fun(self: TLLKeywordList, test_string: string): boolean
+---@field set_match_type fun(self: TLLKeywordList, keyword: string, new_match_type: string)
 
 ---@class TLLToggleableItem
 ---@field enabled boolean
+---@field match_type string
 ---@field new fun(): TLLToggleableItem
+---@field toggle_enabled fun(self: TLLToggleableItem)
+---@field set_enabled fun(self: TLLToggleableItem, enabled: boolean)
+---@field set_match_type fun(self: TLLToggleableItem, new_match_type: string)
 
 -- toggleable item
 
@@ -27,9 +33,25 @@ script.register_metatable("TLLToggleableItem", ti_mt)
 
 ---@return TLLToggleableItem
 function TLLToggleableItem.new()
-    local self = { enabled = true }
+    local self = {
+        enabled = true,
+        match_type=constants.keyword_match_types.substring,
+    }
     setmetatable(self, ti_mt)
     return self
+end
+
+function TLLToggleableItem:toggle_enabled()
+    self.enabled = not self.enabled
+end
+
+function TLLToggleableItem:set_enabled(enabled)
+    self.enabled = enabled
+end
+
+function TLLToggleableItem:set_match_type(new_match_type)
+    if not constants.keyword_match_types[new_match_type] then return end
+    self.match_type = new_match_type
 end
 
 -- keyword list
@@ -62,15 +84,13 @@ function TLLKeywordList:set_enabled(keyword, enabled)
     if self.toggleable_items[keyword] == nil then
         self.toggleable_items[keyword] = TLLToggleableItem.new()
     end
-    self.toggleable_items[keyword].enabled = enabled
+    self.toggleable_items[keyword]:set_enabled(enabled)
 end
 
 ---@param keyword string
 function TLLKeywordList:toggle_enabled(keyword)
-    if self.toggleable_items[keyword] == nil then
-        return
-    end
-    self.toggleable_items[keyword].enabled = not self.toggleable_items[keyword].enabled
+    if not self.toggleable_items[keyword] then return end
+    self.toggleable_items[keyword]:toggle_enabled()
 end
 
 ---@param keyword string
@@ -122,6 +142,11 @@ function TLLKeywordList:matches_any(test_string)
         end
     end
     return false
+end
+
+function TLLKeywordList:set_match_type(keyword, new_match_type)
+    if not self.toggleable_items[keyword] then return end
+    self.toggleable_items[keyword]:set_match_type(new_match_type)
 end
 
 return TLLKeywordList

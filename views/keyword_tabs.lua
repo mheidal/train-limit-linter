@@ -126,16 +126,26 @@ local function build_keyword_tab(
         }
     keyword_table_scroll_pane.clear()
 
-    if keyword_list:get_number_of_keywords() == 0 then
-        keyword_table_scroll_pane.add{type="label", caption={"tll.no_keywords"}}
-        return textfield_flow[icon_selector_textfield.textfield_name]
-    end
+    local any_keywords = false
+
+    local no_keywords_label = keyword_table_scroll_pane.add{type="label", caption={"tll.no_keywords"}}
 
     for keyword, string_data in pairs(keyword_list:get_keywords()) do
+        any_keywords = true
         local keyword_line_flow = keyword_table_scroll_pane.add{type="flow", direction="horizontal"}
         keyword_line_flow.add{type="checkbox", state=string_data.enabled, tags={action=toggle_keyword_action, keyword=keyword}, caption=keyword}
         local spacer = keyword_line_flow.add{type="empty-widget"}
         spacer.style.horizontally_stretchable = true
+
+        keyword_line_flow.add{
+            type="switch",
+            left_label_caption={"tll.keyword_exact_match"},
+            left_label_tooltip={"tll.keyword_exact_match_tooltip"},
+            right_label_caption={"tll.keyword_substring"},
+            right_label_tooltip={"tll.keyword_substring_tooltip"},
+            tags={action=constants.actions.set_hidden_keyword_match_type},
+        }
+
         keyword_line_flow.add{
             type="sprite-button",
             tags={action=delete_keyword_action, keyword=keyword},
@@ -143,6 +153,10 @@ local function build_keyword_tab(
             style="tool_button_red",
             tooltip={"tll.delete_keyword"}
         }
+    end
+
+    if any_keywords then
+        no_keywords_label.visible = false
     end
 
     return textfield_flow[icon_selector_textfield.textfield_name]
