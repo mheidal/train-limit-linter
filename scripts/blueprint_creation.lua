@@ -287,7 +287,9 @@ function Exports.schedule_report_table_create_blueprint(event, player, player_gl
         blueprint_book_inventory.insert(train_blueprint)
 
         local train_limit = blueprint_config.limit_train_stops and blueprint_config.default_train_limit or nil
-        for _, train_stop in pairs(event.element.tags.template_train_stops) do
+        local template_train_stops = event.element.tags.template_train_stops
+        if not template_train_stops or type(template_train_stops) ~= "table" then return end
+        for _, train_stop in pairs(template_train_stops) do
             local train_stop_blueprint = create_blueprint_from_train_stop(
                 player_global.model.inventory_scratch_pad,
                 train_stop.name,

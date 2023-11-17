@@ -170,7 +170,7 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.train_schedule_create_blueprint_and_ping_trains then
             blueprint_creation_scripts.schedule_report_table_create_blueprint(event, player, player_global)
             local parked_trains = event.element.tags.parked_train_positions
-            if not parked_trains or not type(parked_trains) == "table" then return end
+            if not parked_trains or type(parked_trains) ~= "table" then return end
             for _, parked_train in pairs(parked_trains) do
                 player.print{"tll.train_parked_at_stop", parked_train.train_stop, parked_train.position.x, parked_train.position.y, event.element.tags.surface}
             end

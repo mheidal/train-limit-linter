@@ -243,8 +243,8 @@ local function build_train_schedule_group_report(player)
                     local parked_train_positions_and_train_stops = {}
                     for _, parked_train_and_train_stop in pairs(schedule_report_data.trains_with_no_schedule_parked) do
                         table.insert(parked_train_positions_and_train_stops, {
-                            position=parked_train_and_train_stop.train.front_stock.position,
-                            train_stop=parked_train_and_train_stop.train_stop
+                            position=parked_train_and_train_stop.train.front_stock.position, ---@diagnostic disable-line
+                            train_stop=parked_train_and_train_stop.train_stop ---@diagnostic disable-line
                         })
                     end
 
