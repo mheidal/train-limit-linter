@@ -7,10 +7,6 @@ local Exports = {}
 ---@param parent LuaGuiElement
 ---@param label_caption LocalisedString
 ---@param label_tooltip LocalisedString
----@param apply_button_action string
----@param delete_all_keywords_action string
----@param toggle_keyword_action string
----@param delete_keyword_action string
 ---@param keyword_list TLLKeywordList
 ---@param keyword_list_name string
 ---@return LuaGuiElement -- the textfield, so the train stop name selector can find it. Gross!
@@ -18,11 +14,6 @@ local function build_keyword_tab(
     parent,
     label_caption,
     label_tooltip,
-    enter_text_action,
-    apply_button_action,
-    delete_all_keywords_action,
-    toggle_keyword_action,
-    delete_keyword_action,
     keyword_list,
     keyword_list_name
 )
@@ -48,10 +39,16 @@ local function build_keyword_tab(
             name=textfield_flow_name,
             direction="horizontal"
         }
-        icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {action=enter_text_action})
+        icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {
+            action=constants.actions.keyword_textfield_enter_text,
+            keywords=keyword_list_name,
+        })
         textfield_flow.add{
             type="sprite-button",
-            tags={action=apply_button_action},
+            tags={
+                action=constants.actions.keyword_textfield_apply,
+                keywords=keyword_list_name,
+            },
             style="item_and_count_select_confirm",
             sprite="utility/enter",
             tooltip={"tll.apply_change"},
@@ -107,7 +104,10 @@ local function build_keyword_tab(
     if keyword_list:get_number_of_keywords() > 1 then
         button_flow.add{
             type="sprite-button",
-            tags={action=delete_all_keywords_action},
+            tags={
+                action=constants.actions.delete_all_keywords,
+                keywords=keyword_list_name,
+            },
             style="tool_button_red",
             sprite="utility/trash",
             tooltip={"tll.delete_all_keywords"}
@@ -126,23 +126,54 @@ local function build_keyword_tab(
         }
     keyword_table_scroll_pane.clear()
 
-    if keyword_list:get_number_of_keywords() == 0 then
-        keyword_table_scroll_pane.add{type="label", caption={"tll.no_keywords"}}
-        return textfield_flow[icon_selector_textfield.textfield_name]
-    end
+    local any_keywords = false
+
+    local no_keywords_label = keyword_table_scroll_pane.add{type="label", caption={"tll.no_keywords"}}
 
     for keyword, string_data in pairs(keyword_list:get_keywords()) do
+        any_keywords = true
         local keyword_line_flow = keyword_table_scroll_pane.add{type="flow", direction="horizontal"}
-        keyword_line_flow.add{type="checkbox", state=string_data.enabled, tags={action=toggle_keyword_action, keyword=keyword}, caption=keyword}
-        local spacer = keyword_line_flow.add{type="empty-widget"}
-        spacer.style.horizontally_stretchable = true
+        keyword_line_flow.add{
+            type="checkbox",
+            state=string_data.enabled,
+            tags={
+                action=constants.actions.toggle_keyword,
+                keyword=keyword,
+                keywords=keyword_list_name,
+            },
+            caption=keyword
+        }
+        keyword_line_flow.add{type="empty-widget", style="tll_spacer"}
+
+        keyword_line_flow.add{
+            type="switch",
+            left_label_caption={"tll.keyword_exact_match"},
+            left_label_tooltip={"tll.keyword_exact_match_tooltip"},
+            right_label_caption={"tll.keyword_substring"},
+            right_label_tooltip={"tll.keyword_substring_tooltip"},
+            tags={
+                action=constants.actions.set_keyword_match_type,
+                keyword=keyword,
+                keywords=keyword_list_name,
+            },
+            switch_state=string_data.match_type == constants.keyword_match_types.exact and "left" or "right",
+        }
+
         keyword_line_flow.add{
             type="sprite-button",
-            tags={action=delete_keyword_action, keyword=keyword},
+            tags={
+                action=constants.actions.delete_keyword,
+                keyword=keyword,
+                keywords=keyword_list_name,
+            },
             sprite="utility/trash",
             style="tool_button_red",
             tooltip={"tll.delete_keyword"}
         }
+    end
+
+    if any_keywords then
+        no_keywords_label.visible = false
     end
 
     return textfield_flow[icon_selector_textfield.textfield_name]
@@ -159,11 +190,6 @@ function Exports.build_exclude_tab(player)
         exclude_content_frame,
         {"tll.add_excluded_keyword"},
         {"tll.add_excluded_keyword_tooltip"},
-        constants.actions.exclude_textfield_enter_text,
-        constants.actions.exclude_textfield_apply,
-        constants.actions.delete_all_excluded_keywords,
-        constants.actions.toggle_excluded_keyword,
-        constants.actions.delete_excluded_keyword,
         player_global.model.excluded_keywords,
         constants.keyword_lists.exclude
     )
@@ -181,11 +207,6 @@ function Exports.build_hide_tab(player)
         hide_content_frame,
         {"tll.add_hidden_keyword"},
         {"tll.add_hidden_keyword_tooltip"},
-        constants.actions.hide_textfield_enter_text,
-        constants.actions.hide_textfield_apply,
-        constants.actions.delete_all_hidden_keywords,
-        constants.actions.toggle_hidden_keyword,
-        constants.actions.delete_hidden_keyword,
         player_global.model.hidden_keywords,
         constants.keyword_lists.hide
     )

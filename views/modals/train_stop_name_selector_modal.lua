@@ -25,10 +25,12 @@ Exports[constants.modal_functions.train_stop_name_selector] = function (player, 
     for _, surface in pairs(game.surfaces) do
         for _, entity in pairs(surface.find_entities_filtered{name="train-stop"}) do
             local name = entity.backer_name
-            if train_stop_name_to_count[name] then
-                train_stop_name_to_count[name] = train_stop_name_to_count[name] + 1
-            else
-                train_stop_name_to_count[name] = 1
+            if name then
+                if train_stop_name_to_count[name] then
+                    train_stop_name_to_count[name] = train_stop_name_to_count[name] + 1
+                else
+                    train_stop_name_to_count[name] = 1
+                end
             end
         end
     end

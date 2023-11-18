@@ -1,8 +1,12 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.20
-Date: 2023-11-16
+Date: 2023-11-17
+  Features:
+    - Added ability to toggle keywords between matching when they're a substring of a train stop's
+      name and matching when they're an exact match of the train stop's name (previously, was only
+      substring matching).
   Changes:
-    - Minor internal changes.
+    - Some internal refactoring.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.19
 Date: 2023-11-16
