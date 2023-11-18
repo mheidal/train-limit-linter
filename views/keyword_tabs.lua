@@ -131,6 +131,9 @@ local function build_keyword_tab(
     local no_keywords_label = keyword_table_scroll_pane.add{type="label", caption={"tll.no_keywords"}}
 
     for keyword, string_data in pairs(keyword_list:get_keywords()) do
+        if any_keywords then
+            keyword_table_scroll_pane.add{type="line"}
+        end
         any_keywords = true
         local keyword_line_flow = keyword_table_scroll_pane.add{type="flow", direction="horizontal"}
         keyword_line_flow.add{

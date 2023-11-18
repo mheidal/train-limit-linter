@@ -63,8 +63,16 @@ function Exports.build_modal(player)
     local modal_function_name = player_global.model.modal_function_configuration:get_modal_content_function()
     local modal_args = player_global.model.modal_function_configuration:get_modal_content_args()
 
+    local modal_content_frame_name = "modal_content_frame_name"
+    local modal_content_frame = modal_main_frame[modal_content_frame_name] or modal_main_frame.add{
+        type="frame",
+        direction="vertical",
+        name=modal_content_frame_name,
+        style="inside_shallow_frame"
+    }
+
     ---@type TLLModalContentData
-    local modal_content_data = modal_content_frame_functions[modal_function_name](player, modal_main_frame, modal_args)
+    local modal_content_data = modal_content_frame_functions[modal_function_name](player, modal_content_frame, modal_args)
     close_button.visible = modal_content_data.close_button_visible
     titlebar_flow.visible = modal_content_data.titlebar_visible
     if modal_content_data.titlebar_caption then titlebar_caption.caption = modal_content_data.titlebar_caption end

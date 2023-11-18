@@ -17,9 +17,10 @@ Exports[constants.modal_functions.train_stop_name_selector] = function (player, 
     if not args then return return_data end
     if not args.keywords then return return_data end
 
-    local content_frame = parent.add{type="frame", direction="vertical", name="modal_content_frame", style="inside_shallow_frame"}
-    local content_flow = content_frame.add{type="flow", direction="vertical"}
+    local content_flow = parent.add{type="flow", direction="vertical"}
     content_flow.style.margin = 10
+    content_flow.style.horizontally_stretchable = true
+    content_flow.style.minimal_width = 300
 
     local train_stop_name_to_count = {}
     for _, surface in pairs(game.surfaces) do
