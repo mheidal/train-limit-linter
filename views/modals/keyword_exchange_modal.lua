@@ -21,8 +21,7 @@ Exports[constants.modal_functions.export_keyword_list] = function (player, paren
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
-    local content_frame = parent.add{type="frame", direction="vertical", name="modal_content_frame", style="inside_shallow_frame"}
-    content_flow = content_frame.add{type="flow", direction="vertical"}
+    content_flow = parent.add{type="flow", direction="vertical"}
     content_flow.style.margin = 10
 
 
@@ -53,9 +52,7 @@ Exports[constants.modal_functions.import_keyword_list] = function (player, paren
     if not args then return return_data end
     if not args.keywords then return return_data end
 
-    local content_frame = parent.add{type="frame", direction="vertical", name="modal_content_frame", style="inside_shallow_frame"}
-
-    content_flow = content_frame.add{type="flow", direction="vertical"}
+    content_flow = parent.add{type="flow", direction="vertical"}
     content_flow.style.margin = 10
 
     content_flow.add{type="label", caption={"tll.import_keywords_label"}, tooltip={"tll.import_keywords_tooltip"}}

@@ -40,8 +40,14 @@ function Exports.build_settings_tab(player)
         {"tll.blueprint_settings_tooltip"},
         player_global.model.collapsible_frame_configuration.blueprint_settings_visible
     )
+
     blueprint_orientation_selector.build_blueprint_orientation_selector(blueprint_config.new_blueprint_orientation, blueprint_content_flow)
+
+    blueprint_content_flow.add{type="line"}
+
     blueprint_snap_selection.build_blueprint_snap_selector(player, blueprint_content_flow)
+
+    blueprint_content_flow.add{type="line"}
 
     blueprint_content_flow.add{
         type="checkbox",

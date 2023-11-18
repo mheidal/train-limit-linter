@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.21
+Date: 2023-11-17
+  Bugfixes:
+    - Fixed crash when opening some modals.
+  Changes:
+    - Added lines separating sections in settinsg and separating keywords.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.20
 Date: 2023-11-17
   Features:
