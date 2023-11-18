@@ -4,7 +4,7 @@ local utils = require("utils")
 ---@class TLLKeywordList
 ---@field toggleable_items table<string, TLLToggleableItem>
 ---@field new fun(): TLLKeywordList
----@field get_enabled_keywords fun(self: TLLKeywordList): string[]
+---@field get_enabled_keywords fun(self: TLLKeywordList): table<string, TLLToggleableItem>
 ---@field set_enabled fun(self: TLLKeywordList, keyword: string, enabled: boolean)
 ---@field toggle_enabled fun(self: TLLKeywordList, keyword: string)
 ---@field remove_item fun(self: TLLKeywordList, keyword: string)
@@ -68,12 +68,13 @@ function TLLKeywordList.new()
     return self
 end
 
----@return string[]
+---@return table<string, TLLToggleableItem>
 function TLLKeywordList:get_enabled_keywords()
     local enabled_keywords = {}
-
     for value, toggleable_item in pairs(self.toggleable_items) do
-        if toggleable_item.enabled then table.insert(enabled_keywords, value) end
+        if toggleable_item.enabled then
+            enabled_keywords[value] = toggleable_item
+        end
     end
     return enabled_keywords
 end
@@ -136,9 +137,15 @@ function TLLKeywordList:add_from_serialized(serialized)
 end
 
 function TLLKeywordList:matches_any(test_string)
-    for _, keyword in pairs(self:get_enabled_keywords()) do
-        if utils.find_in_rich_text(keyword, test_string) then
-            return true
+    for keyword, toggleable_item in pairs(self:get_enabled_keywords()) do
+        if toggleable_item.match_type == constants.keyword_match_types.substring then
+            if utils.find_in_rich_text(test_string, keyword) then
+                return true
+            end
+        elseif toggleable_item.match_type == constants.keyword_match_types.exact then
+            if test_string == keyword then
+                return true
+            end
         end
     end
     return false

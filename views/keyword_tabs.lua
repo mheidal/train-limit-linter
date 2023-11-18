@@ -152,10 +152,11 @@ local function build_keyword_tab(
             right_label_caption={"tll.keyword_substring"},
             right_label_tooltip={"tll.keyword_substring_tooltip"},
             tags={
-                action=constants.actions.set_hidden_keyword_match_type,
+                action=constants.actions.set_keyword_match_type,
                 keyword=keyword,
                 keywords=keyword_list_name,
             },
+            switch_state=string_data.match_type == constants.keyword_match_types.exact and "left" or "right",
         }
 
         keyword_line_flow.add{

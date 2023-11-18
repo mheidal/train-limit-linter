@@ -454,7 +454,7 @@ end)
 
 script.on_event(defines.events.on_gui_switch_state_changed, function(event)
     local player = game.get_player(event.player_index)
-    if not player then return end -- 
+    if not player then return end
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -462,6 +462,19 @@ script.on_event(defines.events.on_gui_switch_state_changed, function(event)
         local action = event.element.tags.action
         if action == constants.actions.toggle_blueprint_snap_direction then
             player_global.model.blueprint_configuration:toggle_snap_direction()
+
+        elseif action == constants.actions.set_keyword_match_type then
+            local keyword = event.element.tags.keyword
+            if not keyword or type(keyword) ~= "string" then return end
+            local keywords_name = event.element.tags.keywords
+            if not keywords_name or type(keywords_name) ~= "string" then return end
+            local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_name)
+
+            if event.element.switch_state == "left" then
+                keyword_list:set_match_type(keyword, constants.keyword_match_types.exact)
+            elseif event.element.switch_state == "right" then
+                keyword_list:set_match_type(keyword, constants.keyword_match_types.substring)
+            end
         end
     end
 end)
