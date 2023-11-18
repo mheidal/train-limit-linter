@@ -129,39 +129,30 @@ script.on_event(defines.events.on_gui_click, function (event)
         elseif action == constants.actions.close_window then
             toggle_interface(player)
 
-        elseif action == constants.actions.exclude_textfield_apply then
+        elseif action == constants.actions.keyword_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
+            local keywords_name = event.element.tags.keywords
+            if not keywords_name or type(keywords_name) ~= "string" then return end
             if text ~= "" then -- don't allow user to input the empty string
-                player_global.model.excluded_keywords:set_enabled(text, true)
+                local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_name)
+                keyword_list:set_enabled(text, true)
                 rebuild_interfaces(player)
             end
 
-        elseif action == constants.actions.delete_excluded_keyword then
-            local excluded_keyword = event.element.tags.keyword
-            if type(excluded_keyword) ~= "string" then return end
-            player_global.model.excluded_keywords:remove_item(excluded_keyword)
+        elseif action == constants.actions.delete_keyword then
+            local keyword = event.element.tags.keyword
+            if type(keyword) ~= "string" then return end
+            local keywords_name = event.element.tags.keywords
+            if not keywords_name or type(keywords_name) ~= "string" then return end
+            local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_name)
+            keyword_list:remove_item(keyword)
             rebuild_interfaces(player)
 
-        elseif action == constants.actions.delete_all_excluded_keywords then
-
-            player_global.model.excluded_keywords:remove_all()
-            rebuild_interfaces(player)
-
-        elseif action == constants.actions.hide_textfield_apply then
-            local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
-            if text ~= "" then -- don't allow user to input the empty string
-                player_global.model.hidden_keywords:set_enabled(text, true)
-                rebuild_interfaces(player)
-            end
-
-        elseif action == constants.actions.delete_hidden_keyword then
-            local hidden_keyword = event.element.tags.keyword
-            if type(hidden_keyword) ~= "string" then return end
-            player_global.model.hidden_keywords:remove_item(hidden_keyword)
-            rebuild_interfaces(player)
-
-        elseif action == constants.actions.delete_all_hidden_keywords then
-            player_global.model.hidden_keywords:remove_all()
+        elseif action == constants.actions.delete_all_keywords then
+            local keywords_name = event.element.tags.keywords
+            if not keywords_name or type(keywords_name) ~= "string" then return end
+            local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_name)
+            keyword_list:remove_all()
             rebuild_interfaces(player)
 
         elseif action == constants.actions.train_schedule_create_blueprint then
@@ -292,7 +283,7 @@ end)
 
 script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     local player = game.get_player(event.player_index)
-    if not player then return end -- 
+    if not player then return end
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -300,15 +291,15 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     if event.element.tags.action then
         local action = event.element.tags.action
         if event.element.type == "checkbox" then
-            if action == constants.actions.toggle_excluded_keyword then
-                local keyword = event.element.tags.keyword
-                if type(keyword) ~= "string" then return end
-                player_global.model.excluded_keywords:toggle_enabled(keyword)
+            if false then
 
-            elseif action == constants.actions.toggle_hidden_keyword then
+            elseif action == constants.actions.toggle_keyword then
                 local keyword = event.element.tags.keyword
                 if type(keyword) ~= "string" then return end
-                player_global.model.hidden_keywords:toggle_enabled(keyword)
+                local keywords_name = event.element.tags.keywords
+                if not keywords_name or type(keywords_name) ~= "string" then return end
+                local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_name)
+                keyword_list:toggle_enabled(keyword)
 
             elseif action == constants.actions.toggle_show_all_surfaces then
                 player_global.model.schedule_table_configuration:toggle_show_all_surfaces()
@@ -508,18 +499,17 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
     local player_global = global.players[player.index]
     if event.element.tags.action then
         local action = event.element.tags.action
-        if action == constants.actions.exclude_textfield_enter_text then
+
+        if action == constants.actions.keyword_textfield_enter_text then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
             if text ~= "" then -- don't allow user to input the empty string
-                player_global.model.excluded_keywords:set_enabled(text, true)
+                local keywords_name = event.element.tags.keywords
+                if not keywords_name or type(keywords_name) ~= "string" then return end
+                local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_name)
+                keyword_list:set_enabled(text, true)
                 rebuild_interfaces(player)
             end
-        elseif action == constants.actions.hide_textfield_enter_text then
-            local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
-            if text ~= "" then -- don't allow user to input the empty string
-                player_global.model.hidden_keywords:set_enabled(text, true)
-                rebuild_interfaces(player)
-            end
+
         elseif action == constants.actions.import_keywords_textfield then
             local text = event.element.text
             if text == "" then return end -- don't allow user to input the empty string
