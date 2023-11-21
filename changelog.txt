@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.22
+Date: 2023-11-22
+  Bugfixes:
+    - Fixed crash when opening settings tab with 248k mod installed.
+    - Fixed crash when opening settings tab after removing mods which added fuel categories.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.21
 Date: 2023-11-17
   Bugfixes:
