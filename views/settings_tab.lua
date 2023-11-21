@@ -23,7 +23,8 @@ function Exports.build_settings_tab(player)
         type="scroll-pane",
         direction="vertical",
         name=scroll_pane_name,
-        style="tll_content_scroll_pane"
+        style="tll_content_scroll_pane",
+        vertical_scroll_policy="auto-and-reserve-space",
     }
     scroll_pane.clear()
 
@@ -107,6 +108,7 @@ function Exports.build_settings_tab(player)
     fuel_category_table = fuel_content_flow.add{type="table", column_count=2, style="bordered_table"}
 
     for fuel_category, fuel_category_config in pairs(fuel_config.fuel_category_configurations) do
+        if not game.fuel_category_prototypes[fuel_category] then goto fuel_category_continue end
 
         local fuel_category_caption = {"tll.fuel_category_caption", game.fuel_category_prototypes[fuel_category].localised_name}
 
@@ -119,8 +121,11 @@ function Exports.build_settings_tab(player)
         local tooltip_title = {"tll.tooltip_title", {"tll.fuel_category_consumed_by"}}
         local locomotive_consumer_tooltip = {"", tooltip_title}
         for _, locomotive_consumer in pairs(locomotive_consumers) do
-            table.insert(locomotive_consumer_tooltip, {"", "\n[img=item." .. locomotive_consumer .. "] ", game.item_prototypes[locomotive_consumer].localised_name})
+            table.insert(locomotive_consumer_tooltip, {"", "\n[img=entity." .. locomotive_consumer .. "] ", (game.entity_prototypes[locomotive_consumer].localised_name or locomotive_consumer)})
         end
+
+        local valid_fuels = global.model.fuel_category_data.fuel_categories_and_fuels[fuel_category]
+        if not valid_fuels then goto fuel_category_continue end
 
         local fuel_category_label = fuel_category_table.add{type="label", caption=fuel_category_caption, tooltip=locomotive_consumer_tooltip}
         fuel_category_label.style.width = 160 -- 1/3 the table's width, ish
@@ -148,8 +153,6 @@ function Exports.build_settings_tab(player)
         )
 
         player_global.view.fuel_amount_flows[fuel_category] = fuel_category_slider_textfield
-
-        local valid_fuels = global.model.fuel_category_data.fuel_categories_and_fuels[fuel_category]
 
         local max_column_count = 8
         local column_count = #valid_fuels < max_column_count and #valid_fuels or max_column_count
@@ -197,6 +200,7 @@ function Exports.build_settings_tab(player)
                 tooltip=tooltip
             }
         end
+        ::fuel_category_continue::
     end
 
     -- general settings
