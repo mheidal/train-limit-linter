@@ -197,7 +197,7 @@ local function create_blueprint_from_train(player, train, surface_name)
     aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
     aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player, prev_vert_offset)
 
-    aggregated_blueprint_slot.label = utils.train_records_to_key(train.schedule.records)
+    aggregated_blueprint_slot.label = utils.train_schedule_to_key(train.schedule)
 
     return aggregated_blueprint_slot
 end

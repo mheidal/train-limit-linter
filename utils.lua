@@ -88,16 +88,17 @@ function Exports.localize_to_percentage(value, round)
     return formatted_string .. "%"
 end
 
----@param records TrainScheduleRecord[]
+---@param schedule TrainSchedule 
 ---@return string
-function Exports.train_records_to_key(records)
+function Exports.train_schedule_to_key(schedule)
     local key
-    for _, record in pairs(records) do
-        local record_string = record.station or record.rail and "[" .. record.rail.position.x .. ", " .. record.rail.position.y .. "]" or ""
-        if not key then
-            key = record_string
-        else
-            key = key .. " → " .. record_string
+    for _, record in pairs(schedule.records) do
+        if not record.temporary and record.station then
+            if not key then
+                 key = record.station
+            else
+                key = key .. " → " .. record.station
+            end
         end
     end
     if not key then return "" end
@@ -111,18 +112,6 @@ function Exports.find_in_rich_text(superstring, substring)
     or string.find(superstring, alt_rich_text_format_img, nil, true)
     or string.find(superstring, alt_rich_text_format_entity, nil, true)
     )
-end
-
----@generic V
----@param t table
----@param k any
----@param v V
----@return V
-function Exports.get_or_insert(t, k, v)
-    if not t[k] then
-        t[k] = v
-    end
-    return t[k]
 end
 
 Exports.deep_copy = deep_copy
