@@ -13,7 +13,7 @@ local function build_train_schedule_group_report(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
-    local new_train_groups = schedule_report_table_scripts.new_get_train_groups(player_global.model.excluded_keywords, player_global.model.hidden_keywords)
+    local train_groups = schedule_report_table_scripts.get_train_groups(player_global.model.excluded_keywords, player_global.model.hidden_keywords)
 
     local report_frame = player_global.view.report_frame
     if not report_frame then return end
@@ -44,21 +44,19 @@ local function build_train_schedule_group_report(player)
     schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
     schedule_report_table.add{type="label", caption={"tll.actions_header"}}
 
-    local surface_train_groups = schedule_report_table_scripts.group_train_groups_by_surface(new_train_groups)
-
-    for surface, train_groups in pairs(surface_train_groups) do
+    for surface, surface_train_groups in pairs(schedule_report_table_scripts.group_train_groups_by_surface(train_groups)) do
 
         -- barrier for all train schedules for a surface
         if table_config.show_all_surfaces or surface == player.surface.name then
 
-            table.sort(train_groups, function(a, b)
+            table.sort(surface_train_groups, function(a, b)
                 return a.filtered_schedule.key < b.filtered_schedule.key
             end
             )
 
-            for _, train_group in pairs(train_groups) do
+            for _, train_group in pairs(surface_train_groups) do
                 ---@type ScheduleTableData
-                local schedule_report_data = schedule_report_table_scripts.new_get_train_stop_data(
+                local schedule_report_data = schedule_report_table_scripts.get_train_stop_data(
                     train_group,
                     surface,
                     rails_under_trains_without_schedules
