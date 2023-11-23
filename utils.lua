@@ -125,6 +125,17 @@ function Exports.get_or_insert(t, k, v)
     return t[k]
 end
 
+---@generic V
+---@param t V[]
+---@return V[]
+function Exports.reverse(t)
+    for i = 1, math.floor(#t/2), 1 do
+        t[i], t[#t-i+1] = t[#t-i+1], t[i]
+    end
+    return t
+end
+
+
 Exports.deep_copy = deep_copy
 
 return Exports

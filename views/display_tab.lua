@@ -62,6 +62,8 @@ local function build_train_schedule_group_report(player)
                     rails_under_trains_without_schedules
                 )
 
+                local train_count_difference = schedule_report_data.limit - 1 - #train_group.trains
+
                 local is_single_station_schedule = #train_group.filtered_schedule.records == 1
 
                 local nonexistent_stations_in_schedule = {}
@@ -106,29 +108,36 @@ local function build_train_schedule_group_report(player)
                     -- whether the schedule should have any stated opinion (warnings, coloration)
                     local opinionate = player_global.model.schedule_table_configuration.opinionate
 
-                    local sorted_all_schedules = {}
-                    for key, schedule in pairs(train_group.all_schedules) do
-                        sorted_all_schedules[#sorted_all_schedules+1] = schedule
+                    -- color
+                    local non_excluded_label_color
+                    if schedule_valid and opinionate then
+                        if train_count_difference ~= 0 then
+                            non_excluded_label_color = {"tll.red"}
+                        else
+                            non_excluded_label_color = {"tll.green"} -- copied from "confirm" buttons in game
+                        end
+                    else
+                        non_excluded_label_color = {"tll.white"}
                     end
-                    table.sort(sorted_all_schedules, function (a, b)
-                        return #a > #b
-                    end)
+
+                    local sorted_all_schedules_length = schedule_report_table_scripts.all_schedules_sorted_by_length(train_group.all_schedules, false)
 
                     local first_schedule = true
                     local schedule_caption
                     local schedule_caption_tooltip
-                    for _, schedule in pairs(sorted_all_schedules) do
+                    for _, schedule in pairs(sorted_all_schedules_length) do
                         if first_schedule then
                             schedule_caption = schedule_report_table_scripts.generate_schedule_caption(
                                 table_config,
-                                schedule,
+                                schedule.records,
                                 schedule_report_data,
                                 player_global.model.excluded_keywords,
                                 opinionate,
-                                nonexistent_stations_in_schedule
+                                nonexistent_stations_in_schedule,
+                                non_excluded_label_color
                             )
 
-                            if #sorted_all_schedules == 1 then
+                            if #sorted_all_schedules_length == 1 then
                                 schedule_caption_tooltip = deep_copy(schedule_caption)
                             else
                                 schedule_caption = {
@@ -147,11 +156,12 @@ local function build_train_schedule_group_report(player)
                                 "\n",
                                 schedule_report_table_scripts.generate_schedule_caption(
                                     table_config,
-                                    schedule,
+                                    schedule.records,
                                     schedule_report_data,
                                     player_global.model.excluded_keywords,
                                     opinionate,
-                                    nonexistent_stations_in_schedule
+                                    nonexistent_stations_in_schedule,
+                                    non_excluded_label_color
                                 )
                             }
                         end
@@ -175,8 +185,6 @@ local function build_train_schedule_group_report(player)
                         opinionate and schedule_report_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
                     }
 
-                    local train_count_difference = schedule_report_data.limit - 1 - #train_group.trains
-
                     -- caption
                     local train_count_caption = tostring(#train_group.trains)
                     if schedule_valid and opinionate and train_count_difference ~= 0 then
@@ -191,19 +199,19 @@ local function build_train_schedule_group_report(player)
                         recommended_action_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip", abs_diff} or {"tll.remove_n_trains_tooltip", abs_diff}
                     end
 
-                    -- color
-                    local train_count_label_color
-                    if schedule_valid and opinionate then
-                        if train_count_difference ~= 0 then
-                            train_count_label_color = {1, 0.541176, 0.541176}
-                        else
-                            train_count_label_color = {0.375, 0.703125, 0.390625} -- copied from "confirm" buttons in game
-                        end
-                    else
-                        train_count_label_color = {1, 1, 1}
-                    end
-
                     -- info about train stops this group visits
+
+                    local sorted_all_schedules_count_length = schedule_report_table_scripts.all_schedules_sorted_by_count_then_length(
+                        train_group.all_schedules,
+                        false
+                    )
+                    local unfiltered_records = sorted_all_schedules_count_length[1].records
+                    local filtered_records = {}
+                    for _, record in pairs(unfiltered_records) do
+                        if not record.rail then
+                            filtered_records[#filtered_records+1] = record
+                        end
+                    end
 
                     local template_train_stops = {}
                     for train_stop_name, train_stop_group_data in pairs(schedule_report_data.train_stops) do
@@ -226,25 +234,23 @@ local function build_train_schedule_group_report(player)
                         direction="horizontal",
                         style="tll_horizontal_stretch_squash_flow"
                     }
-                    local schedule_cell_label = schedule_cell.add{
+                    schedule_cell.add{
                         type="label",
                         caption=schedule_caption,
                         tooltip=schedule_caption_tooltip,
                         style="tll_horizontal_stretch_squash_label",
                     }
-                    schedule_cell_label.style.font_color=train_count_label_color
 
                     schedule_cell.add{type="empty-widget"}
                     schedule_cell.style.maximal_width = 300
 
 
                     -- cell 3
-                    local train_count_cell = schedule_report_table.add{
+                    schedule_report_table.add{
                         type="label",
-                        caption=train_count_caption,
+                        caption={"tll.color_text", non_excluded_label_color, train_count_caption},
                         tooltip=recommended_action_tooltip
                     }
-                    train_count_cell.style.font_color=train_count_label_color
 
                     -- cell 4
                     schedule_report_table.add{type="label", caption=train_limit_sum_caption, tooltip=train_limit_sum_tooltip}
@@ -274,7 +280,8 @@ local function build_train_schedule_group_report(player)
                         template_train_ids=train_group.trains,
                         surface=surface,
                         parked_train_positions=any_trains_with_no_schedule_parked and parked_train_positions_and_train_stops or nil,
-                        template_train_stops=template_train_stops
+                        template_train_stops=template_train_stops,
+                        records=utils.deep_copy(filtered_records),
                     }
 
 

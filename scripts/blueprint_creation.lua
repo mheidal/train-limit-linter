@@ -108,8 +108,9 @@ end
 ---@param player LuaPlayer
 ---@param train LuaTrain
 ---@param surface_name string
+---@param records TrainScheduleRecord[]
 ---@return LuaItemStack?
-local function create_blueprint_from_train(player, train, surface_name)
+local function create_blueprint_from_train(player, train, surface_name, records)
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -173,6 +174,9 @@ local function create_blueprint_from_train(player, train, surface_name)
     if not aggregated_entities then return end
     for _, entity in pairs(aggregated_entities) do
         local entity_prototype = game.entity_prototypes[entity.name]
+        if entity_prototype.type == "locomotive" then
+            entity.schedule = records
+        end
         local items_to_add = {}
         if player_global.model.fuel_configuration.add_fuel then
             local accepted_fuel_categories = global.model.fuel_category_data.locomotives_fuel_categories[entity.name]
@@ -197,7 +201,7 @@ local function create_blueprint_from_train(player, train, surface_name)
     aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
     aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player, prev_vert_offset)
 
-    aggregated_blueprint_slot.label = utils.train_records_to_key(train.schedule.records)
+    aggregated_blueprint_slot.label = utils.train_records_to_key(records)
 
     return aggregated_blueprint_slot
 end
@@ -275,7 +279,11 @@ function Exports.schedule_report_table_create_blueprint(event, player, player_gl
     end
     local surface_name = event.element.tags.surface
     if type(surface_name) ~= "string" then return end
-    local train_blueprint = create_blueprint_from_train(player, template_train, surface_name)
+
+    local records = event.element.tags.records
+    if not records or type(records) ~= "table" then return end
+
+    local train_blueprint = create_blueprint_from_train(player, template_train, surface_name, records)
     if not train_blueprint then
         player.create_local_flying_text({create_at_cursor=true, text={"tll.could_not_create_blueprint"}})
         return

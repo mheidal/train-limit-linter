@@ -12,8 +12,10 @@ local utils = require("utils")
 ---@class TrainGroup
 ---@field surface string
 ---@field filtered_schedule {key: string, records: TrainScheduleRecord[]}
----@field all_schedules table<string, TrainScheduleRecord[]>
+---@field all_schedules table<string, AllSchedulesEntry>
 ---@field trains number[] ids of the trains in this group
+
+---@alias AllSchedulesEntry {records: TrainScheduleRecord[], count: number}
 
 ---@class TrainStopData
 ---@field unit_number number
@@ -78,9 +80,8 @@ function Exports.get_train_groups(excluded_keywords, hidden_keywords)
                 })
                 table.insert(train_group.trains, train.id)
                 local full_key = utils.train_records_to_key(train.schedule.records)
-                if not train_group.all_schedules[full_key] then
-                    train_group.all_schedules[full_key] = train.schedule.records
-                end
+                local all_schedules_entry = utils.get_or_insert(train_group.all_schedules, full_key, {records=train.schedule.records, count=0})
+                all_schedules_entry.count = all_schedules_entry.count + 1
             end
             ::continue_schedule::
         end
@@ -219,19 +220,33 @@ end
 ---@param excluded_keywords TLLKeywordList
 ---@param opinionate boolean
 ---@param nonexistent_stations_in_schedule table<string, boolean>
+---@param non_excluded_label_color LocalisedString
 ---@return LocalisedString
-function Exports.generate_schedule_caption(table_config, schedule, schedule_report_data, excluded_keywords, opinionate, nonexistent_stations_in_schedule)
+function Exports.generate_schedule_caption(table_config, schedule, schedule_report_data, excluded_keywords, opinionate, nonexistent_stations_in_schedule, non_excluded_label_color)
 
-    local schedule_caption
+    ---@type LocalisedString
+    local schedule_caption = {""}
+
+    local first_record = true
     for _, record in pairs(schedule) do
         local stop_name = record.station or {"tll.temporary", record.rail.position.x, record.rail.position.y}
+
         local stop_excluded = not record.station or excluded_keywords:matches_any(stop_name --[[@as string]])
 
-        if not schedule_caption then
-            schedule_caption = {"", stop_excluded and "[" or "", stop_name}
+        ---@type LocalisedString
+        local color_localised_string = {"tll.color_text", stop_excluded and {"tll.gray"} or non_excluded_label_color}
+
+        ---@type LocalisedString
+        local stop_localised_string = {""}
+
+        if first_record then
+            first_record = false
+            stop_localised_string[#stop_localised_string+1] = stop_excluded and "[" or ""
         else
-            schedule_caption = {"", schedule_caption, stop_excluded and " [" or "", " → ",  stop_name}
+            stop_localised_string[#stop_localised_string+1] = (stop_excluded and " [" or "") .. " → "
         end
+
+        stop_localised_string[#stop_localised_string+1] = stop_name
 
         if record.station then
             if table_config.show_train_limits_separately and not stop_excluded then
@@ -241,17 +256,65 @@ function Exports.generate_schedule_caption(table_config, schedule, schedule_repo
                         train_group_limit = train_group_limit + train_stop_data.limit
                     end
                 end
-                schedule_caption = {"", schedule_caption, " (" .. train_group_limit .. ")"}
+                stop_localised_string[#stop_localised_string+1] = " (" .. train_group_limit .. ")"
             end
             if opinionate and nonexistent_stations_in_schedule[record.station] then
-                schedule_caption = {"", schedule_caption, {"tll.warning_icon"}}
+                stop_localised_string[#stop_localised_string+1] = {"tll.warning_icon"}
             end
         end
 
-        schedule_caption = {"", schedule_caption, stop_excluded and "]" or ""}
+        stop_localised_string[#stop_localised_string+1] = stop_excluded and "]" or ""
+        color_localised_string[#color_localised_string+1] = stop_localised_string
 
+        schedule_caption[#schedule_caption+1] = color_localised_string
     end
+
     return schedule_caption
+end
+
+---@generic T
+---@param all_schedules AllSchedulesEntry[]
+---@param comp fun(a: AllSchedulesEntry, b: AllSchedulesEntry): boolean
+---@param lo_to_hi boolean?
+---@return AllSchedulesEntry[]
+local function sort_all_schedules(all_schedules, comp, lo_to_hi)
+    local sorted_all_schedules = {}
+
+    for _, schedule in pairs(all_schedules) do
+        sorted_all_schedules[#sorted_all_schedules+1] = schedule
+    end
+
+    table.sort(sorted_all_schedules, comp)
+
+    if not lo_to_hi then
+        utils.reverse(sorted_all_schedules)
+    end
+    return sorted_all_schedules
+end
+
+---@param all_schedules AllSchedulesEntry[]
+---@param lo_to_hi boolean?
+---@return AllSchedulesEntry[]
+function Exports.all_schedules_sorted_by_length(all_schedules, lo_to_hi)
+    return sort_all_schedules(
+        all_schedules,
+        function (a, b) return #a.records < #b.records end,
+        lo_to_hi
+    )
+end
+
+---@param all_schedules AllSchedulesEntry[]
+---@param lo_to_hi boolean?
+---@return AllSchedulesEntry[]
+function Exports.all_schedules_sorted_by_count_then_length(all_schedules, lo_to_hi)
+    return sort_all_schedules(
+        all_schedules,
+        function (a, b)
+            if a.count == b.count then return #a.records < #b.records end
+            return a.count < b.count
+        end,
+        lo_to_hi
+    )
 end
 
 return Exports
