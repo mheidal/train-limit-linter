@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.23
+Date: 2023-11-24
+  Features:
+    - Added ability to consider trains whose only differences in schedule are excluded to be part
+      of the same train group.
+    - Added automatic exclusion of temporary stops.
+    - Improved display of schedules, with more granular colors indicating excluded train stops.
+  Modding:
+    - Compatibility with Train Control Signals.
+    - Compatibility with Fuel Train Stop.
+  Bugfixes:
+    - Fixed incorrect display of schedules with invalid stops (temporary stops terminating at rails
+      which had been removed).
+---------------------------------------------------------------------------------------------------
 Version: 1.0.22
 Date: 2023-11-22
   Bugfixes:
