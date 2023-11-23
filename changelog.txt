@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.23
-Date: 2023-11-24
+Date: 2023-11-22
   Features:
     - Added ability to consider trains whose only differences in schedule are excluded to be part
       of the same train group.
@@ -24,7 +24,7 @@ Date: 2023-11-17
   Bugfixes:
     - Fixed crash when opening some modals.
   Changes:
-    - Added lines separating sections in settinsg and separating keywords.
+    - Added lines separating sections in settings and separating keywords.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.20
 Date: 2023-11-17
