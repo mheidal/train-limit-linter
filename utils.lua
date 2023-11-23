@@ -100,7 +100,7 @@ function Exports.train_records_to_key(records)
             key = key .. " → " .. record_string
         end
     end
-    if not key then return "" end
+    if not key or key == "" then return "<no non-excluded stops>" end
     return key
 end
 

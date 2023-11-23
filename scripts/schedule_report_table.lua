@@ -229,9 +229,10 @@ function Exports.generate_schedule_caption(table_config, schedule, schedule_repo
 
     local first_record = true
     for _, record in pairs(schedule) do
-        local stop_name = record.station or {"tll.temporary", record.rail.position.x, record.rail.position.y}
+        local stop_name = (
+        record.temporary and (record.rail and {"tll.temporary", record.rail.position.x, record.rail.position.y} or {"tll.invalid_schedule"})) or record.station
 
-        local stop_excluded = not record.station or excluded_keywords:matches_any(stop_name --[[@as string]])
+        local stop_excluded = record.temporary or record.station and excluded_keywords:matches_any(stop_name --[[@as string]])
 
         ---@type LocalisedString
         local color_localised_string = {"tll.color_text", stop_excluded and {"tll.gray"} or non_excluded_label_color}
