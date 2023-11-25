@@ -114,6 +114,13 @@ local function create_blueprint_from_train(player, train, surface_name)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
+    local other_mods_config = player_global.model.other_mods_configuration
+    local TrainGroups_train_group_id = remote.interfaces["TrainGroups"] and other_mods_config.TrainGroups_configuration.copy_train_group and remote.call(
+        "TrainGroups",
+        "get_train_group",
+        train.id
+    )
+
     local surface = game.get_surface(surface_name)
     if not surface then return end
 
@@ -173,6 +180,12 @@ local function create_blueprint_from_train(player, train, surface_name)
     if not aggregated_entities then return end
     for _, entity in pairs(aggregated_entities) do
         local entity_prototype = game.entity_prototypes[entity.name]
+        if entity_prototype.type == "locomotive" then
+            if TrainGroups_train_group_id then
+                local tags = entity.tags or (function () entity.tags = {} return entity.tags end)()
+                tags.train_group = TrainGroups_train_group_id
+            end
+        end
         local items_to_add = {}
         if player_global.model.fuel_configuration.add_fuel then
             local accepted_fuel_categories = global.model.fuel_category_data.locomotives_fuel_categories[entity.name]
@@ -264,25 +277,29 @@ function Exports.schedule_report_table_create_blueprint(event, player, player_gl
     if type(template_train_ids) ~= "table" then return end
     for _, id in pairs(template_train_ids) do
         local template_option = game.get_train_by_id(id)
-        if template_option then
+        if template_option and template_option.valid then
             template_train = template_option
             break
         end
     end
-    if template_train == nil then
+    if not template_train then
         player.create_local_flying_text{text={"tll.no_valid_template_trains"}, create_at_cursor=true}
         return
     end
+
     local surface_name = event.element.tags.surface
     if type(surface_name) ~= "string" then return end
+
     local train_blueprint = create_blueprint_from_train(player, template_train, surface_name)
     if not train_blueprint then
         player.create_local_flying_text({create_at_cursor=true, text={"tll.could_not_create_blueprint"}})
         return
     end
+
     if not blueprint_config.include_train_stops then
         player.add_to_clipboard(train_blueprint)
         player.activate_paste()
+
     else
         blueprint_book_inventory.insert(train_blueprint)
 

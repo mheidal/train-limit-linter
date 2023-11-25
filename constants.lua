@@ -49,12 +49,15 @@ constants.actions = {
     toggle_blueprint_settings_visible="toggle_blueprint_settings_visible",
     toggle_fuel_settings_visible="toggle_fuel_settings_visible",
     toggle_general_settings_visible="toggle_general_settings_visible",
+    toggle_other_mods_settings_visible="toggle_other_mods_settings_visible",
 
     toggle_opinionation="toggle_opinionation",
     change_remove_train_option="change_remove_train_option",
     toggle_train_to_remove_checkbox="toggle_train_to_remove_checkbox",
     toggle_train_to_remove_button="toggle_train_to_remove_button",
     remove_trains="remove_trains",
+
+    toggle_TrainGroups_copy_train_group="toggle_TrainGroups_copy_train_group",
 }
 
 constants.orientations = {
