@@ -250,6 +250,10 @@ script.on_event(defines.events.on_gui_click, function (event)
             player_global.model.collapsible_frame_configuration:toggle_general_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
+        elseif action == constants.actions.toggle_other_mods_settings_visible then
+            player_global.model.collapsible_frame_configuration:toggle_other_mods_settings_visible()
+            collapsible_frame.toggle_collapsible_frame_visible(event.element)
+
         elseif action == constants.actions.remove_trains then
             local remove_train_option = player_global.model.general_configuration.remove_train_option
 
@@ -354,6 +358,10 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
                 else
                     player_global.model.trains_to_remove_list:remove(train_id)
                 end
+
+            elseif action == constants.actions.toggle_TrainGroups_copy_train_group then
+                player_global.model.other_mods_configuration.TrainGroups_configuration:toggle_copy_train_group()
+                rebuild_interfaces(player)
             end
 
         elseif event.element.type == "radiobutton" then

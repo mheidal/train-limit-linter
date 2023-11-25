@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.0.23
-Date: 2023-11-22
+Version: 1.0.24
+Date: 2023-11-25
   Features:
     - Added ability to consider trains whose only differences in schedule are excluded to be part
       of the same train group.
@@ -12,6 +12,15 @@ Date: 2023-11-22
   Bugfixes:
     - Fixed incorrect display of schedules with invalid stops (temporary stops terminating at rails
       which had been removed).
+---------------------------------------------------------------------------------------------------
+Version: 1.0.23
+Date: 2023-11-25
+  Modding:
+    - Added compatibility with the TrainGroups mod (by raiguard).
+      When generating a blueprint for a train, the new train will share a train group with the
+      template train. This behavior can be toggled. This behavior is not guaranteed to work if not
+      all trains with a particular schedule are part of the same train group by TrainGroups's
+      definition.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.22
 Date: 2023-11-22

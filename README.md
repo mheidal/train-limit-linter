@@ -51,6 +51,14 @@ Train Limit Linter allows the creation of blueprints using the "Copy" button in 
 
 These blueprints can contain fuels which construction robots will insert into locomotives when the train is built. One can customize what fuels are added to locomotives, both fuel type and fuel amount. This can handle other mods, allowing one to select different fuels for each fuel category that any kind of locomotive consumes.
 
+### Compatibility
+To request compatibility with another mod, please [make an issue on the Github page](https://github.com/mheidal/train-limit-linter/issues/new) or [make a new thread on the forum](https://mods.factorio.com/mod/train-limit-linter/discussion/new).
+
+Train Limit Linter is compatible with mods that add new types of vehicle fuel and new types of locomotives or wagons.
+
+#### [Train Groups by raiguard](https://mods.factorio.com/mod/TrainGroups)
+Train Limit Linter is compatible with Train Groups. When generating a blueprint for a train, the new train will share a train group with the template train. This behavior can be  toggled. This behavior is not guaranteed to work if not all trains with a particular schedule are part of the same train group by Train Groups's definition.
+
 ### Contact
 For bug reports or feature suggestions, please [make an issue on the Github page](https://github.com/mheidal/train-limit-linter/issues/new). 
 
