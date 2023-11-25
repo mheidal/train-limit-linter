@@ -221,6 +221,46 @@ function Exports.build_settings_tab(player)
     local remove_train_options_flow = general_content_flow.add{type="flow", direction="vertical"}
     train_removal_buttons.add_train_removal_radio_buttons(remove_train_options_flow, general_config)
 
+    -- other mods settings
+    do
+        local other_mods_collapsible_frame_name = "other_mods_collapsible_frame_name"
+        local other_mods_collapsible_frame = scroll_pane[other_mods_collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+            scroll_pane,
+            other_mods_collapsible_frame_name
+        )
+        local other_mods_content_flow = collapsible_frame.build_collapsible_frame_contents(
+            other_mods_collapsible_frame,
+            constants.actions.toggle_other_mods_settings_visible,
+            {"tll.other_mod_settings"},
+            nil,
+            player_global.model.collapsible_frame_configuration.other_mods_settings_visible
+        )
+        local other_mods_config = player_global.model.other_mods_configuration
+        local number_of_mods_shown = 0
+
+        if remote.interfaces["TrainGroups"] then
+            number_of_mods_shown = number_of_mods_shown + 1
+            if number_of_mods_shown >= 2 then
+                other_mods_content_flow.add{type="line"}
+            end
+
+            local TrainGroups_config = other_mods_config.TrainGroups_configuration
+            local TrainGroups_flow = other_mods_content_flow.add{type="flow", direction="vertical"}
+            TrainGroups_flow.add{type="label", style="caption_label", caption={"tll.TrainGroups"}}
+            TrainGroups_flow.add{
+                type="checkbox",
+                caption={"tll.TrainGroups_copy_train_group"},
+                state=TrainGroups_config.copy_train_group,
+                tags={action=constants.actions.toggle_TrainGroups_copy_train_group},
+            }
+        end
+
+        if number_of_mods_shown == 0 then
+            other_mods_collapsible_frame.visible = false
+        end
+
+    end
+
 end
 
 return Exports

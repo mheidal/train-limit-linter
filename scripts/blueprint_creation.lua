@@ -114,6 +114,13 @@ local function create_blueprint_from_train(player, train, surface_name)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
 
+    local other_mods_config = player_global.model.other_mods_configuration
+    local TrainGroups_train_group_id = remote.interfaces["TrainGroups"] and other_mods_config.TrainGroups_configuration.copy_train_group and remote.call(
+        "TrainGroups",
+        "get_train_group",
+        train.id
+    )
+
     local surface = game.get_surface(surface_name)
     if not surface then return end
 
@@ -173,6 +180,12 @@ local function create_blueprint_from_train(player, train, surface_name)
     if not aggregated_entities then return end
     for _, entity in pairs(aggregated_entities) do
         local entity_prototype = game.entity_prototypes[entity.name]
+        if entity_prototype.type == "locomotive" then
+            if TrainGroups_train_group_id then
+                local tags = entity.tags or (function () entity.tags = {} return entity.tags end)()
+                tags.train_group = TrainGroups_train_group_id
+            end
+        end
         local items_to_add = {}
         if player_global.model.fuel_configuration.add_fuel then
             local accepted_fuel_categories = global.model.fuel_category_data.locomotives_fuel_categories[entity.name]
