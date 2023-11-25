@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.23
+Date: 2023-11-25
+  Modding:
+    - Added compatibility with the TrainGroups mod (by raiguard).
+      When generating a blueprint for a train, the new train will share a train group with the
+      template train. This behavior can be toggled. This behavior is not guaranteed to work if not
+      all trains with a particular schedule are part of the same train group by TrainGroups's
+      definition.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.22
 Date: 2023-11-22
   Bugfixes:
