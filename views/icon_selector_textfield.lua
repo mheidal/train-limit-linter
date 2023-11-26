@@ -47,7 +47,7 @@ function Exports.item_name_to_rich_text(elem_value)
     elseif elem_value.type == "fluid" then
         return "[fluid=" .. elem_value.name .. "]"
     elseif elem_value.type == "virtual" then
-        return "[virtual-signal=." .. elem_value.name .. "]"
+        return "[virtual-signal=" .. elem_value.name .. "]"
     end
     return ""
 end

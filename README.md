@@ -59,6 +59,15 @@ Train Limit Linter is compatible with mods that add new types of vehicle fuel an
 #### [Train Groups by raiguard](https://mods.factorio.com/mod/TrainGroups)
 Train Limit Linter is compatible with Train Groups. When generating a blueprint for a train, the new train will share a train group with the template train. This behavior can be  toggled. This behavior is not guaranteed to work if not all trains with a particular schedule are part of the same train group by Train Groups's definition.
 
+#### Mods which inject stations into schedules temporarily
+This includes [Train Control Signals by Klonan](https://mods.factorio.com/mod/Train_Control_Signals) and [Automatic Train Fuel Stop by magu5026](https://mods.factorio.com/mod/FuelTrainStop), and possibly others.
+
+Train Control Signals adds virtual signals which can be added to train stop names to mark them as skippable depending on a couple of conditions. To let Train Limit Linter know that those train stops are not "really" part of a train's schedule, add the virtual signals to the excluded keyword list.
+
+Automatic Train Fuel Stop can temporarily inject refuel train stops into a train's schedule. To let Train Limit Linter know that these train stops are not "really" part of a train's schedule, add the name of the refuel train stops to the excluded keyword list.
+
+Other mods which inject train stops into a train's schedule can be handled in a similar fashion.
+
 ### Contact
 For bug reports or feature suggestions, please [make an issue on the Github page](https://github.com/mheidal/train-limit-linter/issues/new). 
 
