@@ -117,7 +117,7 @@ local function build_train_schedule_group_report(player)
                         if train_count_difference ~= 0 then
                             non_excluded_label_color = {"tll.red"}
                         else
-                            non_excluded_label_color = {"tll.green"} -- copied from "confirm" buttons in game
+                            non_excluded_label_color = {"tll.green"}
                         end
                     else
                         non_excluded_label_color = {"tll.white"}
@@ -130,6 +130,8 @@ local function build_train_schedule_group_report(player)
                     local schedule_caption_tooltip
                     for _, schedule in pairs(sorted_all_schedules_length) do
                         if first_schedule then
+                            first_schedule = false
+
                             schedule_caption = schedule_report_table_scripts.generate_schedule_caption(
                                 table_config,
                                 schedule.records,
@@ -150,8 +152,6 @@ local function build_train_schedule_group_report(player)
                                 }
                                 schedule_caption_tooltip = {"tll.multiple_matching_schedules"}
                             end
-
-                            first_schedule = false
                         else
                             schedule_caption_tooltip = {
                                 "",
