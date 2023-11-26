@@ -50,6 +50,31 @@ local function get_filtered_schedule(records, excluded_keywords)
     return filtered_schedule
 end
 
+---@param existing_train_groups table<string, TrainGroup>
+---@param key string
+---@return string
+local function get_equivalent_key(existing_train_groups, key)
+    local existing_keys = {}
+    for existing_key, _ in pairs(existing_train_groups) do
+        existing_keys[#existing_keys+1] = existing_key
+    end
+    local equivalent_key = key
+    for _, existing_key in pairs(existing_keys) do
+        if #existing_key == #key then
+            if existing_key == key then
+                equivalent_key = existing_key
+            end
+
+        else
+            local doubled_key = existing_key .. " → " .. existing_key
+            if string.find(doubled_key, key, nil, true) then
+                equivalent_key = existing_key
+            end
+        end
+    end
+    return equivalent_key
+end
+
 ---@param excluded_keywords TLLKeywordList
 ---@param hidden_keywords TLLKeywordList
 ---@return table<string, table<string, TrainGroup>> {<surface name>: {<filtered key>: TrainGroup}}
@@ -72,11 +97,12 @@ function Exports.get_surfaces_to_train_groups(excluded_keywords, hidden_keywords
 
                 local filtered_records = get_filtered_schedule(train.schedule.records, excluded_keywords)
                 local filtered_key = utils.train_records_to_key(filtered_records)
+                local equivalent_key = get_equivalent_key(train_groups_on_surface, filtered_key)
 
                 ---@type TrainGroup
-                local train_group = utils.get_or_insert(train_groups_on_surface, filtered_key, {
+                local train_group = utils.get_or_insert(train_groups_on_surface, equivalent_key, {
                     filtered_schedule={
-                        key=filtered_key,
+                        key=equivalent_key,
                         records=deep_copy(filtered_records)
                     },
                     all_schedules={},
