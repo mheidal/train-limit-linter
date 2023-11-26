@@ -12,6 +12,8 @@ Date: 2023-11-25
   Bugfixes:
     - Fixed incorrect display of schedules with invalid stops (temporary stops terminating at rails
       which had been removed).
+    - Fixed excluded/hidden keywords not applying if they were added to the keyword list before 
+      version 1.0.20.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.23
 Date: 2023-11-25

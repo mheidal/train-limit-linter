@@ -35,7 +35,7 @@ local utils = require("utils")
 
 local Exports = {}
 
----@param records TrainSchedule
+---@param records TrainScheduleRecord[]
 ---@param excluded_keywords TLLKeywordList
 ---@return TrainScheduleRecord[]
 local function get_filtered_schedule(records, excluded_keywords)
@@ -52,12 +52,14 @@ end
 
 ---@param excluded_keywords TLLKeywordList
 ---@param hidden_keywords TLLKeywordList
----@return table<string, TrainGroup>
-function Exports.get_train_groups(excluded_keywords, hidden_keywords)
+---@return table<string, table<string, TrainGroup>> {<surface name>: {<filtered key>: TrainGroup}}
+function Exports.get_surfaces_to_train_groups(excluded_keywords, hidden_keywords)
     ---@type table<string, TrainGroup>
-    local train_groups = {}
+    local surfaces_to_train_groups = {}
 
     for surface_name, surface in pairs(game.surfaces) do
+        local train_groups_on_surface = {}
+        local any_train_groups_on_surface = false
         for _, train in pairs(surface.get_trains()) do
 
             if train.schedule then
@@ -66,11 +68,13 @@ function Exports.get_train_groups(excluded_keywords, hidden_keywords)
                         goto continue_schedule
                     end
                 end
+                any_train_groups_on_surface = true
 
                 local filtered_records = get_filtered_schedule(train.schedule.records, excluded_keywords)
                 local filtered_key = utils.train_records_to_key(filtered_records)
-                local train_group = utils.get_or_insert(train_groups, filtered_key, {
-                    surface=surface_name,
+
+                ---@type TrainGroup
+                local train_group = utils.get_or_insert(train_groups_on_surface, filtered_key, {
                     filtered_schedule={
                         key=filtered_key,
                         records=deep_copy(filtered_records)
@@ -85,20 +89,13 @@ function Exports.get_train_groups(excluded_keywords, hidden_keywords)
             end
             ::continue_schedule::
         end
+
+        if any_train_groups_on_surface then
+            surfaces_to_train_groups[surface_name] = train_groups_on_surface
+        end
     end
 
-    return train_groups
-end
-
----@param train_groups TrainGroup[]
----@return table<string, TrainGroup[]>
-function Exports.group_train_groups_by_surface(train_groups)
-    local surface_train_groups = {}
-    for _, train_group in pairs(train_groups) do
-        local surface_train_group = utils.get_or_insert(surface_train_groups, train_group.surface, {})
-        table.insert(surface_train_group, train_group)
-    end
-    return surface_train_groups
+    return surfaces_to_train_groups
 end
 
 ---@return table<number, RailAndTrain> unit numbers to rails and trains
