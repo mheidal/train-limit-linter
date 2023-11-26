@@ -61,9 +61,9 @@ local function get_equivalent_key(existing_train_groups, key)
     local equivalent_key = key
     for _, existing_key in pairs(existing_keys) do
         if #key == #existing_key then
-            local doubled_key = existing_key .. " → " .. existing_key
-            if string.find(doubled_key, key, nil, true) then
-                equivalent_key = existing_key
+            local superkey = existing_key .. " → " .. existing_key
+            if string.find(superkey, key, nil, true) then
+                return existing_key
             end
         end
     end
