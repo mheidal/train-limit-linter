@@ -124,6 +124,16 @@ function Exports.migrate_global(player)
         end
     end
     global.players[player.index] = new_global
+
+    local toggleable_item_lists = {new_global.model.excluded_keywords.toggleable_items, new_global.model.hidden_keywords.toggleable_items}
+    for _, toggleable_item_list in pairs(toggleable_item_lists) do
+        for _, toggleable_item in pairs(toggleable_item_list) do
+            if not toggleable_item.match_type then
+                toggleable_item:set_match_type(constants.keyword_match_types.substring)
+            end
+        end
+    end
+
 end
 
 ---@param player_global TLLPlayerGlobal

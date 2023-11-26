@@ -1,4 +1,20 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.24
+Date: 2023-11-25
+  Features:
+    - Added ability to consider trains whose only differences in schedule are excluded to be part
+      of the same train group.
+    - Added automatic exclusion of temporary stops.
+    - Improved display of schedules, with more granular colors indicating excluded train stops.
+  Modding:
+    - Compatibility with Train Control Signals.
+    - Compatibility with Fuel Train Stop.
+  Bugfixes:
+    - Fixed incorrect display of schedules with invalid stops (temporary stops terminating at rails
+      which had been removed).
+    - Fixed excluded/hidden keywords not applying if they were added to the keyword list before 
+      version 1.0.20.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.23
 Date: 2023-11-25
   Modding:
@@ -19,7 +35,7 @@ Date: 2023-11-17
   Bugfixes:
     - Fixed crash when opening some modals.
   Changes:
-    - Added lines separating sections in settinsg and separating keywords.
+    - Added lines separating sections in settings and separating keywords.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.20
 Date: 2023-11-17

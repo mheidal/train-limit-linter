@@ -12,7 +12,12 @@ local function build_train_schedule_group_report(player)
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
-    local surface_train_schedule_groups_pairs = schedule_report_table_scripts.get_train_schedule_groups_by_surface()
+
+    local surfaces_to_train_groups = schedule_report_table_scripts.get_surfaces_to_train_groups(
+        player_global.model.excluded_keywords,
+        player_global.model.hidden_keywords
+    )
+
     local report_frame = player_global.view.report_frame
     if not report_frame then return end
     report_frame.clear()
@@ -42,55 +47,47 @@ local function build_train_schedule_group_report(player)
     schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
     schedule_report_table.add{type="label", caption={"tll.actions_header"}}
 
-
-    for _, surface_train_schedule_groups_pair in pairs(surface_train_schedule_groups_pairs) do
-        local surface = surface_train_schedule_groups_pair.surface
+    for surface, surface_train_groups in pairs(surfaces_to_train_groups) do
 
         -- barrier for all train schedules for a surface
-        if table_config.show_all_surfaces or surface.name == player.surface.name then
-            local train_schedule_groups = surface_train_schedule_groups_pair.train_schedule_groups
+        if table_config.show_all_surfaces or surface == player.surface.name then
 
-            local sorted_schedule_names = {}
-            for schedule_name, _ in pairs(train_schedule_groups) do table.insert(sorted_schedule_names, schedule_name) end
-            table.sort(sorted_schedule_names)
+            table.sort(surface_train_groups, function(a, b)
+                return a.filtered_schedule.key < b.filtered_schedule.key
+            end
+            )
 
-            for _, schedule_name in pairs(sorted_schedule_names) do
-                ---@type LuaTrain[]
-                local train_schedule_group = train_schedule_groups[schedule_name]
+            for _, train_group in pairs(surface_train_groups) do
+                ---@type ScheduleTableData
                 local schedule_report_data = schedule_report_table_scripts.get_train_stop_data(
-                    train_schedule_group,
+                    train_group,
                     surface,
-                    player_global.model.excluded_keywords,
-                    player_global.model.hidden_keywords,
                     rails_under_trains_without_schedules
                 )
 
-                local non_excluded_schedule = {}
-                for _, record in pairs(train_schedule_group[1].schedule.records) do
-                    if not record.temporary and record.station and (not schedule_report_data.train_stops[record.station] or not schedule_report_data.train_stops[record.station].excluded) then
-                        table.insert(non_excluded_schedule, record.station)
-                    end
-                end
+                local train_count_difference = schedule_report_data.limit - 1 - #train_group.trains
 
-                local single_station_schedule = #non_excluded_schedule == 1
+                local is_single_station_schedule = #train_group.filtered_schedule.records == 1
 
                 local nonexistent_stations_in_schedule = {}
                 local any_nonexistent_stations_in_schedule = false
-                for _, station in pairs(non_excluded_schedule) do
-                    if not schedule_report_data.train_stops[station] and not player_global.model.excluded_keywords:matches_any(station) then
-                        nonexistent_stations_in_schedule[station] = true
+                for _, record in pairs(train_group.filtered_schedule.records) do
+                    if record.station and not schedule_report_data.train_stops[record.station] then
+                        nonexistent_stations_in_schedule[record.station] = true
                         any_nonexistent_stations_in_schedule = true
                     end
                 end
 
                 local satisfied = (
-                    (not (
-                        schedule_report_data.dynamic
-                        or schedule_report_data.not_set
-                        or single_station_schedule
-                        or any_nonexistent_stations_in_schedule
-                    ))
-                    and (schedule_report_data.limit - #train_schedule_group == 1)
+                    not (
+                            schedule_report_data.dynamic
+                            or schedule_report_data.not_set
+                            or is_single_station_schedule
+                            or any_nonexistent_stations_in_schedule
+                    )
+                    and (
+                            schedule_report_data.limit - #train_group.trains == 1
+                    )
                 )
 
                 -- barrier for showing a particular schedule
@@ -99,7 +96,7 @@ local function build_train_schedule_group_report(player)
                     and (table_config.show_satisfied or (not satisfied))
                     and (table_config.show_not_set or (not schedule_report_data.not_set))
                     and (table_config.show_dynamic or (not schedule_report_data.dynamic))
-                    and (table_config.show_single_station_schedules or (not single_station_schedule))
+                    and (table_config.show_single_station_schedules or (not is_single_station_schedule))
                 ) then
                     any_schedule_shown = true
 
@@ -107,43 +104,76 @@ local function build_train_schedule_group_report(player)
                     local schedule_valid = (
                         not schedule_report_data.not_set
                         and not schedule_report_data.dynamic
-                        and not single_station_schedule
+                        and not is_single_station_schedule
                         and not any_nonexistent_stations_in_schedule
                     )
 
                     -- whether the schedule should have any stated opinion (warnings, coloration)
                     local opinionate = player_global.model.schedule_table_configuration.opinionate
 
-                    -- schedule caption
-                    local schedule_caption
-                    for _, record in pairs(train_schedule_group[1].schedule.records) do
-                        local stop_name = record.station or {"tll.temporary", record.rail.position.x, record.rail.position.y}
-                        if not schedule_caption then
-                            schedule_caption = stop_name
+                    -- color
+                    local non_excluded_label_color
+                    if schedule_valid and opinionate then
+                        if train_count_difference ~= 0 then
+                            non_excluded_label_color = {"tll.red"}
                         else
-                            schedule_caption = {"", schedule_caption, " → ",  stop_name}
+                            non_excluded_label_color = {"tll.green"}
                         end
+                    else
+                        non_excluded_label_color = {"tll.white"}
+                    end
 
-                        if record.station then
-                            if table_config.show_train_limits_separately then
-                                local train_group_limit = 0
-                                if schedule_report_data.train_stops[record.station] then
-                                    for _, train_stop_data in pairs(schedule_report_data.train_stops[record.station]) do
-                                        train_group_limit = train_group_limit + train_stop_data.limit
-                                    end
-                                end
-                                schedule_caption = {"", schedule_caption, " (" .. train_group_limit .. ")"}
+                    local sorted_all_schedules_length = schedule_report_table_scripts.all_schedules_sorted_by_length(train_group.all_schedules, false)
+
+                    local first_schedule = true
+                    local schedule_caption
+                    local schedule_caption_tooltip
+                    for _, schedule in pairs(sorted_all_schedules_length) do
+                        if first_schedule then
+                            first_schedule = false
+
+                            schedule_caption = schedule_report_table_scripts.generate_schedule_caption(
+                                table_config,
+                                schedule.records,
+                                schedule_report_data,
+                                player_global.model.excluded_keywords,
+                                opinionate,
+                                nonexistent_stations_in_schedule,
+                                non_excluded_label_color
+                            )
+
+                            if #sorted_all_schedules_length == 1 then
+                                schedule_caption_tooltip = deep_copy(schedule_caption)
+                            else
+                                schedule_caption = {
+                                    "",
+                                    "[img=info] ",
+                                    schedule_caption,
+                                }
+                                schedule_caption_tooltip = {"tll.multiple_matching_schedules"}
                             end
-                            if opinionate and nonexistent_stations_in_schedule[record.station] then
-                                schedule_caption = {"", schedule_caption, {"tll.warning_icon"}}
-                            end
+                        else
+                            schedule_caption_tooltip = {
+                                "",
+                                schedule_caption_tooltip,
+                                "\n",
+                                schedule_report_table_scripts.generate_schedule_caption(
+                                    table_config,
+                                    schedule.records,
+                                    schedule_report_data,
+                                    player_global.model.excluded_keywords,
+                                    opinionate,
+                                    nonexistent_stations_in_schedule,
+                                    non_excluded_label_color
+                                )
+                            }
                         end
                     end
 
-                    local schedule_caption_tooltip = utils.deep_copy(schedule_caption)
                     for station, _ in pairs(nonexistent_stations_in_schedule) do
                         schedule_caption_tooltip = {"", schedule_caption_tooltip, {"tll.no_stations_with_name", station}}
                     end
+
 
                     local train_limit_sum_caption = {
                         "",
@@ -158,10 +188,8 @@ local function build_train_schedule_group_report(player)
                         opinionate and schedule_report_data.dynamic and {"tll.train_limit_dynamic_tooltip"} or "",
                     }
 
-                    local train_count_difference = schedule_report_data.limit - 1 - #train_schedule_group
-
                     -- caption
-                    local train_count_caption = tostring(#train_schedule_group)
+                    local train_count_caption = tostring(#train_group.trains)
                     if schedule_valid and opinionate and train_count_difference ~= 0 then
                         local diff_str = train_count_difference > 0 and "+" or ""
                         train_count_caption = train_count_caption .. " (" .. diff_str .. tostring(train_count_difference) .. ") [img=info]"
@@ -174,26 +202,19 @@ local function build_train_schedule_group_report(player)
                         recommended_action_tooltip = train_count_difference > 0 and {"tll.add_n_trains_tooltip", abs_diff} or {"tll.remove_n_trains_tooltip", abs_diff}
                     end
 
-                    -- color
-                    local train_count_label_color
-                    if schedule_valid and opinionate then
-                        if train_count_difference ~= 0 then
-                            train_count_label_color = {1, 0.541176, 0.541176}
-                        else
-                            train_count_label_color = {0.375, 0.703125, 0.390625} -- copied from "confirm" buttons in game
-                        end
-                    else
-                        train_count_label_color = {1, 1, 1}
-                    end
-
-                    -- ids of trains in this group
-
-                    local train_ids = {}
-                    for _, train in pairs(train_schedule_group) do
-                        table.insert(train_ids, train.id)
-                    end
-
                     -- info about train stops this group visits
+
+                    local sorted_all_schedules_count_length = schedule_report_table_scripts.all_schedules_sorted_by_count_then_length(
+                        train_group.all_schedules,
+                        false
+                    )
+                    local unfiltered_records = sorted_all_schedules_count_length[1].records
+                    local filtered_records = {}
+                    for _, record in pairs(unfiltered_records) do
+                        if not record.rail then
+                            filtered_records[#filtered_records+1] = record
+                        end
+                    end
 
                     local template_train_stops = {}
                     for train_stop_name, train_stop_group_data in pairs(schedule_report_data.train_stops) do
@@ -206,7 +227,7 @@ local function build_train_schedule_group_report(player)
 
                     -- cell 1
                     if table_config.show_all_surfaces then
-                        schedule_report_table.add{type="label", caption=surface.name}
+                        schedule_report_table.add{type="label", caption=surface}
                     end
 
 
@@ -216,25 +237,23 @@ local function build_train_schedule_group_report(player)
                         direction="horizontal",
                         style="tll_horizontal_stretch_squash_flow"
                     }
-                    local schedule_cell_label = schedule_cell.add{
+                    schedule_cell.add{
                         type="label",
                         caption=schedule_caption,
                         tooltip=schedule_caption_tooltip,
                         style="tll_horizontal_stretch_squash_label",
                     }
-                    schedule_cell_label.style.font_color=train_count_label_color
 
                     schedule_cell.add{type="empty-widget"}
                     schedule_cell.style.maximal_width = 300
 
 
                     -- cell 3
-                    local train_count_cell = schedule_report_table.add{
+                    schedule_report_table.add{
                         type="label",
-                        caption=train_count_caption,
+                        caption={"tll.color_text", non_excluded_label_color, train_count_caption},
                         tooltip=recommended_action_tooltip
                     }
-                    train_count_cell.style.font_color=train_count_label_color
 
                     -- cell 4
                     schedule_report_table.add{type="label", caption=train_limit_sum_caption, tooltip=train_limit_sum_tooltip}
@@ -261,10 +280,11 @@ local function build_train_schedule_group_report(player)
 
                     local copy_tags = {
                         action=any_trains_with_no_schedule_parked and constants.actions.train_schedule_create_blueprint_and_ping_trains or constants.actions.train_schedule_create_blueprint,
-                        template_train_ids=train_ids,
-                        surface=surface.name,
+                        template_train_ids=train_group.trains,
+                        surface=surface,
                         parked_train_positions=any_trains_with_no_schedule_parked and parked_train_positions_and_train_stops or nil,
-                        template_train_stops=template_train_stops
+                        template_train_stops=template_train_stops,
+                        records=utils.deep_copy(filtered_records),
                     }
 
 
@@ -280,7 +300,7 @@ local function build_train_schedule_group_report(player)
                         action=constants.actions.open_modal,
                         modal_function=constants.modal_functions.remove_trains,
                         args={
-                            train_ids=train_ids,
+                            train_ids=train_group.trains,
                         },
                     }
 

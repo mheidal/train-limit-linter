@@ -27,13 +27,21 @@ Train Limit Linter provides a GUI, which is opened by default using `CONTROL + O
     - They only contain one train stop
 
 ### Keywords
-Train Limit Linter allows the creation of lists of keywords which can be excluded or hidden. These keywords affect certain elements of the schedule display table in the Display tab, specifically how train limits are calculated and whether schedules are displayed. Keyword lists can be converted into exchange strings which can be shared between players or save files.
+Train Limit Linter allows the creation of lists of keywords which can be excluded or hidden. These keywords affect certain elements of the schedule display table in the Display tab, specifically how train limits are calculated and whether schedules are displayed. Keyword lists can be converted into exchange strings which can be shared between players or save files. Keywords can be enabled or disabled to allow you to quickly toggle their changes to the schedule display table without having to delete them and type them back in. Also, keywords can be toggled between requiring a train station to exactly match the keyword or requiring the keyword to be a substring of the train station to affect the schedule display table.
 
 #### Keyword exclusion
-Train Limit Linter allows some customization of how train limit sums are calculated. It is possible through the `Exclude` tab to add excluded keywords. Train stations with excluded keywords in their name will not be counted when calculating train limit sums. For example, if a train schedule has the stops `Iron Ore Load`, `Iron Ore Byproduct Load`, and `Iron Ore Unload`, only one of each of those stops exists, and all stops have a train limit of 2, and the keyword `Byproduct` has been added, then the train limit sum displayed will be 4. If the keyword `Byproduct` has not been added or has been added and is disabled, the train limit sum displayed will be 6.
+Train Limit Linter allows some customization of how train limit sums are calculated. It is possible through the `Exclude` tab to add excluded keywords. Train stations with names matching excluded keywords will not be counted when calculating train limit sums or when determining which trains are part of the same group, and will not cause various warnings to appear, such as warnings for if a train station has no limit set, has a limit set dynamically, or does not exist at the moment.
+
+Excluding keywords is meant to be useful when there may be stops on a train's schedule which are not "really" part of the schedule; for example, other mods may inject stops on a train's schedule where they can resupply with fuel, or a train may have a stop acting as a waypoint which it must travel through but at which the train is not required to stop.
+
+For example, if a train schedule has the stops `Iron Ore Load`, `Fuel Resupply`, and `Iron Ore Unload`, only one of each of those stops exists, and all stops have a train limit of 2, and the keyword `Fuel Resupply` has been added to the excluded keyword list, then the train limit sum displayed will be 4. If the keyword `Fuel Resupply` has not been added to the excluded keyword list or has been added and is disabled, the train limit sum displayed will be 6.
+
+Another example: In a situation with the same train stops (`Iron Ore Load`, `Fuel Resupply`, and `Iron Ore Unload`), if one train has a schedule which visits `Iron Ore Load` and `Iron Ore Unload` (and does not visit `Fuel Resupply`), and another train has a schedule which visits `Iron Ore Load`, `Fuel Resupply`, and `Iron Ore Unload`, and the keyword `Fuel Resupply` has been added to the excluded keyword list and is not disabled, the two trains will be considered to be part of the same group, since their schedules match except for the excluded stop.
+
+Temporary stops are always considered to be excluded.
 
 #### Keyword hiding
-Train Limit Linter allows some customization of which schedules are displayed. It is possible through the `Hide` tab to add hidden keywords. If any station in a schedule contains a hidden keyword, that schedule will not be displayed in the `Display` tab.
+Train Limit Linter allows some customization of which schedules are displayed. It is possible through the `Hide` tab to add hidden keywords. If any station in a schedule matches a hidden keyword, that schedule will not be displayed in the `Display` tab.
 
 ### Settings
 Train Limit Linter allows the creation of blueprints using the "Copy" button in the schedule report table in the `Display` tab. These blueprints contain a copy of a train with the given schedule. These blueprints can be customized in several ways:
@@ -61,7 +69,7 @@ You can contact me on Discord `@notnot`. To message me you need to share a serve
 ### License
 Train Limit Linter is licensed under MIT.
 
-Train Limit Linter has some elements which are taken from or based on the [Factory Planner](https://github.com/ClaudeMetz/FactoryPlanner) mod by Therenas and the [Recipe Book](https://mods.factorio.com/mod/RecipeBook) and [flib](https://mods.factorio.com/mod/flib) mods by raiguard.
+Train Limit Linter has some elements which are taken from or based on the [Factory Planner](https://github.com/ClaudeMetz/FactoryPlanner) mod by Therenas, the [Recipe Book](https://mods.factorio.com/mod/RecipeBook) and [flib](https://mods.factorio.com/mod/flib) mods by raiguard, and the [Krastorio2](https://mods.factorio.com/mod/Krastorio2) mod by raiguard, Krastor, and Linver.
 
 Train Limit Linter uses "Duster Icon #5827" from https://icon-library.com.
 The icon can be found at https://icon-library.com/icon/duster-icon-8.html >Duster Icon # 5827
