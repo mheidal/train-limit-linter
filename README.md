@@ -66,9 +66,6 @@ If you would like to contribute new features or localizations, please [make a pu
 
 You can contact me on Discord `@notnot`. To message me you need to share a server with me. I expect that I will be in [the Factorio discord server](https://discord.com/invite/factorio) for the foreseeable future.
 
-### Compatibility
-
-
 ### License
 Train Limit Linter is licensed under MIT.
 
