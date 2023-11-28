@@ -379,15 +379,35 @@ end
 ---@param all_schedules AllSchedulesEntry[]
 ---@param lo_to_hi boolean?
 ---@return AllSchedulesEntry[]
-function Exports.all_schedules_sorted_by_count_then_length(all_schedules, lo_to_hi)
+function Exports.all_schedules_sorted_by_count_then_reverse_length(all_schedules, lo_to_hi)
     return sort_all_schedules(
         all_schedules,
         function (a, b)
-            if a.count == b.count then return #a.records < #b.records end
+            if a.count == b.count then return #a.records > #b.records end
             return a.count < b.count
         end,
         lo_to_hi
     )
+end
+
+---@param all_schedules AllSchedulesEntry[]
+---@return table<string, TrainScheduleRecord[]>
+function Exports.get_keys_to_record_lists_from_all_records_excluding_temporary_stops(all_schedules)
+
+    local all_schedules_filtered_temporary_stops = {}
+    for _, schedule in pairs(all_schedules) do
+        local filtered_records = {}
+        for _, record in pairs(schedule.records) do
+            if not record.temporary then
+                filtered_records[#filtered_records+1] = record
+            end
+        end
+        if #filtered_records > 0 then
+            local filtered_record_key = utils.train_records_to_key(filtered_records)
+            all_schedules_filtered_temporary_stops[filtered_record_key] = filtered_records
+        end
+    end
+    return all_schedules_filtered_temporary_stops
 end
 
 return Exports
