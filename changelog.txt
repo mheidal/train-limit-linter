@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.26
+Date: 2023-11-26
+  Bugfixes:
+    - Fixed error where trains were counted as belonging to a group when they had no locomotive.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.25
 Date: 2023-11-25
   Bugfixes:
