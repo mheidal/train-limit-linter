@@ -246,7 +246,15 @@ end
 ---@param nonexistent_stations_in_schedule table<string, boolean>
 ---@param non_excluded_label_color LocalisedString
 ---@return LocalisedString
-function Exports.generate_schedule_caption(table_config, schedule, schedule_report_data, excluded_keywords, opinionate, nonexistent_stations_in_schedule, non_excluded_label_color)
+function Exports.generate_schedule_caption(
+    table_config,
+    schedule,
+    schedule_report_data,
+    excluded_keywords,
+    opinionate,
+    nonexistent_stations_in_schedule,
+    non_excluded_label_color
+)
 
     ---@type LocalisedString
     local schedule_caption = {""}

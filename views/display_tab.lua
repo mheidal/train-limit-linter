@@ -123,12 +123,18 @@ local function build_train_schedule_group_report(player)
                         non_excluded_label_color = {"tll.white"}
                     end
 
-                    local sorted_all_schedules_length = schedule_report_table_scripts.all_schedules_sorted_by_length(train_group.all_schedules, false)
+                    local all_schedules_sorted_by_length = schedule_report_table_scripts.all_schedules_sorted_by_length(train_group.all_schedules, true)
 
                     local first_schedule = true
+
+                    ---@type LocalisedString
                     local schedule_caption
+
+                    ---@type LocalisedString
                     local schedule_caption_tooltip
-                    for _, schedule in pairs(sorted_all_schedules_length) do
+                    local non_shown_schedules_count = 0
+
+                    for _, schedule in pairs(all_schedules_sorted_by_length) do
                         if first_schedule then
                             first_schedule = false
 
@@ -142,7 +148,7 @@ local function build_train_schedule_group_report(player)
                                 non_excluded_label_color
                             )
 
-                            if #sorted_all_schedules_length == 1 then
+                            if #all_schedules_sorted_by_length == 1 then
                                 schedule_caption_tooltip = deep_copy(schedule_caption)
                             else
                                 schedule_caption = {
@@ -150,14 +156,13 @@ local function build_train_schedule_group_report(player)
                                     "[img=info] ",
                                     schedule_caption,
                                 }
-                                schedule_caption_tooltip = {"tll.multiple_matching_schedules"}
+                                schedule_caption_tooltip = {"", {"tll.n_matching_schedules", #all_schedules_sorted_by_length}}
                             end
                         else
-                            schedule_caption_tooltip = {
-                                "",
-                                schedule_caption_tooltip,
-                                "\n",
-                                schedule_report_table_scripts.generate_schedule_caption(
+                            if #schedule_caption_tooltip == 20 then -- max number which can be shown to prevent LocalisedString parameter limit crash
+                                non_shown_schedules_count = non_shown_schedules_count + 1
+                            else
+                                schedule_caption_tooltip[#schedule_caption_tooltip+1] = {"", "\n", schedule_report_table_scripts.generate_schedule_caption(
                                     table_config,
                                     schedule.records,
                                     schedule_report_data,
@@ -165,9 +170,13 @@ local function build_train_schedule_group_report(player)
                                     opinionate,
                                     nonexistent_stations_in_schedule,
                                     non_excluded_label_color
-                                )
-                            }
+                                )}
+                            end
                         end
+                    end
+
+                    if non_shown_schedules_count > 0 and schedule_caption_tooltip then
+                        schedule_caption_tooltip[#schedule_caption_tooltip+1] = {"tll.n_more_schedules", non_shown_schedules_count}
                     end
 
                     for station, _ in pairs(nonexistent_stations_in_schedule) do
