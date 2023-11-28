@@ -256,55 +256,90 @@ function Exports.generate_schedule_caption(
     non_excluded_label_color
 )
 
-    ---@type LocalisedString
-    local schedule_caption = {""}
+    ---@type {stop_name: LocalisedString, color: LocalisedString, excluded: boolean}[][]
+    local stop_group_list = {}
 
-    local first_record = true
     for _, record in pairs(records) do
-        if #schedule_caption == 20 and #records > 20 then -- max length of LocalisedString
-            schedule_caption[#schedule_caption+1] = {"tll.n_more_stops", #records - 19}
-            break
-        end
 
+        ---@type LocalisedString
         local stop_name = (
-        record.temporary and (record.rail and {"tll.temporary", record.rail.position.x, record.rail.position.y} or {"tll.invalid_schedule"})) or record.station
+        record.temporary and (record.rail and {"tll.temporary", record.rail.position.x, record.rail.position.y} or {"tll.invalid_schedule"})) or {"", record.station}
 
-        local stop_excluded = record.temporary or record.station and excluded_keywords:matches_any(stop_name --[[@as string]])
-
-        ---@type LocalisedString
-        local color_localised_string = {"tll.color_text", stop_excluded and {"tll.gray"} or non_excluded_label_color}
-
-        ---@type LocalisedString
-        local stop_localised_string = {""}
-
-        if first_record then
-            first_record = false
-            stop_localised_string[#stop_localised_string+1] = stop_excluded and "[" or ""
-        else
-            stop_localised_string[#stop_localised_string+1] = (stop_excluded and " [" or "") .. " → "
-        end
-
-        stop_localised_string[#stop_localised_string+1] = stop_name
-
+        local excluded = not not (record.temporary or record.station and excluded_keywords:matches_any(record.station)) -- hi
         if record.station then
-            if table_config.show_train_limits_separately and not stop_excluded then
+            if table_config.show_train_limits_separately and not excluded then
                 local train_group_limit = 0
                 if schedule_report_data.train_stops[record.station] then
                     for _, train_stop_data in pairs(schedule_report_data.train_stops[record.station]) do
                         train_group_limit = train_group_limit + train_stop_data.limit
                     end
                 end
-                stop_localised_string[#stop_localised_string+1] = " (" .. train_group_limit .. ")"
+                stop_name[#stop_name+1] = " (" .. train_group_limit .. ")"
             end
             if opinionate and nonexistent_stations_in_schedule[record.station] then
-                stop_localised_string[#stop_localised_string+1] = {"tll.warning_icon"}
+                stop_name[#stop_name+1] = {"tll.warning_icon"}
             end
         end
+        local stop_data = {
+            stop_name=stop_name,
+            excluded=excluded
+        }
 
-        stop_localised_string[#stop_localised_string+1] = stop_excluded and "]" or ""
-        color_localised_string[#color_localised_string+1] = stop_localised_string
+        local current_stop_list = stop_group_list[#stop_group_list]
+        if current_stop_list and excluded == current_stop_list[1].excluded then
+            current_stop_list[#current_stop_list+1] = stop_data
+        else
+            stop_group_list[#stop_group_list+1] = {stop_data}
+        end
+    end
 
-        schedule_caption[#schedule_caption+1] = color_localised_string
+    ---@type LocalisedString
+    local schedule_caption = {""}
+
+    local first_stop_in_schedule = true
+
+    for _, stop_group in pairs(stop_group_list) do
+        if stop_group[1] then
+
+            local first_stop_in_group = true
+
+            ---@type LocalisedString
+            stop_group_localised_string = {"tll.color_text"}
+            if stop_group[1].excluded then
+                stop_group_localised_string[#stop_group_localised_string+1] = {"tll.gray"}
+            else
+                stop_group_localised_string[#stop_group_localised_string+1] = non_excluded_label_color
+            end
+
+            ---@type LocalisedString
+            local stop_names = {""}
+            for _, stop in pairs(stop_group) do
+
+                ---@type LocalisedString
+                local stop_name = {""}
+
+                if first_stop_in_group then
+                    first_stop_in_group = false
+                    if stop.excluded then
+                        stop_name[#stop_name+1] = " ["
+                    end
+                end
+
+                if not first_stop_in_schedule then
+                    stop_name[#stop_name+1] = {"", " → ", stop.stop_name}
+                else
+                    first_stop_in_schedule = false
+                    stop_name[#stop_name+1] = stop.stop_name
+                end
+                stop_names[#stop_names+1] = stop_name
+            end
+
+            if stop_group[1].excluded then
+                stop_names[#stop_names+1] = " ]"
+            end
+            stop_group_localised_string[#stop_group_localised_string+1] = stop_names
+            schedule_caption[#schedule_caption+1] = stop_group_localised_string
+        end
     end
 
     return schedule_caption
