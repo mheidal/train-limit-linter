@@ -81,8 +81,14 @@ function Exports.get_surfaces_to_train_groups(excluded_keywords, hidden_keywords
         local train_groups_on_surface = {}
         local any_train_groups_on_surface = false
         for _, train in pairs(surface.get_trains()) do
+            local train_has_locomotive = false
+            for _, carriage in pairs(train.carriages) do
+                if carriage.type == "locomotive" then
+                    train_has_locomotive = true
+                end
+            end
 
-            if train.schedule then
+            if train.schedule and train_has_locomotive then
                 for _, record in pairs(train.schedule.records) do
                     if record.station and hidden_keywords:matches_any(record.station) then
                         goto continue_schedule

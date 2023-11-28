@@ -143,8 +143,7 @@ local function create_blueprint_from_train(player, train, surface_name, records)
         local new_blueprint_entities = single_carriage_slot.get_blueprint_entities()
         if new_blueprint_entities == nil then return end
 
-        local carriage_prototype = game.entity_prototypes[carriage.name]
-        local diff = carriage_prototype.joint_distance + carriage_prototype.connection_distance
+        local diff = carriage.prototype.joint_distance + carriage.prototype.connection_distance
         local vert_offset = prev_vert_offset + diff
         if not first_vert_offset_diff then first_vert_offset_diff = diff end
 
