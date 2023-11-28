@@ -239,7 +239,7 @@ end
 
 
 ---@param table_config TLLScheduleTableConfiguration
----@param schedule TrainScheduleRecord[]
+---@param records TrainScheduleRecord[]
 ---@param schedule_report_data ScheduleTableData
 ---@param excluded_keywords TLLKeywordList
 ---@param opinionate boolean
@@ -248,7 +248,7 @@ end
 ---@return LocalisedString
 function Exports.generate_schedule_caption(
     table_config,
-    schedule,
+    records,
     schedule_report_data,
     excluded_keywords,
     opinionate,
@@ -260,7 +260,12 @@ function Exports.generate_schedule_caption(
     local schedule_caption = {""}
 
     local first_record = true
-    for _, record in pairs(schedule) do
+    for _, record in pairs(records) do
+        if #schedule_caption == 20 and #records > 20 then -- max length of LocalisedString
+            schedule_caption[#schedule_caption+1] = {"tll.n_more_stops", #records - 19}
+            break
+        end
+
         local stop_name = (
         record.temporary and (record.rail and {"tll.temporary", record.rail.position.x, record.rail.position.y} or {"tll.invalid_schedule"})) or record.station
 
