@@ -108,9 +108,8 @@ end
 ---@param player LuaPlayer
 ---@param train LuaTrain
 ---@param surface_name string
----@param records TrainScheduleRecord[]
 ---@return LuaItemStack?
-local function create_blueprint_from_train(player, train, surface_name, records)
+local function create_blueprint_from_train(player, train, surface_name)
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
@@ -178,11 +177,12 @@ local function create_blueprint_from_train(player, train, surface_name, records)
 
     local aggregated_entities = aggregated_blueprint_slot.get_blueprint_entities()
     if not aggregated_entities then return end
-    for _, entity in pairs(aggregated_entities) do
-        local entity_prototype = game.entity_prototypes[entity.name]
-        if entity_prototype.type == "locomotive" then
-            entity.schedule = records
 
+    local entity_prototypes = game.entity_prototypes
+
+    for _, entity in pairs(aggregated_entities) do
+        local entity_prototype = entity_prototypes[entity.name]
+        if entity_prototype.type == "locomotive" then
             if TrainGroups_train_group_id then
                 local tags = entity.tags or (function () entity.tags = {} return entity.tags end)()
                 tags.train_group = TrainGroups_train_group_id
@@ -211,8 +211,6 @@ local function create_blueprint_from_train(player, train, surface_name, records)
 
     aggregated_blueprint_slot.set_blueprint_entities(aggregated_entities)
     aggregated_blueprint_slot.blueprint_snap_to_grid = get_snap_to_grid(player, prev_vert_offset)
-
-    aggregated_blueprint_slot.label = utils.train_records_to_key(records)
 
     return aggregated_blueprint_slot
 end
@@ -248,9 +246,32 @@ local function create_blueprint_from_train_stop(script_inventory, name, color, t
 end
 
 ---@param script_inventory LuaInventory
+---@param blueprint LuaItemStack
+local function create_duplicate_of_blueprint(script_inventory, blueprint)
+    local duplicate = script_inventory.find_empty_stack()
+    if not duplicate then return end
+    duplicate.set_stack(blueprint)
+    return duplicate
+end
+
+---@param blueprint LuaItemStack
+---@param records TrainScheduleRecord[]
+local function set_blueprint_train_schedule(blueprint, records, label)
+    local blueprint_entities = blueprint.get_blueprint_entities()
+    if not blueprint_entities then error() end
+    local entity_prototypes = game.entity_prototypes
+    for _, blueprint_entity in pairs(blueprint_entities) do
+        if entity_prototypes[blueprint_entity.name].type == "locomotive" then
+            blueprint_entity.schedule = records
+        end
+    end
+    blueprint.set_blueprint_entities(blueprint_entities)
+    blueprint.label = label
+end
+
+---@param script_inventory LuaInventory
 ---@return LuaItemStack
 local function create_blueprint_book(script_inventory)
-    script_inventory.clear()
     local blueprint_book = script_inventory[1]
     blueprint_book.set_stack{name="tll_cursor_blueprint_book"}
     return blueprint_book
@@ -261,29 +282,36 @@ end
 ---@param player_global TLLPlayerGlobal
 function Exports.schedule_report_table_create_blueprint(event, player, player_global)
 
+    player_global.model.inventory_scratch_pad.clear()
     local blueprint_config = player_global.model.blueprint_configuration
 
-    local blueprint_book = create_blueprint_book(player_global.model.inventory_scratch_pad)
-
-    local cursor_stack = player.cursor_stack
-    if cursor_stack then
-        cursor_stack.set_stack(blueprint_book)
-    else
-        error("Could not add blueprint book to cursor")
+    local blueprint_book_inventory
+    do
+        local blueprint_book = create_blueprint_book(player_global.model.inventory_scratch_pad)
+        local cursor_stack = player.cursor_stack
+        if cursor_stack then
+            cursor_stack.set_stack(blueprint_book)
+        else
+            error("Could not add blueprint book to cursor")
+        end
+        blueprint_book_inventory = cursor_stack.get_inventory(defines.inventory.item_main)
     end
-    local blueprint_book_inventory = cursor_stack.get_inventory(defines.inventory.item_main)
+
     if not blueprint_book_inventory then return end
 
     local template_train
-    local template_train_ids = event.element.tags.template_train_ids
-    if type(template_train_ids) ~= "table" then return end
-    for _, id in pairs(template_train_ids) do
-        local template_option = game.get_train_by_id(id)
-        if template_option and template_option.valid then
-            template_train = template_option
-            break
+    do
+        local template_train_ids = event.element.tags.template_train_ids
+        if type(template_train_ids) ~= "table" then return end
+        for _, id in pairs(template_train_ids) do
+            local template_option = game.get_train_by_id(id)
+            if template_option and template_option.valid then
+                template_train = template_option
+                break
+            end
         end
     end
+
     if not template_train then
         player.create_local_flying_text{text={"tll.no_valid_template_trains"}, create_at_cursor=true}
         return
@@ -292,23 +320,37 @@ function Exports.schedule_report_table_create_blueprint(event, player, player_gl
     local surface_name = event.element.tags.surface
     if type(surface_name) ~= "string" then return end
 
+    ---@type {[string]: TrainScheduleRecord[]}
+    local record_lists = event.element.tags.record_lists ---@diagnostic disable-line
+    if not record_lists or type(record_lists) ~= "table" then return end
 
-    local records = event.element.tags.records
-    if not records or type(records) ~= "table" then return end
-
-    local train_blueprint = create_blueprint_from_train(player, template_train, surface_name, records)
+    local train_blueprint = create_blueprint_from_train(player, template_train, surface_name)
     if not train_blueprint then
         player.create_local_flying_text({create_at_cursor=true, text={"tll.could_not_create_blueprint"}})
         return
     end
 
-    if not blueprint_config.include_train_stops then
-        player.add_to_clipboard(train_blueprint)
-        player.activate_paste()
-
-    else
+    local record_list_count = utils.get_table_size(record_lists)
+    if record_list_count == 1 then
+        local _, only_records = next(record_lists)
+        set_blueprint_train_schedule(train_blueprint, only_records, "")
         blueprint_book_inventory.insert(train_blueprint)
 
+    else
+        player.create_local_flying_text{text={"tll.create_blueprint_multiple_matching_schedules", record_list_count}, create_at_cursor=true}
+        local blueprint_count = 0
+        for schedule_key, records in pairs(record_lists) do
+            blueprint_count = blueprint_count + 1
+            local duplicate_train_blueprint = create_duplicate_of_blueprint(player_global.model.inventory_scratch_pad, train_blueprint)
+            if duplicate_train_blueprint then
+                local blueprint_label = "(" .. tostring(blueprint_count) .. "/" .. tostring(record_list_count) .. "): " .. schedule_key
+                set_blueprint_train_schedule(duplicate_train_blueprint, records, blueprint_label)
+                blueprint_book_inventory.insert(duplicate_train_blueprint)
+            end
+        end
+    end
+
+    if blueprint_config.include_train_stops then
         local train_limit = blueprint_config.limit_train_stops and blueprint_config.default_train_limit or nil
         local template_train_stops = event.element.tags.template_train_stops
         if not template_train_stops or type(template_train_stops) ~= "table" then return end
@@ -323,6 +365,7 @@ function Exports.schedule_report_table_create_blueprint(event, player, player_gl
             if train_stop_blueprint then blueprint_book_inventory.insert(train_stop_blueprint) end
         end
     end
+    player_global.model.inventory_scratch_pad.clear()
 end
 
 return Exports
