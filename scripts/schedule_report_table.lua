@@ -384,21 +384,7 @@ function Exports.all_schedules_sorted_by_length(all_schedules, lo_to_hi)
 end
 
 ---@param all_schedules AllSchedulesEntry[]
----@param lo_to_hi boolean?
----@return AllSchedulesEntry[]
-function Exports.all_schedules_sorted_by_count_then_reverse_length(all_schedules, lo_to_hi)
-    return sort_all_schedules(
-        all_schedules,
-        function (a, b)
-            if a.count == b.count then return #a.records > #b.records end
-            return a.count < b.count
-        end,
-        lo_to_hi
-    )
-end
-
----@param all_schedules AllSchedulesEntry[]
----@return table<string, TrainScheduleRecord[]>
+---@return {[string]: TrainScheduleRecord[]}
 function Exports.get_keys_to_record_lists_from_all_records_excluding_temporary_stops(all_schedules)
 
     local all_schedules_filtered_temporary_stops = {}
