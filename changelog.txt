@@ -1,6 +1,10 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.26
 Date: 2023-11-27
+  Changes:
+    - If a train group includes more than one schedule (due to excluded keywords in station names)
+      then the 'copy trains' button will generate a blueprint for each schedule instead of picking
+      one randomly.
   Bugfixes:
     - Fixed error where trains were counted as belonging to a group when they had no locomotive.
     - Fixed crash when a schedule had too many stops.
