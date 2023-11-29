@@ -593,8 +593,13 @@ script.on_event(defines.events.on_train_created, function (event)
     end
 end)
 
-script.on_nth_tick(120, function (tick_data)
-    global.model.train_list:validate()
+script.on_nth_tick(120, function (_)
+    local any_trains_removed = global.model.train_list:validate()
+    if any_trains_removed then
+        for _, player in pairs(game.players) do
+            rebuild_interfaces(player)
+        end
+    end
 end)
 
 script.on_event(defines.events.on_train_schedule_changed, function (event)

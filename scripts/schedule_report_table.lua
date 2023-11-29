@@ -77,49 +77,46 @@ function Exports.get_surfaces_to_train_groups(excluded_keywords, hidden_keywords
     ---@type table<string, TrainGroup>
     local surfaces_to_train_groups = {}
 
-    for surface_name, surface in pairs(game.surfaces) do
-        local train_groups_on_surface = {}
-        local any_train_groups_on_surface = false
-        for _, train in pairs(surface.get_trains()) do
-            local train_has_locomotive = false
-            for _, carriage in pairs(train.carriages) do
-                if carriage.type == "locomotive" then
-                    train_has_locomotive = true
-                end
+    for _, train_data in pairs(global.model.train_list.trains) do
+        ---@type LuaTrain
+        local train = train_data.train
+        local train_has_locomotive = false
+        for _, carriage in pairs(train.carriages) do
+            if carriage.type == "locomotive" then
+                train_has_locomotive = true
             end
-
-            if train.schedule and train_has_locomotive then
-                for _, record in pairs(train.schedule.records) do
-                    if record.station and hidden_keywords:matches_any(record.station) then
-                        goto continue_schedule
-                    end
-                end
-                any_train_groups_on_surface = true
-
-                local filtered_records = get_filtered_schedule(train.schedule.records, excluded_keywords)
-                local filtered_key = utils.train_records_to_key(filtered_records)
-                local equivalent_key = get_equivalent_key(train_groups_on_surface, filtered_key)
-
-                ---@type TrainGroup
-                local train_group = utils.get_or_insert(train_groups_on_surface, equivalent_key, {
-                    filtered_schedule={
-                        key=equivalent_key,
-                        records=deep_copy(filtered_records)
-                    },
-                    all_schedules={},
-                    trains={},
-                })
-                table.insert(train_group.trains, train.id)
-                local full_key = utils.train_records_to_key(train.schedule.records)
-                local all_schedules_entry = utils.get_or_insert(train_group.all_schedules, full_key, {records=train.schedule.records, count=0})
-                all_schedules_entry.count = all_schedules_entry.count + 1
-            end
-            ::continue_schedule::
         end
 
-        if any_train_groups_on_surface then
-            surfaces_to_train_groups[surface_name] = train_groups_on_surface
+        if train.schedule and train_has_locomotive then
+
+            local train_groups_on_surface = utils.get_or_insert(surfaces_to_train_groups, train.front_stock.surface.name, {})
+
+            for _, record in pairs(train.schedule.records) do
+                if record.station and hidden_keywords:matches_any(record.station) then
+                    goto continue_schedule
+                end
+            end
+            any_train_groups_on_surface = true
+
+            local filtered_records = get_filtered_schedule(train.schedule.records, excluded_keywords)
+            local filtered_key = utils.train_records_to_key(filtered_records)
+            local equivalent_key = get_equivalent_key(train_groups_on_surface, filtered_key)
+
+            ---@type TrainGroup
+            local train_group = utils.get_or_insert(train_groups_on_surface, equivalent_key, {
+                filtered_schedule={
+                    key=equivalent_key,
+                    records=deep_copy(filtered_records)
+                },
+                all_schedules={},
+                trains={},
+            })
+            table.insert(train_group.trains, train.id)
+            local full_key = utils.train_records_to_key(train.schedule.records)
+            local all_schedules_entry = utils.get_or_insert(train_group.all_schedules, full_key, {records=train.schedule.records, count=0})
+            all_schedules_entry.count = all_schedules_entry.count + 1
         end
+        ::continue_schedule::
     end
 
     return surfaces_to_train_groups
