@@ -81,8 +81,14 @@ function Exports.get_surfaces_to_train_groups(excluded_keywords, hidden_keywords
         local train_groups_on_surface = {}
         local any_train_groups_on_surface = false
         for _, train in pairs(surface.get_trains()) do
+            local train_has_locomotive = false
+            for _, carriage in pairs(train.carriages) do
+                if carriage.type == "locomotive" then
+                    train_has_locomotive = true
+                end
+            end
 
-            if train.schedule then
+            if train.schedule and train_has_locomotive then
                 for _, record in pairs(train.schedule.records) do
                     if record.station and hidden_keywords:matches_any(record.station) then
                         goto continue_schedule
@@ -183,9 +189,15 @@ function Exports.get_train_stop_data(train_group, surface, rails_under_trains_wi
     }
     ---@type TrainSchedule
     local filtered_records = train_group.filtered_schedule.records
-
+    ---@type {[string]: boolean}
+    local counted_station_names = {}
     for _, record in pairs(filtered_records) do
         if not record.temporary and record.station then
+            if counted_station_names[record.station] then
+                goto continue
+            end
+
+            counted_station_names[record.station] = true
 
             for _, train_stop in pairs(game.surfaces[surface].get_train_stops({name=record.station})) do
                 ---@type TrainStopData
@@ -226,6 +238,7 @@ function Exports.get_train_stop_data(train_group, surface, rails_under_trains_wi
                 ret.train_stops[record.station] = ret.train_stops[record.station] or {}
                 table.insert(ret.train_stops[record.station], train_stop_data)
             end
+            ::continue::
         end
     end
     return ret
@@ -233,59 +246,107 @@ end
 
 
 ---@param table_config TLLScheduleTableConfiguration
----@param schedule TrainScheduleRecord[]
+---@param records TrainScheduleRecord[]
 ---@param schedule_report_data ScheduleTableData
 ---@param excluded_keywords TLLKeywordList
 ---@param opinionate boolean
 ---@param nonexistent_stations_in_schedule table<string, boolean>
 ---@param non_excluded_label_color LocalisedString
 ---@return LocalisedString
-function Exports.generate_schedule_caption(table_config, schedule, schedule_report_data, excluded_keywords, opinionate, nonexistent_stations_in_schedule, non_excluded_label_color)
+function Exports.generate_schedule_caption(
+    table_config,
+    records,
+    schedule_report_data,
+    excluded_keywords,
+    opinionate,
+    nonexistent_stations_in_schedule,
+    non_excluded_label_color
+)
 
-    ---@type LocalisedString
-    local schedule_caption = {""}
+    ---@type {stop_name: LocalisedString, color: LocalisedString, excluded: boolean}[][]
+    local stop_group_list = {}
 
-    local first_record = true
-    for _, record in pairs(schedule) do
+    for _, record in pairs(records) do
+
+        ---@type LocalisedString
         local stop_name = (
-        record.temporary and (record.rail and {"tll.temporary", record.rail.position.x, record.rail.position.y} or {"tll.invalid_schedule"})) or record.station
+        record.temporary and (record.rail and {"tll.temporary", record.rail.position.x, record.rail.position.y} or {"tll.invalid_schedule"})) or {"", record.station}
 
-        local stop_excluded = record.temporary or record.station and excluded_keywords:matches_any(stop_name --[[@as string]])
-
-        ---@type LocalisedString
-        local color_localised_string = {"tll.color_text", stop_excluded and {"tll.gray"} or non_excluded_label_color}
-
-        ---@type LocalisedString
-        local stop_localised_string = {""}
-
-        if first_record then
-            first_record = false
-            stop_localised_string[#stop_localised_string+1] = stop_excluded and "[" or ""
-        else
-            stop_localised_string[#stop_localised_string+1] = (stop_excluded and " [" or "") .. " → "
-        end
-
-        stop_localised_string[#stop_localised_string+1] = stop_name
-
+        local excluded = not not (record.temporary or record.station and excluded_keywords:matches_any(record.station)) -- hi
         if record.station then
-            if table_config.show_train_limits_separately and not stop_excluded then
+            if table_config.show_train_limits_separately and not excluded then
                 local train_group_limit = 0
                 if schedule_report_data.train_stops[record.station] then
                     for _, train_stop_data in pairs(schedule_report_data.train_stops[record.station]) do
                         train_group_limit = train_group_limit + train_stop_data.limit
                     end
                 end
-                stop_localised_string[#stop_localised_string+1] = " (" .. train_group_limit .. ")"
+                stop_name[#stop_name+1] = " (" .. train_group_limit .. ")"
             end
             if opinionate and nonexistent_stations_in_schedule[record.station] then
-                stop_localised_string[#stop_localised_string+1] = {"tll.warning_icon"}
+                stop_name[#stop_name+1] = {"tll.warning_icon"}
             end
         end
+        local stop_data = {
+            stop_name=stop_name,
+            excluded=excluded
+        }
 
-        stop_localised_string[#stop_localised_string+1] = stop_excluded and "]" or ""
-        color_localised_string[#color_localised_string+1] = stop_localised_string
+        local current_stop_list = stop_group_list[#stop_group_list]
+        if current_stop_list and excluded == current_stop_list[1].excluded then
+            current_stop_list[#current_stop_list+1] = stop_data
+        else
+            stop_group_list[#stop_group_list+1] = {stop_data}
+        end
+    end
 
-        schedule_caption[#schedule_caption+1] = color_localised_string
+    ---@type LocalisedString
+    local schedule_caption = {""}
+
+    local first_stop_in_schedule = true
+
+    for _, stop_group in pairs(stop_group_list) do
+        if stop_group[1] then
+
+            local first_stop_in_group = true
+
+            ---@type LocalisedString
+            stop_group_localised_string = {"tll.color_text"}
+            if stop_group[1].excluded then
+                stop_group_localised_string[#stop_group_localised_string+1] = {"tll.gray"}
+            else
+                stop_group_localised_string[#stop_group_localised_string+1] = non_excluded_label_color
+            end
+
+            ---@type LocalisedString
+            local stop_names = {""}
+            for _, stop in pairs(stop_group) do
+
+                ---@type LocalisedString
+                local stop_name = {""}
+
+                if first_stop_in_group then
+                    first_stop_in_group = false
+                    if stop.excluded then
+                        stop_name[#stop_name+1] = " ["
+                    end
+                end
+
+                if not first_stop_in_schedule then
+                    stop_name[#stop_name+1] = {"", " → ", stop.stop_name}
+                else
+                    first_stop_in_schedule = false
+                    stop_name[#stop_name+1] = stop.stop_name
+                end
+                stop_names[#stop_names+1] = stop_name
+            end
+
+            if stop_group[1].excluded then
+                stop_names[#stop_names+1] = " ]"
+            end
+            stop_group_localised_string[#stop_group_localised_string+1] = stop_names
+            schedule_caption[#schedule_caption+1] = stop_group_localised_string
+        end
     end
 
     return schedule_caption
@@ -323,17 +384,23 @@ function Exports.all_schedules_sorted_by_length(all_schedules, lo_to_hi)
 end
 
 ---@param all_schedules AllSchedulesEntry[]
----@param lo_to_hi boolean?
----@return AllSchedulesEntry[]
-function Exports.all_schedules_sorted_by_count_then_length(all_schedules, lo_to_hi)
-    return sort_all_schedules(
-        all_schedules,
-        function (a, b)
-            if a.count == b.count then return #a.records < #b.records end
-            return a.count < b.count
-        end,
-        lo_to_hi
-    )
+---@return {[string]: TrainScheduleRecord[]}
+function Exports.get_keys_to_record_lists_from_all_records_excluding_temporary_stops(all_schedules)
+
+    local all_schedules_filtered_temporary_stops = {}
+    for _, schedule in pairs(all_schedules) do
+        local filtered_records = {}
+        for _, record in pairs(schedule.records) do
+            if not record.temporary then
+                filtered_records[#filtered_records+1] = record
+            end
+        end
+        if #filtered_records > 0 then
+            local filtered_record_key = utils.train_records_to_key(filtered_records)
+            all_schedules_filtered_temporary_stops[filtered_record_key] = filtered_records
+        end
+    end
+    return all_schedules_filtered_temporary_stops
 end
 
 return Exports
