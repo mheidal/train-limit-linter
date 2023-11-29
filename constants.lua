@@ -56,6 +56,7 @@ constants.actions = {
     toggle_train_to_remove_checkbox="toggle_train_to_remove_checkbox",
     toggle_train_to_remove_button="toggle_train_to_remove_button",
     remove_trains="remove_trains",
+    open_train="open_train",
 
     toggle_TrainGroups_copy_train_group="toggle_TrainGroups_copy_train_group",
 }

@@ -104,8 +104,8 @@ Exports[constants.modal_functions.remove_trains] = function (player, parent, arg
 
             minimap.add{
                 type="button",
-                tooltip="Toggle removal of train",
-                tags={action=constants.actions.toggle_train_to_remove_button, train_id=train_id},
+                tooltip={"tll.open_train"},
+                tags={action=constants.actions.open_train, train_id=train_id},
                 style="tll_remove_train_minimap_button",
             }
 
