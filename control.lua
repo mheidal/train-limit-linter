@@ -281,6 +281,18 @@ script.on_event(defines.events.on_gui_click, function (event)
                 player_global.model.trains_to_remove_list:add(train_id)
                 checkbox.state = true
             end
+
+        elseif action == constants.actions.open_train then
+
+            local train_id = event.element.tags.train_id
+            if not train_id or type(train_id) ~= "number" then return end
+
+            local train = game.get_train_by_id(train_id)
+            if not train or not train.valid or not train.front_stock then return end
+
+            if player_global.model.modal_open then toggle_modal(player) end
+            if player_global.model.main_interface_open then toggle_interface(player) end
+            player.opened = train.front_stock
         end
     end
 end)
