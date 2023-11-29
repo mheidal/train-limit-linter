@@ -576,9 +576,25 @@ script.on_event(defines.events.on_gui_location_changed, function(event)
 end)
 
 script.on_event(defines.events.on_train_created, function (event)
+
+    local train_list = global.model.train_list
+    if event.old_train_id_1 then
+        train_list:remove_by_id(event.old_train_id_1)
+    end
+
+    if event.old_train_id_2 then
+        train_list:remove_by_id(event.old_train_id_2)
+    end
+
+    train_list:add(event.train)
+
     for _, player in pairs(game.players) do
         rebuild_interfaces(player)
     end
+end)
+
+script.on_nth_tick(120, function (tick_data)
+    global.model.train_list:validate()
 end)
 
 script.on_event(defines.events.on_train_schedule_changed, function (event)
