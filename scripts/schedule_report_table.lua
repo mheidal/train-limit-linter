@@ -189,9 +189,15 @@ function Exports.get_train_stop_data(train_group, surface, rails_under_trains_wi
     }
     ---@type TrainSchedule
     local filtered_records = train_group.filtered_schedule.records
-
+    ---@type {[string]: boolean}
+    local counted_station_names = {}
     for _, record in pairs(filtered_records) do
         if not record.temporary and record.station then
+            if counted_station_names[record.station] then
+                goto continue
+            end
+
+            counted_station_names[record.station] = true
 
             for _, train_stop in pairs(game.surfaces[surface].get_train_stops({name=record.station})) do
                 ---@type TrainStopData
@@ -232,6 +238,7 @@ function Exports.get_train_stop_data(train_group, surface, rails_under_trains_wi
                 ret.train_stops[record.station] = ret.train_stops[record.station] or {}
                 table.insert(ret.train_stops[record.station], train_stop_data)
             end
+            ::continue::
         end
     end
     return ret
