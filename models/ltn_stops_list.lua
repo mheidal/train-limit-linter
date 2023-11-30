@@ -25,7 +25,6 @@ function TLLLTNTrainStopsList.new()
         train_stops={},
     }
     setmetatable(self, mt)
-    self:initialize()
     return self
 end
 

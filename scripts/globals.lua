@@ -102,9 +102,11 @@ end
 function Exports.build_global_model()
     global.model = {
         fuel_category_data = fuel_category_data.get_fuel_category_data(),
-        train_list = TLLTrainList.new(),
         ltn_stops_list = TLLLTNTrainStopsList.new(),
+        train_list = TLLTrainList.new(),
     }
+    global.model.ltn_stops_list:initialize()
+    global.model.train_list:initialize()
 end
 
 function Exports.initialize_global(player)
