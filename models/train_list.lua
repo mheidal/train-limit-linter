@@ -24,16 +24,10 @@ end
 --- Start tracking a train.
 ---@param train LuaTrain
 function TLLTrainList:add(train)
-    local belongs_to_LTN = false
-    if remote.interfaces["logistic-train-network"] then
-        if remote.call("logistic-train-network", "get_next_logistic_stop", train) then
-            belongs_to_LTN = true
-        end
-    end
     if train.valid then
         self.trains[train.id] = {
             train=train,
-            belongs_to_LTN=belongs_to_LTN,
+            belongs_to_LTN=global.model.ltn_stops_list:train_has_ltn_stop(train),
         }
     end
 end
@@ -51,12 +45,15 @@ function TLLTrainList:remove_by_id(id)
 end
 
 --- Check every tracked train's .valid attribute and remove falsy trains. Returns true if any trains were removed, false if no trains were removed.
+--- Also, update whether this train belongs to LTN.
 ---@return boolean
 function TLLTrainList:validate()
     local ids_to_remove = {}
     for id, train_data in pairs(self.trains) do
         if not train_data.train.valid then
             ids_to_remove[#ids_to_remove+1] = id
+        else
+            train_data.belongs_to_LTN = global.model.ltn_stops_list:train_has_ltn_stop(train_data.train)
         end
     end
     for _, id in pairs(ids_to_remove) do

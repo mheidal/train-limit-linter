@@ -10,6 +10,7 @@ local TLLGeneralConfiguration = require("models.general_configuration")
 local TLLTrainsToRemoveList = require("models.trains_to_remove_list")
 local TLLOtherModsConfiguration = require("models.other_mods_configuration")
 local TLLTrainList = require("models.train_list")
+local TLLLTNTrainStopsList = require("models.ltn_stops_list")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
@@ -18,6 +19,7 @@ local TLLTrainList = require("models.train_list")
 ---@class TLLGlobalModel
 ---@field fuel_category_data TLLFuelCategoryData
 ---@field train_list TLLTrainList
+---@field ltn_stops_list TLLLTNTrainStopsList
 
 ---@class TLLPlayerGlobal
 ---@field model TLLPlayerModel
@@ -101,6 +103,7 @@ function Exports.build_global_model()
     global.model = {
         fuel_category_data = fuel_category_data.get_fuel_category_data(),
         train_list = TLLTrainList.new(),
+        ltn_stops_list = TLLLTNTrainStopsList.new(),
     }
 end
 

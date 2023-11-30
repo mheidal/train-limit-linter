@@ -604,12 +604,50 @@ script.on_nth_tick(120, function (_)
     end
 end)
 
+script.on_nth_tick(3600, function(_)
+    ---@type TLLLTNTrainStopsList
+    local ltn_stops_list = global.model.ltn_stops_list
+    ltn_stops_list:validate()
+end)
+
+script.on_event(defines.events.on_entity_renamed, function (event)
+    local entity = event.entity
+    if entity.name == "logistic-train-stop" or entity.name == "ltn-port" then
+        ---@type TLLLTNTrainStopsList
+        local ltn_stops_list = global.model.ltn_stops_list
+        ltn_stops_list:remove_by_backer_name_and_unit_number(event.old_name, entity.unit_number)
+        ltn_stops_list:add(entity)
+    end
+end)
+
 script.on_event(defines.events.on_train_schedule_changed, function (event)
     if not global.model.train_list.trains[event.train.id].belongs_to_LTN then
         for _, player in pairs(game.players) do
             rebuild_interfaces(player)
         end
     end
+end)
+
+---@todo handlers for creation and destruction of LTN stops
+
+---@param event EventData.on_built_entity | EventData.on_robot_built_entity | EventData.on_entity_cloned | EventData.script_raised_built | EventData.script_raised_revive
+local function handle_build(event)
+    local entity = event.entity or event.created_entity
+    if not entity then return end
+
+    ---@type TLLLTNTrainStopsList
+    local ltn_stops_list = global.model.ltn_stops_list
+    ltn_stops_list:add(entity)
+end
+
+for _, event in pairs({ "on_built_entity", "on_robot_built_entity", "on_entity_cloned", "script_raised_built", "script_raised_revive" }) do
+    script.on_event(defines.events[event], handle_build, { {filter="name", name="logistic-train-stop"}, {filter="name", name="ltn-port"} }) ---@diagnostic disable-line
+end
+
+script.on_event(defines.events.on_entity_destroyed, function (event)
+    ---@type TLLLTNTrainStopsList
+    local ltn_stops_list = global.model.ltn_stops_list
+    ltn_stops_list:remove_by_unit_number(event.unit_number)
 end)
 
 script.on_event(defines.events.on_player_created, function(event)
