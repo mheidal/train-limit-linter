@@ -77,7 +77,16 @@ function Exports.get_surfaces_to_train_groups(excluded_keywords, hidden_keywords
     ---@type table<string, TrainGroup>
     local surfaces_to_train_groups = {}
 
-    for _, train_data in pairs(global.model.train_list.trains) do
+    local train_list = global.model.train_list
+    train_list:validate()
+
+    ---@type _, TrainData
+    for _, train_data in pairs(train_list.trains) do
+
+        if train_data.belongs_to_LTN then
+            goto continue_schedule
+        end
+
         ---@type LuaTrain
         local train = train_data.train
         local train_has_locomotive = false

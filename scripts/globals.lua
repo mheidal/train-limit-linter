@@ -13,7 +13,7 @@ local TLLTrainList = require("models.train_list")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
----@field players table<number, TLLPlayerGlobal>
+---@field players {[number]: TLLPlayerGlobal}
 
 ---@class TLLGlobalModel
 ---@field fuel_category_data TLLFuelCategoryData

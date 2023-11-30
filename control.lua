@@ -577,7 +577,9 @@ end)
 
 script.on_event(defines.events.on_train_created, function (event)
 
+    ---@type TLLTrainList
     local train_list = global.model.train_list
+
     if event.old_train_id_1 then
         train_list:remove_by_id(event.old_train_id_1)
     end
@@ -603,8 +605,10 @@ script.on_nth_tick(120, function (_)
 end)
 
 script.on_event(defines.events.on_train_schedule_changed, function (event)
-    for _, player in pairs(game.players) do
-        rebuild_interfaces(player)
+    if not global.model.train_list.trains[event.train.id].belongs_to_LTN then
+        for _, player in pairs(game.players) do
+            rebuild_interfaces(player)
+        end
     end
 end)
 
