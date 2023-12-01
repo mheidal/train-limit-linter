@@ -604,7 +604,7 @@ script.on_nth_tick(120, function (_)
     end
 end)
 
-script.on_nth_tick(3600, function(_)
+script.on_nth_tick(1800, function(_)
     ---@type TLLLTNTrainStopsList
     local ltn_stops_list = global.model.ltn_stops_list
     ltn_stops_list:validate()
