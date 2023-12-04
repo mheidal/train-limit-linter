@@ -9,13 +9,17 @@ local TLLCollapsibleFrameConfiguration = require("models.collapsible_frame_confi
 local TLLGeneralConfiguration = require("models.general_configuration")
 local TLLTrainsToRemoveList = require("models.trains_to_remove_list")
 local TLLOtherModsConfiguration = require("models.other_mods_configuration")
+local TLLTrainList = require("models.train_list")
+local TLLLTNTrainStopsList = require("models.ltn_stops_list")
 
 ---@class TLLGlobal
 ---@field model TLLGlobalModel
----@field players table<number, TLLPlayerGlobal>
+---@field players {[number]: TLLPlayerGlobal}
 
 ---@class TLLGlobalModel
 ---@field fuel_category_data TLLFuelCategoryData
+---@field train_list TLLTrainList
+---@field ltn_stops_list TLLLTNTrainStopsList
 
 ---@class TLLPlayerGlobal
 ---@field model TLLPlayerModel
@@ -98,7 +102,11 @@ end
 function Exports.build_global_model()
     global.model = {
         fuel_category_data = fuel_category_data.get_fuel_category_data(),
+        ltn_stops_list = TLLLTNTrainStopsList.new(),
+        train_list = TLLTrainList.new(),
     }
+    global.model.ltn_stops_list:initialize()
+    global.model.train_list:initialize()
 end
 
 function Exports.initialize_global(player)

@@ -1,5 +1,3 @@
----@diagnostic disable: missing-fields
---- This file should never be imported. This simply indicates the type of `global` to VS Code.
-
+---@meta
 ---@type TLLGlobal
-global = {}
+global = {} ---@diagnostic disable-line because of missing fields

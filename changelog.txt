@@ -1,4 +1,15 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.28
+Date: 2023-11-30
+  Optimizations:
+    - Improved performance by reducing number of queries to the API when building the table in the 
+      Display tab.
+  Modding:
+    - Compatibility with Logistic Train Network.
+    - Compatibility with Cybersyn.
+    - Trains belonging to either LTN or Cybersyn will not be displayed in the Display tab. This
+      should improve performance when using Train Limit Linter on a map with many of these trains.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.27
 Date: 2023-11-27
   Changes:
