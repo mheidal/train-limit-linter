@@ -1,11 +1,26 @@
 --- A list of all the LuaTrains in the game at the moment. Updated periodically and on relevant events.
 
+constants = require("constants")
+
+--- Query Project Cybersyn's remote interface to see if this train is controlled by Cybersyn.
+--- This could be made more efficient if Cybersyn's interface supported querying about multiple trains, possibly.
+---@param train_id number
+---@return boolean
+local function train_belongs_to_cybersyn(train_id)
+    local cybersyn = constants.supported_interfaces.cybersyn
+    if remote.interfaces[cybersyn] then
+        return not not remote.call(cybersyn, "read_global", "trains", train_id) -- hi
+    end
+    return false
+end
+
 ---@class TLLTrainList
 ---@field trains {[number]: TrainData} Mapping of train ids to LuaTrains
 
 ---@class TrainData
 ---@field train LuaTrain
 ---@field belongs_to_LTN boolean
+---@field belongs_to_cybersyn boolean
 
 ---@class TLLTrainList
 local TLLTrainList = {}
@@ -27,6 +42,7 @@ function TLLTrainList:add(train)
         self.trains[train.id] = {
             train=train,
             belongs_to_LTN=global.model.ltn_stops_list:train_has_ltn_stop(train),
+            belongs_to_cybersyn=train_belongs_to_cybersyn(train.id),
         }
     end
 end
@@ -53,6 +69,7 @@ function TLLTrainList:validate()
             ids_to_remove[#ids_to_remove+1] = id
         else
             train_data.belongs_to_LTN = global.model.ltn_stops_list:train_has_ltn_stop(train_data.train)
+            train_data.belongs_to_cybersyn = train_belongs_to_cybersyn(id)
         end
     end
     for _, id in pairs(ids_to_remove) do

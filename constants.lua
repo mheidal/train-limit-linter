@@ -118,6 +118,7 @@ constants.keyword_match_types = {
 
 constants.supported_interfaces = {
     logistic_train_network="logistic-train-network",
+    cybersyn="cybersyn",
 }
 
 return constants

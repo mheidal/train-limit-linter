@@ -83,7 +83,7 @@ function Exports.get_surfaces_to_train_groups(excluded_keywords, hidden_keywords
     ---@type _, TrainData
     for _, train_data in pairs(train_list.trains) do
 
-        if train_data.belongs_to_LTN then
+        if train_data.belongs_to_LTN or train_data.belongs_to_cybersyn then
             goto continue_schedule
         end
 
