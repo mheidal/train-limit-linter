@@ -129,7 +129,7 @@ function Exports.build_settings_tab(player)
             end
 
             local valid_fuels = global.model.fuel_category_data.fuel_categories_and_fuels[fuel_category]
-            if not valid_fuels then goto fuel_category_continue end
+            if not valid_fuels[1] then goto fuel_category_continue end -- check if list of valid fuels is empty
 
             local fuel_category_label = fuel_category_table.add{type="label", caption=fuel_category_caption, tooltip=locomotive_consumer_tooltip}
             fuel_category_label.style.width = 160 -- 1/3 the table's width, ish
