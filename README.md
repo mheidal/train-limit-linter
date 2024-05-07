@@ -68,6 +68,13 @@ Automatic Train Fuel Stop can temporarily inject refuel train stops into a train
 
 Other mods which inject train stops into a train's schedule can be handled in a similar fashion.
 
+#### LTN and Cybersyn 
+Train Limit Linter is not designed to use train networks in the same way as [LTN - Logistic Train Network by Optera](https://mods.factorio.com/mod/LogisticTrainNetwork) and [Project Cybersyn by lesbian_mami](https://mods.factorio.com/mod/cybersyn), which constantly modify train schedules so that the rule of conforming to P + R - 1 is not necessary. Therefore, Train Limit Linter does not display trains which are controlled by LTN or Cybersyn. Train Limit Linter can be used alongside those mods, if some trains are controlled by either LTN or Cybersyn and some trains are not.
+
+A train is considered to be controlled by LTN if any station that it visits is an LTN station (or shares a name with an LTN station.)
+
+A train is considered to be controlled by Project Cybersyn if it visits any station which is controlled by a cybernetic combinator.
+
 ### Contact
 For bug reports or feature suggestions, please [make an issue on the Github page](https://github.com/mheidal/train-limit-linter/issues/new). 
 
