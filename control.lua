@@ -307,9 +307,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     if event.element.tags.action then
         local action = event.element.tags.action
         if event.element.type == "checkbox" then
-            if false then
-
-            elseif action == constants.actions.toggle_keyword then
+            if action == constants.actions.toggle_keyword then
                 local keyword = event.element.tags.keyword
                 if type(keyword) ~= "string" then return end
                 local keywords_name = event.element.tags.keywords
