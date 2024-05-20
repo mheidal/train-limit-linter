@@ -16,6 +16,8 @@ local TLLOtherModsConfiguration = require("models.other_mods_configuration")
 
 ---@class TLLGlobalModel
 ---@field fuel_category_data TLLFuelCategoryData
+---@field space_exploration_trains_teleporting_count number
+---@field delay_rebuilding_interface boolean
 
 ---@class TLLPlayerGlobal
 ---@field model TLLPlayerModel
@@ -98,6 +100,8 @@ end
 function Exports.build_global_model()
     global.model = {
         fuel_category_data = fuel_category_data.get_fuel_category_data(),
+        space_exploration_trains_teleporting_count = 0, ---@TODO account for trains that are already teleporting when we build this model?
+        delay_rebuilding_interface = false,
     }
 end
 

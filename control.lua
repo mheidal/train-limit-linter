@@ -5,102 +5,28 @@ local globals = require("scripts.globals")
 local collapsible_frame = require("views.collapsible_frame")
 local slider_textfield = require("views.slider_textfield")
 local icon_selector_textfield = require("views.icon_selector_textfield")
-
-local main_interface = require("views.main_interface")
-
 local settings_tab_view = require("views.settings_tab")
-
-local modal = require("views.modal")
+local interfaces = require("views.interfaces")
 
 -- scripts
 
-local schedule_report_table_scripts = require("scripts.schedule_report_table")
-
+local remote_events = require("scripts.remote_events")
 local blueprint_creation_scripts = require("scripts.blueprint_creation")
-
 local train_removal_scripts = require("scripts.train_removal")
-
--- handlers
-
----@param player LuaPlayer
-local function rebuild_interfaces(player)
-    main_interface.build_interface(player)
-    modal.build_modal(player)
-end
-
----@param player LuaPlayer
-local function toggle_interface(player)
-    ---@type TLLPlayerGlobal
-    local player_global = global.players[player.index]
-    local main_frame = player_global.view.main_frame
-    if main_frame == nil then
-        player_global.model.main_interface_open = true
-        main_interface.build_interface(player)
-        player.opened = player_global.view.main_frame
-    else
-        local modal_main_frame = player_global.view.modal_main_frame
-        if modal_main_frame then
-            main_frame.ignored_by_interaction = true
-        else
-            player_global.model.main_interface_open = false
-            player_global.model.main_interface_selected_tab = nil
-            main_frame.destroy()
-            player_global.view = globals.get_empty_player_view()
-        end
-    end
-end
-
----@param player LuaPlayer
-function toggle_modal(player)
-    ---@type TLLPlayerGlobal
-    local player_global = global.players[player.index]
-
-    local main_frame = player_global.view.main_frame
-    local modal_main_frame = player_global.view.modal_main_frame
-
-    if modal_main_frame == nil then
-        if main_frame ~= nil then
-            local dimmer = player.gui.screen.add{
-                type="frame",
-                style="tll_frame_semitransparent",
-                tags={action=constants.actions.focus_modal}
-            }
-            dimmer.style.size = constants.style_data.main_frame_size
-            dimmer.location = main_frame.location
-            player_global.view.main_frame_dimmer = dimmer
-        end
-        player_global.model.modal_open = true
-
-        modal.pre_build_cleanup(player)
-        modal.build_modal(player)
-    else
-        player_global.model.modal_open = false
-        modal_main_frame.destroy()
-        if player_global.view.main_frame_dimmer ~= nil then
-            player_global.view.main_frame_dimmer.destroy()
-            player_global.view.main_frame_dimmer = nil
-        end
-        player_global.view.modal_main_frame = nil
-        if main_frame then
-            player.opened = main_frame
-            main_frame.ignored_by_interaction = false
-        end
-    end
-end
 
 -- event handlers
 
 script.on_event("tll_toggle_interface", function(event)
     local player = game.get_player(event.player_index)
     if not player then return end
-    toggle_interface(player)
+    interfaces.toggle_interface(player)
 end)
 
 script.on_event(defines.events.on_lua_shortcut, function(event)
     if event.prototype_name ==  "tll_toggle_interface" then
         local player = game.get_player(event.player_index)
         if not player then return end
-        toggle_interface(player)
+        interfaces.toggle_interface(player)
     end
 end)
 
@@ -127,7 +53,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             settings_tab_view.build_settings_tab(player)
 
         elseif action == constants.actions.close_window then
-            toggle_interface(player)
+            interfaces.toggle_interface(player)
 
         elseif action == constants.actions.keyword_textfield_apply then
             local text = icon_selector_textfield.get_text_and_reset_textfield(event.element)
@@ -136,7 +62,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             if text ~= "" then -- don't allow user to input the empty string
                 local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_name)
                 keyword_list:set_enabled(text, true)
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
             end
 
         elseif action == constants.actions.delete_keyword then
@@ -146,14 +72,14 @@ script.on_event(defines.events.on_gui_click, function (event)
             if not keywords_name or type(keywords_name) ~= "string" then return end
             local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_name)
             keyword_list:remove_item(keyword)
-            rebuild_interfaces(player)
+            interfaces.rebuild_interfaces(player)
 
         elseif action == constants.actions.delete_all_keywords then
             local keywords_name = event.element.tags.keywords
             if not keywords_name or type(keywords_name) ~= "string" then return end
             local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_name)
             keyword_list:remove_all()
-            rebuild_interfaces(player)
+            interfaces.rebuild_interfaces(player)
 
         elseif action == constants.actions.train_schedule_create_blueprint then
             blueprint_creation_scripts.schedule_report_table_create_blueprint(event, player, player_global)
@@ -175,7 +101,7 @@ script.on_event(defines.events.on_gui_click, function (event)
             elseif orientation == constants.orientations.l or orientation == constants.orientations.r then
                 player_global.model.blueprint_configuration:set_snap_direction(constants.snap_directions.vertical)
             end
-            rebuild_interfaces(player)
+            interfaces.rebuild_interfaces(player)
 
         elseif action == constants.actions.open_modal then
             local modal_function = event.element.tags.modal_function
@@ -187,12 +113,12 @@ script.on_event(defines.events.on_gui_click, function (event)
             player_global.model.modal_function_configuration:set_modal_content_function(modal_function)
             ---@diagnostic disable-next-line vscode is angry about the type of "args"
             player_global.model.modal_function_configuration:set_modal_content_args(args)
-            toggle_modal(player)
+            interfaces.toggle_modal(player)
 
         elseif action == constants.actions.close_modal then
             player_global.model.modal_function_configuration:clear_modal_content_function()
             player_global.model.modal_function_configuration:clear_modal_content_args()
-            toggle_modal(player)
+            interfaces.toggle_modal(player)
 
         elseif action == constants.actions.import_keywords_button then
             local textfield_flow = event.element.parent
@@ -207,8 +133,8 @@ script.on_event(defines.events.on_gui_click, function (event)
             local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_tag)
             keyword_list:add_from_serialized(text)
 
-            rebuild_interfaces(player)
-            toggle_modal(player)
+            interfaces.rebuild_interfaces(player)
+            interfaces.toggle_modal(player)
 
         elseif action == constants.actions.focus_modal then
             local modal_main_frame = player_global.view.modal_main_frame
@@ -225,14 +151,14 @@ script.on_event(defines.events.on_gui_click, function (event)
             local keyword_textfield = globals.get_keyword_textfield_from_name(player_global, keywords_tag)
             keyword_textfield.text = keyword_textfield.text .. event.element.tags.train_stop_name
             keyword_textfield.focus()
-            toggle_modal(player)
+            interfaces.toggle_modal(player)
 
         elseif action == constants.actions.main_interface_switch_tab then
             local tab_index = event.element.tags.tab_index
             if not tab_index then return end
             if type(tab_index) ~= "number" then return end
             player_global.model.main_interface_selected_tab = tab_index
-            rebuild_interfaces(player)
+            interfaces.rebuild_interfaces(player)
 
         elseif action == constants.actions.toggle_display_settings_visible then
             player_global.model.collapsible_frame_configuration:toggle_display_settings_visible()
@@ -266,8 +192,8 @@ script.on_event(defines.events.on_gui_click, function (event)
                 end
             end
             player_global.model.trains_to_remove_list:remove_all()
-            toggle_modal(player)
-            rebuild_interfaces(player)
+            interfaces.toggle_modal(player)
+            interfaces.rebuild_interfaces(player)
 
         elseif action == constants.actions.toggle_train_to_remove_button then
             local train_id = event.element.tags.train_id
@@ -290,8 +216,8 @@ script.on_event(defines.events.on_gui_click, function (event)
             local train = game.get_train_by_id(train_id)
             if not train or not train.valid or not train.front_stock then return end
 
-            if player_global.model.modal_open then toggle_modal(player) end
-            if player_global.model.main_interface_open then toggle_interface(player) end
+            if player_global.model.modal_open then interfaces.toggle_modal(player) end
+            if player_global.model.main_interface_open then interfaces.toggle_interface(player) end
             player.opened = train.front_stock
         end
     end
@@ -319,47 +245,47 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
 
             elseif action == constants.actions.toggle_show_all_surfaces then
                 player_global.model.schedule_table_configuration:toggle_show_all_surfaces()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_show_satisfied then
                 player_global.model.schedule_table_configuration:toggle_show_satisfied()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_show_not_set then
                 player_global.model.schedule_table_configuration:toggle_show_not_set()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_show_dynamic then
                 player_global.model.schedule_table_configuration:toggle_show_dynamic()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_show_single_station_schedules then
                 player_global.model.schedule_table_configuration:toggle_show_single_station_schedules()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_show_train_limits_separately then
                 player_global.model.schedule_table_configuration:toggle_show_train_limits_separately()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_blueprint_snap then
                 player_global.model.blueprint_configuration:toggle_blueprint_snap()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_place_trains_with_fuel then
                 player_global.model.fuel_configuration:toggle_add_fuel()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_include_train_stops then
                 player_global.model.blueprint_configuration:toggle_include_train_stops()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_limit_train_stops then
                 player_global.model.blueprint_configuration:toggle_limit_train_stops()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_opinionation then
                 player_global.model.schedule_table_configuration:toggle_opinionate()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
 
             elseif action == constants.actions.toggle_train_to_remove_checkbox then
                 local train_id = event.element.tags.train_id
@@ -373,7 +299,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
 
             elseif action == constants.actions.toggle_TrainGroups_copy_train_group then
                 player_global.model.other_mods_configuration.TrainGroups_configuration:toggle_copy_train_group()
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
             end
 
         elseif event.element.type == "radiobutton" then
@@ -381,7 +307,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
                 local new_option = event.element.tags.new_option
                 if not new_option or type(new_option) ~= "string" then return end
                 player_global.model.general_configuration:change_remove_train_option(new_option)
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
             end
         end
     end
@@ -517,9 +443,9 @@ script.on_event(defines.events.on_gui_closed, function(event)
         if not player then return end
         local name = event.element.name
         if name == "tll_main_frame" then
-            toggle_interface(player)
+            interfaces.toggle_interface(player)
         elseif name == "tll_modal_main_frame" then
-            toggle_modal(player)
+            interfaces.toggle_modal(player)
         end
     end
 end)
@@ -540,7 +466,7 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
                 if not keywords_name or type(keywords_name) ~= "string" then return end
                 local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_name)
                 keyword_list:set_enabled(text, true)
-                rebuild_interfaces(player)
+                interfaces.rebuild_interfaces(player)
             end
 
         elseif action == constants.actions.import_keywords_textfield then
@@ -553,9 +479,9 @@ script.on_event(defines.events.on_gui_confirmed, function(event)
             local keyword_list = globals.get_keyword_list_from_name(player_global, keywords_tag)
             keyword_list:add_from_serialized(text)
 
-            rebuild_interfaces(player)
+            interfaces.rebuild_interfaces(player)
 
-            toggle_modal(player)
+            interfaces.toggle_modal(player)
         end
     end
 end)
@@ -576,14 +502,16 @@ script.on_event(defines.events.on_gui_location_changed, function(event)
 end)
 
 script.on_event(defines.events.on_train_created, function (event)
-    for _, player in pairs(game.players) do
-        rebuild_interfaces(player)
+    if not global.model.delay_rebuilding_interface then
+        for _, player in pairs(game.players) do
+            interfaces.rebuild_interfaces(player)
+        end
     end
 end)
 
 script.on_event(defines.events.on_train_schedule_changed, function (event)
     for _, player in pairs(game.players) do
-        rebuild_interfaces(player)
+        interfaces.rebuild_interfaces(player)
     end
 end)
 
@@ -598,7 +526,7 @@ script.on_event(defines.events.on_player_removed, function(event)
 end)
 
 script.on_init(function ()
-
+    remote_events.handle_remote_events()
     globals.build_global_model()
 
     global.players = {}
@@ -617,10 +545,14 @@ script.on_configuration_changed(function (config_changed_data)
             ---@type TLLPlayerGlobal
             local player_global = global.players[player.index]
             if player_global.view.main_frame ~= nil then
-                toggle_interface(player)
+                interfaces.toggle_interface(player)
             else
                 player.opened = nil
             end
         end
     end
+end)
+
+script.on_load(function(_)
+    remote_events.handle_remote_events()
 end)
