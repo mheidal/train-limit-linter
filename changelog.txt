@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------
-Version: 1.0.29
-Date: 2024-05-07
+Version: 1.0.30
+Date: 2024-05-20
   Optimizations:
     - Improved performance by reducing number of queries to the API when building the table in the 
       Display tab.
@@ -9,6 +9,12 @@ Date: 2024-05-07
     - Compatibility with Cybersyn.
     - Trains belonging to either LTN or Cybersyn will not be displayed in the Display tab. This
       should improve performance when using Train Limit Linter on a map with many of these trains.
+---------------------------------------------------------------------------------------------------
+Version: 1.0.29
+Date: 2024-05-20
+  Optimizations:
+    - Reduced lag when trains traverse space elevators in Space Exploration. The gui will not
+      automatically refresh when a train is traversing the space elevator.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.28
 Date: 2024-05-06
@@ -32,7 +38,7 @@ Date: 2023-11-27
   Bugfixes:
     - Fixed error where trains were counted as belonging to a group when they had no locomotive.
     - Fixed crash when a schedule had too many stops.
-    - Fixed crash when too schedules were sorted into a group by exclusion.
+    - Fixed crash when too many schedules were sorted into a group by exclusion.
     - Fixed double counting of train stop limits if a train visits the same stop more than once.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.25

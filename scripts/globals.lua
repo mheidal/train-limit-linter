@@ -20,6 +20,8 @@ local TLLLTNTrainStopsList = require("models.ltn_stops_list")
 ---@field fuel_category_data TLLFuelCategoryData
 ---@field train_list TLLTrainList
 ---@field ltn_stops_list TLLLTNTrainStopsList
+---@field space_exploration_trains_teleporting_count number
+---@field delay_rebuilding_interface boolean
 
 ---@class TLLPlayerGlobal
 ---@field model TLLPlayerModel
@@ -104,6 +106,8 @@ function Exports.build_global_model()
         fuel_category_data = fuel_category_data.get_fuel_category_data(),
         ltn_stops_list = TLLLTNTrainStopsList.new(),
         train_list = TLLTrainList.new(),
+        space_exploration_trains_teleporting_count = 0,
+        delay_rebuilding_interface = false,
     }
     global.model.ltn_stops_list:initialize()
     global.model.train_list:initialize()
