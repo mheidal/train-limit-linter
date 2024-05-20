@@ -551,8 +551,6 @@ script.on_event(defines.events.on_train_schedule_changed, function (event)
     end
 end)
 
----@todo handlers for creation and destruction of LTN stops
-
 ---@param event EventData.on_built_entity | EventData.on_robot_built_entity | EventData.on_entity_cloned | EventData.script_raised_built | EventData.script_raised_revive
 local function handle_build(event)
     local entity = event.entity or event.created_entity
@@ -564,7 +562,11 @@ local function handle_build(event)
 end
 
 for _, event in pairs({ "on_built_entity", "on_robot_built_entity", "on_entity_cloned", "script_raised_built", "script_raised_revive" }) do
-    script.on_event(defines.events[event], handle_build, { {filter="name", name="logistic-train-stop"}, {filter="name", name="ltn-port"} }) ---@diagnostic disable-line
+    script.on_event(
+        defines.events[event],
+        handle_build,
+        { {filter="name", name="logistic-train-stop"}, {filter="name", name="ltn-port"} }
+    )
 end
 
 script.on_event(defines.events.on_entity_destroyed, function (event)

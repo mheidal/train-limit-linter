@@ -1,3 +1,6 @@
+-- A list of all LTN train stops. Used to determine if a train belongs to LTN. Updated when LTN train stops are created and destroyed,
+-- and validated periodically.
+
 local constants = require("constants")
 
 ---@alias backer_name string
@@ -13,6 +16,8 @@ local function ltn_stop_is_valid_for_tracking(train_stop)
     ) -- hi
 end
 
+-- I need to go to jail for naming crimes
+-- Train Limit Linter Logistic Train Network Train Stops List
 ---@class TLLLTNTrainStopsList
 ---@field train_stops {[backer_name]: {count: number, entities: {[unit_number]: LuaEntity}}}
 local TLLLTNTrainStopsList = {}
