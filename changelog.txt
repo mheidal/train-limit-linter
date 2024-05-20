@@ -1,9 +1,20 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.30
+Date: 2024-05-20
+  Optimizations:
+    - Improved performance by reducing number of queries to the game's API when building the table
+      in the Display tab.
+  Modding:
+    - Compatibility with Logistic Train Network.
+    - Compatibility with Cybersyn.
+    - Trains belonging to either LTN or Cybersyn will not be displayed in the Display tab. This
+      should improve performance when using Train Limit Linter on a map with many of these trains.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.29
 Date: 2024-05-20
   Optimizations:
     - Reduced lag when trains traverse space elevators in Space Exploration. The gui will not
-      automatically refresh when a train is traversing the space elevator.
+      automatically refresh while a train is traversing the space elevator.
 ---------------------------------------------------------------------------------------------------
 Version: 1.0.28
 Date: 2024-05-06

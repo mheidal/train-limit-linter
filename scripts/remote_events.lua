@@ -30,10 +30,16 @@ end
 
 function TLLRemoteEvents.handle_remote_events()
     local remote_events = {}
-    if remote.interfaces["space-exploration"] then
-        remote_events.get_on_train_teleport_started_event = remote.call("space-exploration", "get_on_train_teleport_started_event", {})
+    local se = constants.supported_interfaces.space_exploration
+    -- lots of diabled diagnostics because FMTK doesn't trust that se is a valid remote interface
+    if remote.interfaces[se] then
+        ---@diagnostic disable-next-line: missing-fields
+        remote_events.get_on_train_teleport_started_event = remote.call(se, "get_on_train_teleport_started_event", {})
+        ---@diagnostic disable-next-line: param-type-mismatch
         script.on_event(remote_events.get_on_train_teleport_started_event, train_teleport_start_handler)
-        remote_events.get_on_train_teleport_finished_event = remote.call("space-exploration", "get_on_train_teleport_finished_event", {})
+        ---@diagnostic disable-next-line: missing-fields
+        remote_events.get_on_train_teleport_finished_event = remote.call(se, "get_on_train_teleport_finished_event", {})
+        ---@diagnostic disable-next-line: param-type-mismatch
         script.on_event(remote_events.get_on_train_teleport_finished_event, train_teleport_finish_handler)
     end
 end

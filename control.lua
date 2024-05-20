@@ -233,9 +233,7 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
     if event.element.tags.action then
         local action = event.element.tags.action
         if event.element.type == "checkbox" then
-            if false then
-
-            elseif action == constants.actions.toggle_keyword then
+            if action == constants.actions.toggle_keyword then
                 local keyword = event.element.tags.keyword
                 if type(keyword) ~= "string" then return end
                 local keywords_name = event.element.tags.keywords
@@ -502,6 +500,19 @@ script.on_event(defines.events.on_gui_location_changed, function(event)
 end)
 
 script.on_event(defines.events.on_train_created, function (event)
+    ---@type TLLTrainList
+    local train_list = global.model.train_list
+
+    if event.old_train_id_1 then
+        train_list:remove_by_id(event.old_train_id_1)
+    end
+
+    if event.old_train_id_2 then
+        train_list:remove_by_id(event.old_train_id_2)
+    end
+
+    train_list:add(event.train)
+
     if not global.model.delay_rebuilding_interface then
         for _, player in pairs(game.players) do
             interfaces.rebuild_interfaces(player)
@@ -509,10 +520,59 @@ script.on_event(defines.events.on_train_created, function (event)
     end
 end)
 
+script.on_nth_tick(120, function (_)
+    local any_trains_removed = global.model.train_list:validate()
+    if any_trains_removed then
+        for _, player in pairs(game.players) do
+            interfaces.rebuild_interfaces(player)
+        end
+    end
+end)
+
+script.on_nth_tick(1800, function(_)
+    ---@type TLLLTNTrainStopsList
+    local ltn_stops_list = global.model.ltn_stops_list
+    ltn_stops_list:validate()
+end)
+
+script.on_event(defines.events.on_entity_renamed, function (event)
+    local entity = event.entity
+    if entity.name == "logistic-train-stop" or entity.name == "ltn-port" then
+        ---@type TLLLTNTrainStopsList
+        local ltn_stops_list = global.model.ltn_stops_list
+        ltn_stops_list:remove_by_backer_name_and_unit_number(event.old_name, entity.unit_number)
+        ltn_stops_list:add(entity)
+    end
+end)
+
 script.on_event(defines.events.on_train_schedule_changed, function (event)
     for _, player in pairs(game.players) do
         interfaces.rebuild_interfaces(player)
     end
+end)
+
+---@param event EventData.on_built_entity | EventData.on_robot_built_entity | EventData.on_entity_cloned | EventData.script_raised_built | EventData.script_raised_revive
+local function handle_build(event)
+    local entity = event.entity or event.created_entity
+    if not entity then return end
+
+    ---@type TLLLTNTrainStopsList
+    local ltn_stops_list = global.model.ltn_stops_list
+    ltn_stops_list:add(entity)
+end
+
+for _, event in pairs({ "on_built_entity", "on_robot_built_entity", "on_entity_cloned", "script_raised_built", "script_raised_revive" }) do
+    script.on_event(
+        defines.events[event],
+        handle_build,
+        { {filter="name", name="logistic-train-stop"}, {filter="name", name="ltn-port"} }
+    )
+end
+
+script.on_event(defines.events.on_entity_destroyed, function (event)
+    ---@type TLLLTNTrainStopsList
+    local ltn_stops_list = global.model.ltn_stops_list
+    ltn_stops_list:remove_by_unit_number(event.unit_number)
 end)
 
 script.on_event(defines.events.on_player_created, function(event)
