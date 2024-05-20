@@ -30,10 +30,11 @@ end
 
 function TLLRemoteEvents.handle_remote_events()
     local remote_events = {}
-    if remote.interfaces["space-exploration"] then
-        remote_events.get_on_train_teleport_started_event = remote.call("space-exploration", "get_on_train_teleport_started_event", {})
+    local se = constants.supported_interfaces.space_exploration
+    if remote.interfaces[se] then
+        remote_events.get_on_train_teleport_started_event = remote.call(se, "get_on_train_teleport_started_event", {})
         script.on_event(remote_events.get_on_train_teleport_started_event, train_teleport_start_handler)
-        remote_events.get_on_train_teleport_finished_event = remote.call("space-exploration", "get_on_train_teleport_finished_event", {})
+        remote_events.get_on_train_teleport_finished_event = remote.call(se, "get_on_train_teleport_finished_event", {})
         script.on_event(remote_events.get_on_train_teleport_finished_event, train_teleport_finish_handler)
     end
 end

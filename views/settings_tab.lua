@@ -246,7 +246,7 @@ function Exports.build_settings_tab(player)
         local other_mods_config = player_global.model.other_mods_configuration
         local number_of_mods_shown = 0
 
-        if remote.interfaces["TrainGroups"] then
+        if remote.interfaces[constants.supported_interfaces.train_groups] then
             number_of_mods_shown = number_of_mods_shown + 1
             if number_of_mods_shown >= 2 then
                 other_mods_content_flow.add{type="line"}
