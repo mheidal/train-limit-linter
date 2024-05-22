@@ -13,7 +13,8 @@ Exports = {}
 function Exports.build_interface(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
-    if not player_global.model.main_interface_open then return end
+    local gui_config = player_global.model.gui_configuration
+    if not gui_config.main_interface_open then return end
 
     local tabbed_pane_name = "main_frame_tabbed_pane"
     local tabbed_pane_frame_name = "tabbed_pane_frame_name"
@@ -23,14 +24,14 @@ function Exports.build_interface(player)
         main_frame = screen_element.add{type="frame", name="tll_main_frame", direction="vertical"}
         main_frame.style.size = constants.style_data.main_frame_size
 
-        if not player_global.model.last_gui_location then
+        if not gui_config.last_gui_location then
             main_frame.auto_center = true
         else
-            main_frame.location = player_global.model.last_gui_location
+            main_frame.location = gui_config.last_gui_location
         end
 
-        if not player_global.model.main_interface_selected_tab then
-            player_global.model.main_interface_selected_tab = 1
+        if not gui_config.main_interface_selected_tab then
+            gui_config.main_interface_selected_tab = 1
         end
 
         player_global.view.main_frame = main_frame
@@ -83,25 +84,25 @@ function Exports.build_interface(player)
     -- tabs
     local tab_index = 1
 
-    if player_global.model.main_interface_selected_tab == tab_index then
+    if gui_config.main_interface_selected_tab == tab_index then
         tabbed_pane.selected_tab_index = tab_index
         display_tab_view.build_display_tab(player)
     end
     tab_index = tab_index + 1
 
-    if player_global.model.main_interface_selected_tab == tab_index then
+    if gui_config.main_interface_selected_tab == tab_index then
         tabbed_pane.selected_tab_index = tab_index
         keyword_tabs_view.build_exclude_tab(player)
     end
     tab_index = tab_index + 1
 
-    if player_global.model.main_interface_selected_tab == tab_index then
+    if gui_config.main_interface_selected_tab == tab_index then
         tabbed_pane.selected_tab_index = tab_index
         keyword_tabs_view.build_hide_tab(player)
     end
     tab_index = tab_index + 1
 
-    if player_global.model.main_interface_selected_tab == tab_index then
+    if gui_config.main_interface_selected_tab == tab_index then
         tabbed_pane.selected_tab_index = tab_index
         settings_tab_view.build_settings_tab(player)
     end
