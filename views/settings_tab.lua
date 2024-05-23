@@ -12,15 +12,17 @@ Exports = {}
 function Exports.build_settings_tab(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+    local gui_config = player_global.model.gui_configuration
+
+    local element_names = constants.gui_element_names.settings_tab
+
     local settings_content_frame = player_global.view.settings_content_frame
     if not settings_content_frame then return end
 
-    local scroll_pane_name = "scroll_pane_name"
-
-    local scroll_pane = settings_content_frame[scroll_pane_name] or settings_content_frame.add{
+    local scroll_pane = settings_content_frame[element_names.scroll_pane] or settings_content_frame.add{
         type="scroll-pane",
         direction="vertical",
-        name=scroll_pane_name,
+        name=element_names.scroll_pane,
         style="tll_content_scroll_pane",
         vertical_scroll_policy="auto-and-reserve-space",
     }
@@ -30,17 +32,16 @@ function Exports.build_settings_tab(player)
     do
         local blueprint_config = player_global.model.blueprint_configuration
 
-        local blueprint_collapsible_frame_name = "blueprint_collapsible_frame_name"
-        local blueprint_collapsible_frame = scroll_pane[blueprint_collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+        local blueprint_collapsible_frame = scroll_pane[element_names.blueprint_collapsible_frame] or collapsible_frame.build_collapsible_frame(
             scroll_pane,
-            blueprint_collapsible_frame_name
+            element_names.blueprint_collapsible_frame
         )
         local blueprint_content_flow = collapsible_frame.build_collapsible_frame_contents(
             blueprint_collapsible_frame,
             constants.actions.toggle_blueprint_settings_visible,
             {"tll.blueprint_settings"},
             {"tll.blueprint_settings_tooltip"},
-            player_global.model.collapsible_frame_configuration.blueprint_settings_visible
+            gui_config.collapsible_frame_configuration.blueprint_settings_visible
         )
 
         blueprint_orientation_selector.build_blueprint_orientation_selector(blueprint_config.new_blueprint_orientation, blueprint_content_flow)
@@ -87,17 +88,16 @@ function Exports.build_settings_tab(player)
     -- fuel settings
 
     do
-        local fuel_collapsible_frame_name = "fuel_collapsible_frame_name"
-        local fuel_collapsible_frame = scroll_pane[fuel_collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+        local fuel_collapsible_frame = scroll_pane[element_names.fuel_collapsible_frame] or collapsible_frame.build_collapsible_frame(
             scroll_pane,
-            fuel_collapsible_frame_name
+            element_names.fuel_collapsible_frame
         )
         local fuel_content_flow = collapsible_frame.build_collapsible_frame_contents(
             fuel_collapsible_frame,
             constants.actions.toggle_fuel_settings_visible,
             {"tll.fuel_settings"},
             {"tll.fuel_settings_tooltip"},
-            player_global.model.collapsible_frame_configuration.fuel_settings_visible
+            gui_config.collapsible_frame_configuration.fuel_settings_visible
         )
 
         local fuel_config = player_global.model.fuel_configuration
@@ -211,17 +211,16 @@ function Exports.build_settings_tab(player)
 
     -- general settings
     do
-        local general_collapsible_frame_name = "general_collapsible_frame_name"
-        local general_collapsible_frame = scroll_pane[general_collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+        local general_collapsible_frame = scroll_pane[element_names.general_collapsible_frame] or collapsible_frame.build_collapsible_frame(
             scroll_pane,
-            general_collapsible_frame_name
+            element_names.general_collapsible_frame
         )
         local general_content_flow = collapsible_frame.build_collapsible_frame_contents(
             general_collapsible_frame,
             constants.actions.toggle_general_settings_visible,
             {"tll.general_settings"},
             {"tll.general_settings"},
-            player_global.model.collapsible_frame_configuration.general_settings_visible
+            gui_config.collapsible_frame_configuration.general_settings_visible
         )
         local general_config = player_global.model.general_configuration
 
@@ -231,17 +230,16 @@ function Exports.build_settings_tab(player)
 
     -- other mods settings
     do
-        local other_mods_collapsible_frame_name = "other_mods_collapsible_frame_name"
-        local other_mods_collapsible_frame = scroll_pane[other_mods_collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+        local other_mods_collapsible_frame = scroll_pane[element_names.other_mods_collapsible_frame] or collapsible_frame.build_collapsible_frame(
             scroll_pane,
-            other_mods_collapsible_frame_name
+            element_names.other_mods_collapsible_frame
         )
         local other_mods_content_flow = collapsible_frame.build_collapsible_frame_contents(
             other_mods_collapsible_frame,
             constants.actions.toggle_other_mods_settings_visible,
             {"tll.other_mod_settings"},
             nil,
-            player_global.model.collapsible_frame_configuration.other_mods_settings_visible
+            gui_config.collapsible_frame_configuration.other_mods_settings_visible
         )
         local other_mods_config = player_global.model.other_mods_configuration
         local number_of_mods_shown = 0

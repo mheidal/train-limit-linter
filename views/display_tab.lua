@@ -332,22 +332,25 @@ end
 function Exports.build_display_tab(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+    local gui_config = player_global.model.gui_configuration
+
+    local element_names = constants.gui_element_names.display
+
     local display_content_frame = player_global.view.display_content_frame
     if not display_content_frame then return end
 
     local table_config = player_global.model.schedule_table_configuration
 
-    local collapsible_frame_name = "display_collapsible_frame"
-    local display_settings_collapsible_frame = display_content_frame[collapsible_frame_name] or collapsible_frame.build_collapsible_frame(
+    local display_settings_collapsible_frame = display_content_frame[element_names.collapsible_frame] or collapsible_frame.build_collapsible_frame(
         display_content_frame,
-        collapsible_frame_name
+        element_names.collapsible_frame
     )
     local collapsible_frame_content_flow = collapsible_frame.build_collapsible_frame_contents(
         display_settings_collapsible_frame,
         constants.actions.toggle_display_settings_visible,
         {"tll.display_settings"},
         nil,
-        player_global.model.collapsible_frame_configuration.display_settings_visible
+        gui_config.collapsible_frame_configuration.display_settings_visible
     )
 
     local controls_flow = collapsible_frame_content_flow.add{
@@ -368,12 +371,9 @@ function Exports.build_display_tab(player)
     add_checkbox(constants.actions.toggle_show_train_limits_separately, {"tll.show_train_limits_separately"}, nil, table_config.show_train_limits_separately)
     add_checkbox(constants.actions.toggle_opinionation, {"tll.toggle_opinionation"}, {"tll.toggle_opinionation_tooltip"}, table_config.opinionate)
 
-
-    local report_frame_name = "report_frame_name"
-
-    local report_frame = display_content_frame[report_frame_name] or display_content_frame.add{
+    local report_frame = display_content_frame[element_names.report_frame] or display_content_frame.add{
         type="scroll-pane",
-        name="report_frame_name",
+        name=element_names.report_frame,
         direction="vertical",
         style="tll_content_scroll_pane",
         vertical_scroll_policy="auto-and-reserve-space"

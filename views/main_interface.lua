@@ -13,11 +13,11 @@ Exports = {}
 function Exports.build_interface(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+
+    local element_names = constants.gui_element_names.main_interface
+
     local gui_config = player_global.model.gui_configuration
     if not gui_config.main_interface_open then return end
-
-    local tabbed_pane_name = "main_frame_tabbed_pane"
-    local tabbed_pane_frame_name = "tabbed_pane_frame_name"
 
     if not player_global.view.main_frame then
         local screen_element = player.gui.screen
@@ -47,9 +47,9 @@ function Exports.build_interface(player)
         titlebar_flow.add{type="label", style="frame_title", caption={"tll.main_frame_header"}}
         titlebar_flow.add{type="empty-widget", style="flib_titlebar_drag_handle", ignored_by_interaction=true}
         titlebar_flow.add{type="sprite-button", tags={action=constants.actions.close_window}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
-        
-        local tab_pane_frame = main_frame.add{type="frame", style="inside_deep_frame_for_tabs", name="tabbed_pane_frame_name"}
-        local tabbed_pane = tab_pane_frame.add{type="tabbed-pane", style="tabbed_pane_with_no_side_padding", name="main_frame_tabbed_pane"}
+
+        local tab_pane_frame = main_frame.add{type="frame", style="inside_deep_frame_for_tabs", name=element_names.tabbed_pane_frame}
+        local tabbed_pane = tab_pane_frame.add{type="tabbed-pane", style="tabbed_pane_with_no_side_padding", name=element_names.tabbed_pane}
 
         -- display tab
         local display_tab = tabbed_pane.add{type="tab", caption={"tll.display_tab"}, tags={action=constants.actions.main_interface_switch_tab, tab_index=1}}
@@ -79,7 +79,7 @@ function Exports.build_interface(player)
 
     local main_frame = player_global.view.main_frame
     if not main_frame then return end
-    local tabbed_pane = main_frame[tabbed_pane_frame_name][tabbed_pane_name]
+    local tabbed_pane = main_frame[element_names.tabbed_pane_frame][element_names.tabbed_pane]
 
     -- tabs
     local tab_index = 1

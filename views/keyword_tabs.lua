@@ -17,26 +17,27 @@ local function build_keyword_tab(
     keyword_list,
     keyword_list_name
 )
-    local control_label_name = "keyword_tab_control_label"
-    if not parent[control_label_name] then parent.add{type="label", name=control_label_name, caption=label_caption, tooltip=label_tooltip} end
 
-    local control_flow_name = "keyword_tab_control_flow"
-    local control_flow = parent[control_flow_name] or parent.add{
+    local element_names = constants.gui_element_names.keyword_tabs
+
+    if not parent[element_names.control_label] then parent.add{type="label", name=element_names.control_label, caption=label_caption, tooltip=label_tooltip} end
+
+
+    local control_flow = parent[element_names.control_flow] or parent.add{
         type="flow",
-        name=control_flow_name,
+        name=element_names.control_flow,
         direction="horizontal",
         style="tll_horizontal_controls_flow"
     }
     control_flow.style.bottom_margin = 5
 
-    local textfield_flow_name = "keyword_tab_textfield_flow"
     local textfield_flow
-    if control_flow[textfield_flow_name] then
-        textfield_flow = control_flow[textfield_flow_name]
+    if control_flow[element_names.textfield_flow] then
+        textfield_flow = control_flow[element_names.textfield_flow]
     else
         textfield_flow = control_flow.add{
             type="flow",
-            name=textfield_flow_name,
+            name=element_names.textfield_flow,
             direction="horizontal"
         }
         icon_selector_textfield.build_icon_selector_textfield(textfield_flow, {
@@ -55,10 +56,9 @@ local function build_keyword_tab(
         }
     end
 
-    local button_flow_name = "keyword_tab_button_flow"
-    local button_flow = control_flow[button_flow_name] or control_flow.add{
+    local button_flow = control_flow[element_names.button_flow] or control_flow.add{
         type="flow",
-        name=button_flow_name,
+        name=element_names.button_flow,
         direction="horizontal"
     }
     button_flow.clear()
@@ -117,11 +117,10 @@ local function build_keyword_tab(
         spacer.style.width = 28
     end
 
-    local scroll_pane_name = "scroll_pane_name"
-    local keyword_table_scroll_pane = parent[scroll_pane_name] or parent.add{
+    local keyword_table_scroll_pane = parent[element_names.scroll_pane] or parent.add{
             type="scroll-pane",
             direction="vertical",
-            name=scroll_pane_name,
+            name=element_names.scroll_pane,
             style="tll_content_scroll_pane"
         }
     keyword_table_scroll_pane.clear()
@@ -179,7 +178,7 @@ local function build_keyword_tab(
         no_keywords_label.visible = false
     end
 
-    return textfield_flow[icon_selector_textfield.textfield_name]
+    return textfield_flow[constants.gui_element_names.icon_selector_textfield.textfield]
 
 end
 

@@ -112,7 +112,7 @@ script.on_event(defines.events.on_gui_click, function (event)
 
             player_global.model.gui_configuration.modal_function_configuration:set_modal_content_function(modal_function)
             ---@diagnostic disable-next-line vscode is angry about the type of "args"
-            player_global.model.modal_function_configuration:set_modal_content_args(args)
+            player_global.model.gui_configuration.modal_function_configuration:set_modal_content_args(args)
             interfaces.toggle_modal(player)
 
         elseif action == constants.actions.close_modal then
@@ -161,23 +161,23 @@ script.on_event(defines.events.on_gui_click, function (event)
             interfaces.rebuild_interfaces(player)
 
         elseif action == constants.actions.toggle_display_settings_visible then
-            player_global.model.collapsible_frame_configuration:toggle_display_settings_visible()
+            player_global.model.gui_configuration.collapsible_frame_configuration:toggle_display_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
         elseif action == constants.actions.toggle_blueprint_settings_visible then
-            player_global.model.collapsible_frame_configuration:toggle_blueprint_settings_visible()
+            player_global.model.gui_configuration.collapsible_frame_configuration:toggle_blueprint_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
         elseif action == constants.actions.toggle_fuel_settings_visible then
-            player_global.model.collapsible_frame_configuration:toggle_fuel_settings_visible()
+            player_global.model.gui_configuration.collapsible_frame_configuration:toggle_fuel_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
         elseif action == constants.actions.toggle_general_settings_visible then
-            player_global.model.collapsible_frame_configuration:toggle_general_settings_visible()
+            player_global.model.gui_configuration.collapsible_frame_configuration:toggle_general_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
         elseif action == constants.actions.toggle_other_mods_settings_visible then
-            player_global.model.collapsible_frame_configuration:toggle_other_mods_settings_visible()
+            player_global.model.gui_configuration.collapsible_frame_configuration:toggle_other_mods_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
         elseif action == constants.actions.remove_trains then

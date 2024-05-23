@@ -32,7 +32,6 @@ local TLLGuiConfiguration = require("models.gui_configuration")
 ---@field fuel_configuration TLLFuelConfiguration
 ---@field excluded_keywords TLLKeywordList
 ---@field hidden_keywords TLLKeywordList
----@field collapsible_frame_configuration TLLCollapsibleFrameConfiguration
 ---@field inventory_scratch_pad LuaInventory
 ---@field general_configuration TLLGeneralConfiguration
 ---@field trains_to_remove_list TLLTrainsToRemoveList

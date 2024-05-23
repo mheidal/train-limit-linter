@@ -21,36 +21,37 @@ function Exports.build_modal(player)
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+    local gui_config = player_global.model.gui_configuration
+    if not gui_config.modal_open then return end
 
-    if not player_global.model.modal_open then return end
-
-    local modal_main_frame_name = "tll_modal_main_frame"
+    local element_names = constants.gui_element_names.modal
 
     ---@type LuaGuiElement
-    local modal_main_frame = player.gui.screen[modal_main_frame_name] or player.gui.screen.add{type="frame", name=modal_main_frame_name, direction="vertical"}
+    local modal_main_frame = player.gui.screen[element_names.main_frame] or player.gui.screen.add{
+        type="frame",
+        name=element_names.main_frame,
+        direction="vertical"
+    }
     modal_main_frame.style.size = {0, 0}
     modal_main_frame.style.horizontally_squashable = true
     modal_main_frame.style.vertically_squashable = true
     modal_main_frame.style.horizontally_stretchable = true
     modal_main_frame.style.vertically_stretchable = true
 
-    if not player_global.model.last_modal_location then
+    if not gui_config.last_modal_location then
         modal_main_frame.auto_center = true
     else
-        modal_main_frame.location = player_global.model.last_modal_location
+        modal_main_frame.location = gui_config.last_modal_location
     end
-
 
     player_global.view.modal_main_frame = modal_main_frame
     player.opened = modal_main_frame
 
     -- titlebar
-    local titlebar_flow_name = "tll_titlebar_flow"
-
-    local titlebar_flow = modal_main_frame[titlebar_flow_name] or modal_main_frame.add{
+    local titlebar_flow = modal_main_frame[element_names.titlebar_flow] or modal_main_frame.add{
         type="flow",
         direction="horizontal",
-        name=titlebar_flow_name,
+        name=element_names.titlebar_flow,
         style="flib_titlebar_flow"
     }
     titlebar_flow.clear()
@@ -60,14 +61,13 @@ function Exports.build_modal(player)
     titlebar_flow.add{type="empty-widget", style="flib_titlebar_drag_handle", ignored_by_interaction=true}
     local close_button = titlebar_flow.add{type="sprite-button", tags={action=constants.actions.close_modal}, style="frame_action_button", sprite = "utility/close_white", tooltip={"tll.close"}}
 
-    local modal_function_name = player_global.model.modal_function_configuration:get_modal_content_function()
-    local modal_args = player_global.model.modal_function_configuration:get_modal_content_args()
+    local modal_function_name = gui_config.modal_function_configuration:get_modal_content_function()
+    local modal_args = gui_config.modal_function_configuration:get_modal_content_args()
 
-    local modal_content_frame_name = "modal_content_frame_name"
-    local modal_content_frame = modal_main_frame[modal_content_frame_name] or modal_main_frame.add{
+    local modal_content_frame = modal_main_frame[element_names.content_frame] or modal_main_frame.add{
         type="frame",
         direction="vertical",
-        name=modal_content_frame_name,
+        name=element_names.content_frame,
         style="inside_shallow_frame"
     }
 
