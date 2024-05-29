@@ -50,6 +50,8 @@ local TLLGuiConfiguration = require("models.gui_configuration")
 ---@field fuel_amount_flows table<string, LuaGuiElement> -- string is a fuel category (e.g. 'chemical')
 ---@field exclude_textfield LuaGuiElement?
 ---@field hide_textfield LuaGuiElement?
+---@field limit_train_stops_checkbox LuaGuiElement?
+---@field default_train_limit_slider_textfield LuaGuiElement?
 
 local Exports = {}
 
@@ -154,6 +156,27 @@ function Exports.get_keyword_textfield_from_name(player_global, keyword_list_nam
     elseif keyword_list_name == constants.keyword_lists.hide then return player_global.view.hide_textfield
     else error("No such keyword list")
     end
+end
+
+---@param player PlayerIdentification
+---@return TLLPlayerGlobal
+function Exports.get_player_global(player)
+    if type(player) == "number" then
+        return global.players[player]
+    elseif type(player) == "table" then
+        return global.players[player.index]
+    else
+        error("Unexpected player identification")
+    end
+end
+
+---@param player_index number
+---@return LuaPlayer, TLLPlayerGlobal
+function Exports.get_player_data(player_index)
+    player = game.get_player(player_index)
+    player_global = global.players[player_index]
+    if not player then return end
+    return player, player_global
 end
 
 return Exports

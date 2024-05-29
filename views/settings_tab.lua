@@ -1,4 +1,6 @@
 local constants = require("constants")
+local globals = require("scripts.globals")
+local gui = require("gui")
 local utils = require("utils")
 
 local collapsible_frame = require("views.collapsible_frame")
@@ -8,6 +10,38 @@ local slider_textfield = require("views.slider_textfield")
 local train_removal_buttons = require("views.train_removal_radio_buttons")
 
 Exports = {}
+
+local handlers = {}
+
+---@param event EventData.on_gui_checked_state_changed
+function handlers.toggle_include_train_stops(event)
+    pg = globals.get_player_global(event.player_index)
+    config = pg.model.blueprint_configuration
+    config:toggle_include_train_stops()
+    pg.view.limit_train_stops_checkbox.enabled = config.include_train_stops
+end
+
+---@param event EventData.on_gui_checked_state_changed
+function handlers.toggle_limit_train_stops(event)
+    pg = globals.get_player_global(event.player_index)
+    config = pg.model.blueprint_configuration
+    config:toggle_limit_train_stops()
+    pg.view.default_train_limit_slider_textfield.enabled = config.include_train_stops and config.limit_train_stops
+end
+
+function handlers.select_fuel(event)
+    local player_global = global.players[event.player_index]
+    local item_name = event.element.tags.item_name
+    local fuel_category = event.element.tags.fuel_category
+    if type(item_name) ~= "string" or type(fuel_category) ~= "string" then return end
+    local fuel_config = player_global.model.fuel_configuration.fuel_category_configurations[fuel_category]
+    if fuel_config:change_selected_fuel_and_check_overcap(item_name) then
+        local fuel_category_slider_textfield_flow = player_global.view.fuel_amount_flows[fuel_category]
+        local maximum_fuel_amount = fuel_config:get_fuel_stack_size() * global.model.fuel_category_data.maximum_fuel_slot_count
+        slider_textfield.update_slider_value(fuel_category_slider_textfield_flow, maximum_fuel_amount)
+    end
+    Exports.build_settings_tab(game.players[event.player_index])
+end
 
 function Exports.build_settings_tab(player)
     ---@type TLLPlayerGlobal
@@ -50,31 +84,48 @@ function Exports.build_settings_tab(player)
 
         blueprint_snap_selection.build_blueprint_snap_selector(player, blueprint_content_flow)
 
-        blueprint_content_flow.add{type="line"}
+        elems = gui.lib.add(
+            blueprint_content_flow,
+            {
+                {type="line"},
+                {
+                    type="checkbox",
+                    state=blueprint_config.include_train_stops,
+                    caption={"tll.include_train_stops"},
+                    tooltip={"tll.include_train_stops_tooltip"},
+                    handler={[gui.e.on_gui_checked_state_changed]=handlers.toggle_include_train_stops}
+                },
+                {
+                    type="checkbox",
+                    name=element_names.limit_train_stops_checkbox,
+                    state=blueprint_config.limit_train_stops,
+                    enabled=blueprint_config.include_train_stops,
+                    caption={"tll.limit_train_stops"},
+                    handler={[gui.e.on_gui_checked_state_changed]=handlers.toggle_limit_train_stops}
+                },
+                {
+                    type="table",
+                    column_count=2,
+                    name=element_names.include_train_stops_table,
+                    children={
+                        {
+                            type="label",
+                            caption={"tll.set_default_train_limit"},
+                            style_mods={
+                                single_line=false,
+                                width=180,
+                            }
+                        }
+                    }
+                }
+            }
+        )
 
-        blueprint_content_flow.add{
-            type="checkbox",
-            tags={action=constants.actions.toggle_include_train_stops},
-            state=blueprint_config.include_train_stops,
-            caption={"tll.include_train_stops"},
-            tooltip={"tll.include_train_stops_tooltip"}
-        }
+        player_global.view.limit_train_stops_checkbox = elems[element_names.limit_train_stops_checkbox]
 
-        blueprint_content_flow.add{
-            type="checkbox",
-            tags={action=constants.actions.toggle_limit_train_stops},
-            state=blueprint_config.limit_train_stops,
-            enabled=blueprint_config.include_train_stops,
-            caption={"tll.limit_train_stops"},
-        }
-
-        local default_train_limit_table = blueprint_content_flow.add{type="table", column_count=2}
-        local default_train_limit_label = default_train_limit_table.add{type="label", caption="Set default train limit"}
-        default_train_limit_label.style.single_line = false
-        default_train_limit_label.style.width = 180
-
-        slider_textfield.add_slider_textfield(
-            default_train_limit_table,
+        ---@todo
+        player_global.view.default_train_limit_slider_textfield = slider_textfield.add_slider_textfield(
+            elems[element_names.include_train_stops_table],
             {action=constants.actions.set_default_train_limit},
             blueprint_config.default_train_limit,
             1,
@@ -191,18 +242,19 @@ function Exports.build_settings_tab(player)
                 }
 
                 local button_style = (fuel == fuel_category_config.selected_fuel) and "yellow_slot_button" or "recipe_slot_button"
-                fuel_button_table.add{
+                gui.lib.add(fuel_button_table, {
                     type="sprite-button",
                     sprite=("item/" .. fuel),
                     tags={
-                        action=constants.actions.select_fuel,
                         item_name=fuel,
                         fuel_category=fuel_category
                     },
                     style=button_style,
                     enabled=fuel_config.add_fuel,
-                    tooltip=tooltip
-                }
+                    tooltip=tooltip,
+                    handler={[gui.e.on_gui_click]=handlers.select_fuel}
+
+                })
             end
             ::fuel_category_continue::
         end
@@ -268,5 +320,7 @@ function Exports.build_settings_tab(player)
     end
 
 end
+
+gui.lib.add_handlers(handlers)
 
 return Exports

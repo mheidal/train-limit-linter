@@ -127,6 +127,9 @@ constants.gui_element_names = {
     },
     settings_tab = {
         blueprint_collapsible_frame="blueprint_collapsible_frame",
+        include_train_stops_table="include_train_stops_table",
+        limit_train_stops_checkbox="limit_train_stops_checkbox",
+        default_train_limit_slider_textfield="default_train_limit_slider_textfield",
         scroll_pane="scroll_pane",
         fuel_collapsible_frame="fuel_collapsible_frame",
         general_collapsible_frame="general_collapsible_frame",
@@ -135,6 +138,10 @@ constants.gui_element_names = {
     main_interface = {
         tabbed_pane="main_frame_tabbed_pane",
         tabbed_pane_frame="main_frame_tabbed_pane_frame",
+        display_tab_content_frame="display_tab_content_frame",
+        exclude_tab_content_frame = "exclude_tab_content_frame",
+        hide_tab_content_frame = "hide_tab_content_frame",
+        settings_tab_content_frame = "settings_tab_content_frame",
     },
     modal = {
         main_frame="modal_main_frame",

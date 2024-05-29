@@ -1,11 +1,29 @@
 local constants = require("constants")
 local utils = require("utils")
 
+local globals = require("scripts.globals")
+local blueprint_creation_scripts = require("scripts.blueprint_creation")
 local schedule_report_table_scripts = require("scripts.schedule_report_table")
 
 local collapsible_frame = require("views.collapsible_frame")
 
 local Exports = {}
+
+local gui = require("gui")
+
+---@param event EventData.on_gui_click
+function gui.handlers.create_blueprint(event)
+    local p = game.get_player(event.player_index)
+    if not p then return end
+    local pg = globals.get_player_global(p)
+
+    blueprint_creation_scripts.schedule_report_table_create_blueprint(event, p, pg)
+    local parked_trains = event.element.tags.parked_train_positions
+    if not parked_trains or type(parked_trains) ~= "table" then return end
+    for _, parked_train in pairs(parked_trains) do
+        p.print{"tll.train_parked_at_stop", parked_train.train_stop, parked_train.position.x, parked_train.position.y, event.element.tags.surface}
+    end
+end
 
 ---@param player LuaPlayer
 local function build_train_schedule_group_report(player)
@@ -281,7 +299,6 @@ local function build_train_schedule_group_report(player)
                         }
 
                         local copy_tags = {
-                            action=any_trains_with_no_schedule_parked and constants.actions.train_schedule_create_blueprint_and_ping_trains or constants.actions.train_schedule_create_blueprint,
                             template_train_ids=train_group.trains,
                             surface=surface,
                             parked_train_positions=any_trains_with_no_schedule_parked and parked_train_positions_and_train_stops or nil,
@@ -291,13 +308,14 @@ local function build_train_schedule_group_report(player)
 
                         local train_action_flow = schedule_report_table.add{type="flow", direction="horizontal"}
 
-                        train_action_flow.add{
+                        gui.lib.add(train_action_flow, {
                             type="sprite-button",
                             sprite=copy_sprite,
                             style="tool_button_blue",
                             tags=copy_tags,
                             tooltip=copy_tooltip,
-                        }
+                            handler={[gui.e.on_gui_click]=gui.handlers.create_blueprint}
+                        })
 
                         local remove_tags = {
                             action=constants.actions.open_modal,
@@ -327,6 +345,50 @@ local function build_train_schedule_group_report(player)
         no_schedules_label.style.horizontally_stretchable = true
         no_schedules_label.style.margin = 12
     end
+end
+
+
+---@param event EventData.on_gui_checked_state_changed
+---@param toggle_function fun(config: TLLScheduleTableConfiguration)
+local function handle_schedule_report_checkbox_click(event, toggle_function)
+    player, player_global = globals.get_player_data(event.player_index)
+    toggle_function(player_global.model.schedule_table_configuration)
+    build_train_schedule_group_report(player)
+end
+
+---@param event EventData.on_gui_checked_state_changed
+function gui.handlers.toggle_show_all_surfaces(event)
+    handle_schedule_report_checkbox_click(event, function (config) config:toggle_show_all_surfaces() end)
+end
+
+---@param event EventData.on_gui_checked_state_changed
+function gui.handlers.toggle_show_satisfied(event)
+    handle_schedule_report_checkbox_click(event, function (config) config:toggle_show_satisfied() end)
+end
+
+---@param event EventData.on_gui_checked_state_changed
+function gui.handlers.toggle_show_not_set(event)
+    handle_schedule_report_checkbox_click(event, function (config) config:toggle_show_not_set() end)
+end
+
+---@param event EventData.on_gui_checked_state_changed
+function gui.handlers.toggle_show_dynamic(event)
+    handle_schedule_report_checkbox_click(event, function (config) config:toggle_show_dynamic() end)
+end
+
+---@param event EventData.on_gui_checked_state_changed
+function gui.handlers.toggle_show_single_station_schedules(event)
+    handle_schedule_report_checkbox_click(event, function (config) config:toggle_show_single_station_schedules() end)
+end
+
+---@param event EventData.on_gui_checked_state_changed
+function gui.handlers.toggle_show_train_limits_separately(event)
+    handle_schedule_report_checkbox_click(event, function (config) config:toggle_show_train_limits_separately() end)
+end
+
+---@param event EventData.on_gui_checked_state_changed
+function gui.handlers.toggle_opinionation(event)
+    handle_schedule_report_checkbox_click(event, function (config) config:toggle_opinionate() end)
 end
 
 function Exports.build_display_tab(player)
@@ -359,27 +421,36 @@ function Exports.build_display_tab(player)
         style="tll_controls_flow",
     }
 
-    local function add_checkbox(action, caption, tooltip, state)
-        controls_flow.add{type="checkbox", tags={action=action}, caption=caption, tooltip=tooltip, state=state}
+    local function add_checkbox(handler, caption, tooltip, state)
+        gui.lib.add(controls_flow, {type="checkbox", caption=caption, tooltip=tooltip, state=state,
+            handler={[gui.e.on_gui_checked_state_changed]=handler}
+        })
     end
+    add_checkbox(gui.handlers.toggle_show_all_surfaces, {"tll.show_all_surfaces"}, nil, table_config.show_all_surfaces)
+    add_checkbox(gui.handlers.toggle_show_satisfied, {"tll.show_satisfied"}, nil, table_config.show_satisfied)
+    add_checkbox(gui.handlers.toggle_show_not_set, {"tll.show_not_set"}, nil, table_config.show_not_set)
+    add_checkbox(gui.handlers.toggle_show_dynamic, {"tll.show_dynamic"}, nil, table_config.show_dynamic)
+    add_checkbox(gui.handlers.toggle_show_single_station_schedules, {"tll.show_single_station_schedules"}, nil, table_config.show_single_station_schedules)
+    add_checkbox(gui.handlers.toggle_show_train_limits_separately, {"tll.show_train_limits_separately"}, nil, table_config.show_train_limits_separately)
+    add_checkbox(gui.handlers.toggle_opinionation, {"tll.toggle_opinionation"}, {"tll.toggle_opinionation_tooltip"}, table_config.opinionate)
 
-    add_checkbox(constants.actions.toggle_show_all_surfaces, {"tll.show_all_surfaces"}, nil, table_config.show_all_surfaces)
-    add_checkbox(constants.actions.toggle_show_satisfied, {"tll.show_satisfied"}, nil, table_config.show_satisfied)
-    add_checkbox(constants.actions.toggle_show_not_set, {"tll.show_not_set"}, nil, table_config.show_not_set)
-    add_checkbox(constants.actions.toggle_show_dynamic, {"tll.show_dynamic"}, nil, table_config.show_dynamic)
-    add_checkbox(constants.actions.toggle_show_single_station_schedules, {"tll.show_single_station_schedules"}, nil, table_config.show_single_station_schedules)
-    add_checkbox(constants.actions.toggle_show_train_limits_separately, {"tll.show_train_limits_separately"}, nil, table_config.show_train_limits_separately)
-    add_checkbox(constants.actions.toggle_opinionation, {"tll.toggle_opinionation"}, {"tll.toggle_opinionation_tooltip"}, table_config.opinionate)
-
-    local report_frame = display_content_frame[element_names.report_frame] or display_content_frame.add{
-        type="scroll-pane",
-        name=element_names.report_frame,
-        direction="vertical",
-        style="tll_content_scroll_pane",
-        vertical_scroll_policy="auto-and-reserve-space"
-    }
-    report_frame.style.top_margin = 12
-    report_frame.clear()
+    local report_frame = player_global.view.report_frame
+    if not report_frame then
+        local x = gui.lib.add(
+            display_content_frame,
+            {
+                type="scroll-pane",
+                name=element_names.report_frame,
+                direction="vertical",
+                style="tll_content_scroll_pane",
+                vertical_scroll_policy="auto-and-reserve-space",
+                style_mods={
+                    top_margin=12
+                }
+            }
+        )
+        report_frame = x[element_names.report_frame]
+    end
     player_global.view.report_frame = report_frame
     build_train_schedule_group_report(player)
 end
