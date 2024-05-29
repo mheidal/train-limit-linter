@@ -15,9 +15,10 @@ end
 function Interfaces.toggle_interface(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+    local gui_config = player_global.model.gui_configuration
     local main_frame = player_global.view.main_frame
     if main_frame == nil then
-        player_global.model.main_interface_open = true
+        gui_config.main_interface_open = true
         main_interface.build_interface(player)
         player.opened = player_global.view.main_frame
     else
@@ -25,8 +26,8 @@ function Interfaces.toggle_interface(player)
         if modal_main_frame then
             main_frame.ignored_by_interaction = true
         else
-            player_global.model.main_interface_open = false
-            player_global.model.main_interface_selected_tab = nil
+            gui_config.main_interface_open = false
+            gui_config.main_interface_selected_tab = nil
             main_frame.destroy()
             player_global.view = globals.get_empty_player_view()
         end
@@ -37,6 +38,7 @@ end
 function Interfaces.toggle_modal(player)
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+    local gui_config = player_global.model.gui_configuration
 
     local main_frame = player_global.view.main_frame
     local modal_main_frame = player_global.view.modal_main_frame
@@ -52,12 +54,12 @@ function Interfaces.toggle_modal(player)
             dimmer.location = main_frame.location
             player_global.view.main_frame_dimmer = dimmer
         end
-        player_global.model.modal_open = true
+        gui_config.modal_open = true
 
         modal.pre_build_cleanup(player)
         modal.build_modal(player)
     else
-        player_global.model.modal_open = false
+        gui_config.modal_open = false
         modal_main_frame.destroy()
         if player_global.view.main_frame_dimmer ~= nil then
             player_global.view.main_frame_dimmer.destroy()

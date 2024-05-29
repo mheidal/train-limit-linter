@@ -108,6 +108,45 @@ constants.remove_train_option_enums = {
 constants.gui_element_names = {
     train_removal_modal = {
         checkbox="train_removal_modal_checkbox"
+    },
+    icon_selector_textfield = {
+        textfield="icon_selector_textfield",
+        icon_selector_button="icon_selector_button",
+        enter_button="icon_selector_enter_button",
+    },
+    display = {
+        collapsible_frame="display_collapsible_frame",
+        report_frame="display_report_frame",
+    },
+    keyword_tabs = {
+        control_label="keyword_tab_control_label",
+        control_flow="keyword_tab_control_flow",
+        textfield_flow="keyword_tab_textfield_flow",
+        button_flow="keyword_tab_button_flow",
+        scroll_pane="keyword_tab_scroll_pane",
+    },
+    settings_tab = {
+        blueprint_collapsible_frame="blueprint_collapsible_frame",
+        scroll_pane="scroll_pane",
+        fuel_collapsible_frame="fuel_collapsible_frame",
+        general_collapsible_frame="general_collapsible_frame",
+        other_mods_collapsible_frame="other_mods_collapsible_frame",
+    },
+    main_interface = {
+        tabbed_pane="main_frame_tabbed_pane",
+        tabbed_pane_frame="main_frame_tabbed_pane_frame",
+    },
+    modal = {
+        main_frame="modal_main_frame",
+        titlebar_flow="titlebar_flow",
+        content_frame="content_frame"
+    },
+    remove_train_modal = {
+        modal="modal",
+        header_flow="header_flow",
+        scroll_pane_frame="scroll_pane_frame",
+        scroll_pane="scroll_pane",
+        footer_frame="footer_frame",
     }
 }
 

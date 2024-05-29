@@ -110,14 +110,14 @@ script.on_event(defines.events.on_gui_click, function (event)
             if type(modal_function) ~= "string" or not constants.modal_functions[modal_function] then return end
             if type(args) ~= "table" and args ~= nil then return end
 
-            player_global.model.modal_function_configuration:set_modal_content_function(modal_function)
+            player_global.model.gui_configuration.modal_function_configuration:set_modal_content_function(modal_function)
             ---@diagnostic disable-next-line vscode is angry about the type of "args"
-            player_global.model.modal_function_configuration:set_modal_content_args(args)
+            player_global.model.gui_configuration.modal_function_configuration:set_modal_content_args(args)
             interfaces.toggle_modal(player)
 
         elseif action == constants.actions.close_modal then
-            player_global.model.modal_function_configuration:clear_modal_content_function()
-            player_global.model.modal_function_configuration:clear_modal_content_args()
+            player_global.model.gui_configuration.modal_function_configuration:clear_modal_content_function()
+            player_global.model.gui_configuration.modal_function_configuration:clear_modal_content_args()
             interfaces.toggle_modal(player)
 
         elseif action == constants.actions.import_keywords_button then
@@ -157,27 +157,27 @@ script.on_event(defines.events.on_gui_click, function (event)
             local tab_index = event.element.tags.tab_index
             if not tab_index then return end
             if type(tab_index) ~= "number" then return end
-            player_global.model.main_interface_selected_tab = tab_index
+            player_global.model.gui_configuration.main_interface_selected_tab = tab_index
             interfaces.rebuild_interfaces(player)
 
         elseif action == constants.actions.toggle_display_settings_visible then
-            player_global.model.collapsible_frame_configuration:toggle_display_settings_visible()
+            player_global.model.gui_configuration.collapsible_frame_configuration:toggle_display_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
         elseif action == constants.actions.toggle_blueprint_settings_visible then
-            player_global.model.collapsible_frame_configuration:toggle_blueprint_settings_visible()
+            player_global.model.gui_configuration.collapsible_frame_configuration:toggle_blueprint_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
         elseif action == constants.actions.toggle_fuel_settings_visible then
-            player_global.model.collapsible_frame_configuration:toggle_fuel_settings_visible()
+            player_global.model.gui_configuration.collapsible_frame_configuration:toggle_fuel_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
         elseif action == constants.actions.toggle_general_settings_visible then
-            player_global.model.collapsible_frame_configuration:toggle_general_settings_visible()
+            player_global.model.gui_configuration.collapsible_frame_configuration:toggle_general_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
         elseif action == constants.actions.toggle_other_mods_settings_visible then
-            player_global.model.collapsible_frame_configuration:toggle_other_mods_settings_visible()
+            player_global.model.gui_configuration.collapsible_frame_configuration:toggle_other_mods_settings_visible()
             collapsible_frame.toggle_collapsible_frame_visible(event.element)
 
         elseif action == constants.actions.remove_trains then
@@ -216,8 +216,8 @@ script.on_event(defines.events.on_gui_click, function (event)
             local train = game.get_train_by_id(train_id)
             if not train or not train.valid or not train.front_stock then return end
 
-            if player_global.model.modal_open then interfaces.toggle_modal(player) end
-            if player_global.model.main_interface_open then interfaces.toggle_interface(player) end
+            if player_global.model.gui_configuration.modal_open then interfaces.toggle_modal(player) end
+            if player_global.model.gui_configuration.main_interface_open then interfaces.toggle_interface(player) end
             player.opened = train.front_stock
         end
     end
@@ -490,11 +490,12 @@ script.on_event(defines.events.on_gui_location_changed, function(event)
 
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
+    local gui_config = player_global.model.gui_configuration
 
-    if player_global.model.main_interface_open and player_global.view.main_frame == event.element then
-        player_global.model.last_gui_location = event.element.location
-    elseif player_global.model.modal_open and player_global.view.modal_main_frame == event.element then
-        player_global.model.last_modal_location = event.element.location
+    if gui_config.main_interface_open and player_global.view.main_frame == event.element then
+        gui_config.last_gui_location = event.element.location
+    elseif gui_config.modal_open and player_global.view.modal_main_frame == event.element then
+        gui_config.last_modal_location = event.element.location
     end
 
 end)
