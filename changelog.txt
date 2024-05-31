@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.32
+Date: 2024-05-30
+  Features:
+    - Added toggle in general settings to pretend that stations with dynamic limits have limits set
+      to 0.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.31
 Date: 2024-05-30
   Changes:

@@ -53,6 +53,7 @@ constants.actions = {
 
     toggle_opinionation="toggle_opinionation",
     change_remove_train_option="change_remove_train_option",
+    toggle_ignore_stations_with_dynamic_limits="toggle_ignore_stations_with_dynamic_limits",
     toggle_train_to_remove_checkbox="toggle_train_to_remove_checkbox",
     toggle_train_to_remove_button="toggle_train_to_remove_button",
     remove_trains="remove_trains",

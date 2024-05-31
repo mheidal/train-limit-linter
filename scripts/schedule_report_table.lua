@@ -183,10 +183,11 @@ local function get_rails_near_train_stop(train_stop)
     return rails
 end
 
+---@param player_global TLLPlayerGlobal
 ---@param train_group TrainGroup
 ---@param surface string
 ---@return ScheduleTableData: info about train stops
-function Exports.get_train_stop_data(train_group, surface, rails_under_trains_without_schedules)
+function Exports.get_train_stop_data(player_global, train_group, surface, rails_under_trains_without_schedules)
     ---@type ScheduleTableData
     local ret = {
         limit=0,
@@ -230,16 +231,16 @@ function Exports.get_train_stop_data(train_group, surface, rails_under_trains_wi
                     end
                 end
 
-                local control_behavior = train_stop.get_control_behavior()
-                ---@diagnostic disable-next-line not sure how to indicate to VS Code that this is LuaTrainStopControlBehavior
+                local control_behavior = train_stop.get_control_behavior() --[[@as LuaTrainStopControlBehavior?]]
                 if control_behavior and control_behavior.set_trains_limit then
                     train_stop_data.dynamic = true
                     ret.dynamic = true
                 end
+
                 if train_stop.trains_limit == constants.magic_numbers.train_limit_not_set then
                     train_stop_data.not_set = true
                     ret.not_set = true
-                else
+                elseif not ret.dynamic or not player_global.model.general_configuration.ignore_stations_with_dynamic_limits then
                     train_stop_data.limit = train_stop_data.limit + train_stop.trains_limit
                     ret.limit = ret.limit + train_stop.trains_limit
                 end
