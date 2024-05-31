@@ -70,9 +70,12 @@ local function get_equivalent_key(existing_train_groups, key)
     return equivalent_key
 end
 
+---@alias surface_name string
+---@alias filtered_key string
+
 ---@param excluded_keywords TLLKeywordList
 ---@param hidden_keywords TLLKeywordList
----@return table<string, table<string, TrainGroup>> {<surface name>: {<filtered key>: TrainGroup}}
+---@return {[surface_name]: {[filtered_key]: TrainGroup}}
 function Exports.get_surfaces_to_train_groups(excluded_keywords, hidden_keywords)
     ---@type table<string, TrainGroup>
     local surfaces_to_train_groups = {}

@@ -47,10 +47,15 @@ local function build_train_schedule_group_report(player)
     schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
     schedule_report_table.add{type="label", caption={"tll.actions_header"}}
 
+    local number_of_surfaces_with_trains = 0
+    for _, _ in pairs(surfaces_to_train_groups) do
+        number_of_surfaces_with_trains = number_of_surfaces_with_trains + 1
+    end
+
     for surface, surface_train_groups in pairs(surfaces_to_train_groups) do
 
         -- barrier for all train schedules for a surface
-        if table_config.show_all_surfaces or surface == player.surface.name then
+        if table_config.show_all_surfaces or surface == player.surface.name or number_of_surfaces_with_trains == 1 then
 
             table.sort(surface_train_groups, function(a, b)
                 return a.filtered_schedule.key < b.filtered_schedule.key
