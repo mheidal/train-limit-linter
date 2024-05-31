@@ -65,6 +65,7 @@ local function build_train_schedule_group_report(player)
             for _, train_group in pairs(surface_train_groups) do
                 ---@type ScheduleTableData
                 local schedule_report_data = schedule_report_table_scripts.get_train_stop_data(
+                    player_global,
                     train_group,
                     surface,
                     rails_under_trains_without_schedules

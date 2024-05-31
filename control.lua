@@ -299,6 +299,10 @@ script.on_event(defines.events.on_gui_checked_state_changed, function (event)
         elseif action == constants.actions.toggle_TrainGroups_copy_train_group then
             player_global.model.other_mods_configuration.TrainGroups_configuration:toggle_copy_train_group()
             interfaces.rebuild_interfaces(player)
+
+        elseif action == constants.actions.toggle_ignore_stations_with_dynamic_limits then
+            player_global.model.general_configuration:toggle_ignore_stations_with_dynamic_limits()
+            interfaces.rebuild_interfaces(player)
         end
 
     elseif event.element.type == "radiobutton" then

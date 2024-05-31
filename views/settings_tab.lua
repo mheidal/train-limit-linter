@@ -226,6 +226,15 @@ function Exports.build_settings_tab(player)
 
         local remove_train_options_flow = general_content_flow.add{type="flow", direction="vertical"}
         train_removal_buttons.add_train_removal_radio_buttons(remove_train_options_flow, general_config)
+
+        general_content_flow.add{type="line"}
+
+        general_content_flow.add{
+            type="checkbox",
+            tags={action=constants.actions.toggle_ignore_stations_with_dynamic_limits},
+            state=general_config.ignore_stations_with_dynamic_limits,
+            caption={"tll.ignore_stations_with_dynamic_limits"}
+        }
     end
 
     -- other mods settings
