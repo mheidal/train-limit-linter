@@ -363,7 +363,23 @@ function Exports.build_display_tab(player)
         controls_flow.add{type="checkbox", tags={action=action}, caption=caption, tooltip=tooltip, state=state}
     end
 
-    add_checkbox(constants.actions.toggle_show_all_surfaces, {"tll.show_all_surfaces"}, nil, table_config.show_all_surfaces)
+    do
+        number_of_surfaces_with_trains = 0
+        surfaces_with_trains = {}
+        for _, train_data in pairs(global.model.train_list.trains) do
+            local surface = train_data.train.front_stock.surface.name
+            if not surfaces_with_trains[surface] then
+                number_of_surfaces_with_trains = number_of_surfaces_with_trains + 1
+                surfaces_with_trains[surface] = true
+            end
+        end
+        if number_of_surfaces_with_trains > 1 then
+            add_checkbox(constants.actions.toggle_show_all_surfaces, {"tll.show_all_surfaces"}, nil, table_config.show_all_surfaces)
+        else
+            player_global.model.schedule_table_configuration:set_show_all_surfaces(false)
+        end
+    end
+
     add_checkbox(constants.actions.toggle_show_satisfied, {"tll.show_satisfied"}, nil, table_config.show_satisfied)
     add_checkbox(constants.actions.toggle_show_not_set, {"tll.show_not_set"}, nil, table_config.show_not_set)
     add_checkbox(constants.actions.toggle_show_dynamic, {"tll.show_dynamic"}, nil, table_config.show_dynamic)
