@@ -41,7 +41,7 @@ local function build_train_schedule_group_report(player)
     local schedule_header_flow = schedule_report_table.add{type="flow", direction="horizontal", style="tll_horizontal_stretch_squash_flow"}
     schedule_header_flow.add{type="label", caption={"tll.schedule_header"}}
     schedule_header_flow.add{type="empty-widget"}
-        schedule_header_flow.style.maximal_width = 300
+    schedule_header_flow.style.maximal_width = 300
 
     schedule_report_table.add{type="label", caption={"tll.train_count_header"}}
     schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
