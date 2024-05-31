@@ -47,10 +47,15 @@ local function build_train_schedule_group_report(player)
     schedule_report_table.add{type="label", caption={"tll.sum_of_limits_header"}}
     schedule_report_table.add{type="label", caption={"tll.actions_header"}}
 
+    local number_of_surfaces_with_trains = 0
+    for _, _ in pairs(surfaces_to_train_groups) do
+        number_of_surfaces_with_trains = number_of_surfaces_with_trains + 1
+    end
+
     for surface, surface_train_groups in pairs(surfaces_to_train_groups) do
 
         -- barrier for all train schedules for a surface
-        if table_config.show_all_surfaces or surface == player.surface.name then
+        if table_config.show_all_surfaces or surface == player.surface.name or number_of_surfaces_with_trains == 1 then
 
             table.sort(surface_train_groups, function(a, b)
                 return a.filtered_schedule.key < b.filtered_schedule.key
@@ -363,7 +368,23 @@ function Exports.build_display_tab(player)
         controls_flow.add{type="checkbox", tags={action=action}, caption=caption, tooltip=tooltip, state=state}
     end
 
-    add_checkbox(constants.actions.toggle_show_all_surfaces, {"tll.show_all_surfaces"}, nil, table_config.show_all_surfaces)
+    do
+        number_of_surfaces_with_trains = 0
+        surfaces_with_trains = {}
+        for _, train_data in pairs(global.model.train_list.trains) do
+            local surface = train_data.train.front_stock.surface.name
+            if not surfaces_with_trains[surface] then
+                number_of_surfaces_with_trains = number_of_surfaces_with_trains + 1
+                surfaces_with_trains[surface] = true
+            end
+        end
+        if number_of_surfaces_with_trains > 1 then
+            add_checkbox(constants.actions.toggle_show_all_surfaces, {"tll.show_all_surfaces"}, nil, table_config.show_all_surfaces)
+        else
+            player_global.model.schedule_table_configuration:set_show_all_surfaces(false)
+        end
+    end
+
     add_checkbox(constants.actions.toggle_show_satisfied, {"tll.show_satisfied"}, nil, table_config.show_satisfied)
     add_checkbox(constants.actions.toggle_show_not_set, {"tll.show_not_set"}, nil, table_config.show_not_set)
     add_checkbox(constants.actions.toggle_show_dynamic, {"tll.show_dynamic"}, nil, table_config.show_dynamic)

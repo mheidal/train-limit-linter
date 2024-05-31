@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.31
+Date: 2024-05-30
+  Changes:
+    - Hid the checkbox to toggle showing train schedules on all surfaces if there are only trains
+      on one surface.
+    - If there are only trains on one surface, the schedule report table will always show the
+      schedules on that surface, even if the player is not there.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.30
 Date: 2024-05-20
   Optimizations:

@@ -8,6 +8,7 @@
 ---@field opinionate boolean
 ---@field new fun(): TLLScheduleTableConfiguration
 ---@field toggle_show_all_surfaces fun(self: TLLScheduleTableConfiguration)
+---@field set_show_all_surfaces fun(self: TLLScheduleTableConfiguration, state: boolean)
 ---@field toggle_show_satisfied fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_not_set fun(self: TLLScheduleTableConfiguration)
 ---@field toggle_show_dynamic fun(self: TLLScheduleTableConfiguration)
@@ -36,6 +37,11 @@ end
 
 function TLLScheduleTableConfiguration:toggle_show_all_surfaces()
     self.show_all_surfaces = not self.show_all_surfaces
+end
+
+---@param state any
+function TLLScheduleTableConfiguration:set_show_all_surfaces(state)
+    self.show_all_surfaces = state
 end
 
 function TLLScheduleTableConfiguration:toggle_show_satisfied()
