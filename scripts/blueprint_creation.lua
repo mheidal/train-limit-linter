@@ -118,6 +118,7 @@ local function create_blueprint_from_train(player, train, surface_name)
     local train_groups = constants.supported_interfaces.train_groups
     local TrainGroups_train_group_id = (
         remote.interfaces[train_groups]
+        and remote.interfaces[train_groups]["get_train_group"]
         and other_mods_config.TrainGroups_configuration.copy_train_group
         and remote.call(
             train_groups,
