@@ -336,6 +336,8 @@ local function build_train_schedule_group_report(player)
 end
 
 function Exports.build_display_tab(player)
+
+    global.model.train_list:validate()
     ---@type TLLPlayerGlobal
     local player_global = global.players[player.index]
     local gui_config = player_global.model.gui_configuration

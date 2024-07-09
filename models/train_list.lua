@@ -16,6 +16,12 @@ end
 
 ---@class TLLTrainList
 ---@field trains {[number]: TrainData} Mapping of train ids to LuaTrains
+---@field new fun(): TLLTrainList
+---@field add fun(self: TLLTrainList, train: LuaTrain)
+---@field remove_by_LuaTrain fun(self: TLLTrainList, train: LuaTrain)
+---@field remove_by_id fun(self: TLLTrainList, id: number)
+---@field validate fun(self: TLLTrainList): boolean
+---@field initialize fun(self: TLLTrainList)
 
 ---@class TrainData
 ---@field train LuaTrain
