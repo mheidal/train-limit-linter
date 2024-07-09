@@ -4,6 +4,11 @@ Date: 2024-07-09
   Bugfixes:
     - Fixed crash when deleting trains with the train removal modal.
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.33
+Date: 2024-07-09
+  Bugfixes:
+    - Fixed incompatibility with older versions of Space Exploration.
+---------------------------------------------------------------------------------------------------
 Version: 1.0.32
 Date: 2024-05-30
   Features:
